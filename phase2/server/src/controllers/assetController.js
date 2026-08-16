@@ -30,8 +30,10 @@ export async function deleteAsset(req, res) {
   const used = designs.some((design) => Object.values(design.document?.elements || {}).some((element) => element?.assetId === asset._id.toString()))
   if (used) return res.status(409).json({ message: 'This asset is used by a design. Replace or remove the image layer before deleting it.' })
 
-  const relativePath = asset.url.replace(/^\/uploads\//, '')
-  const filePath = path.join(uploadRoot, relativePath)
+  if (!asset.url.startsWith('/uploads/')) return res.status(400).json({ message: 'Asset storage path is invalid.' })
+  const relativePath = asset.url.slice('/uploads/'.length)
+  const filePath = path.resolve(uploadRoot, relativePath)
+  if (filePath !== uploadRoot && !filePath.startsWith(`${uploadRoot}${path.sep}`)) return res.status(400).json({ message: 'Asset storage path is invalid.' })
   await fs.unlink(filePath).catch(() => {})
   await Asset.deleteOne({ _id: asset._id })
   res.json({ ok: true })

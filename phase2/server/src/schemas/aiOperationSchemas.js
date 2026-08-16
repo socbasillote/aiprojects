@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 const nullable = (schema) => schema.nullable()
+const assetSrcSchema = z.string().regex(/^\/uploads\/[A-Za-z0-9_-]+\/[A-Za-z0-9._-]+$/, 'Asset source must reference a local uploaded asset')
 
 const changeFields = {
   name: nullable(z.string().trim().max(120)),
@@ -24,7 +25,7 @@ const changeFields = {
   strokeWidth: nullable(z.number().min(0).max(100)),
   cornerRadius: nullable(z.number().min(0)),
   points: nullable(z.array(z.number().finite()).min(4)),
-  src: nullable(z.string().min(1)),
+  src: nullable(assetSrcSchema),
   crop: nullable(z.object({ x: z.number(), y: z.number(), width: z.number().positive(), height: z.number().positive() })),
 }
 
@@ -54,7 +55,7 @@ const elementForAddSchema = z.object({
   strokeWidth: z.number().min(0).max(100).optional(),
   cornerRadius: z.number().min(0).optional(),
   points: z.array(z.number().finite()).min(4).optional(),
-  src: z.string().min(1).optional(),
+  src: assetSrcSchema.optional(),
   crop: z.object({ x: z.number(), y: z.number(), width: z.number().positive(), height: z.number().positive() }).optional(),
   children: z.array(z.string().min(1)).optional(),
 }).strict()

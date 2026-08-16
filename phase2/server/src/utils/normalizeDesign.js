@@ -1,3 +1,14 @@
+
+function normalizeAssetSrc(value) {
+  if (typeof value !== 'string') return value
+  if (value.startsWith('/uploads/')) return value
+  try {
+    const url = new URL(value)
+    if (url.pathname.startsWith('/uploads/')) return `${url.pathname}${url.search}`
+  } catch {}
+  return value
+}
+
 export function normalizeDesignDocument(document) {
   const source = document && typeof document === 'object' ? document : {}
   const canvas = source.canvas && typeof source.canvas === 'object' ? source.canvas : {}
@@ -6,11 +17,11 @@ export function normalizeDesignDocument(document) {
 
   if (Array.isArray(rawElements)) {
     for (const element of rawElements) {
-      if (element?.id) elements[element.id] = element
+      if (element?.id) elements[element.id] = { ...element, ...(typeof element.src === 'string' ? { src: normalizeAssetSrc(element.src) } : {}) }
     }
   } else if (rawElements && typeof rawElements === 'object') {
     for (const [id, element] of Object.entries(rawElements)) {
-      if (element && typeof element === 'object') elements[id] = { ...element, id: element.id || id }
+      if (element && typeof element === 'object') elements[id] = { ...element, id: element.id || id, ...(typeof element.src === 'string' ? { src: normalizeAssetSrc(element.src) } : {}) }
     }
   }
 

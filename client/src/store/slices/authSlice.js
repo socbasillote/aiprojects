@@ -16,6 +16,12 @@ const authSlice = createSlice({
       localStorage.setItem('editor_user', JSON.stringify(action.payload.user))
     },
     authChecking: (state) => { state.status = 'checking'; state.error = null },
+    updateAiCredits: (state, action) => {
+      if (state.user) {
+        state.user.aiCredits = action.payload
+        localStorage.setItem('editor_user', JSON.stringify(state.user))
+      }
+    },
     authFailed: (state, action) => { state.status = 'signedOut'; state.error = action.payload || null },
     logout: (state) => {
       state.token = null
@@ -28,5 +34,5 @@ const authSlice = createSlice({
   },
 })
 
-export const { setCredentials, authChecking, authFailed, logout } = authSlice.actions
+export const { setCredentials, authChecking, updateAiCredits, authFailed, logout } = authSlice.actions
 export default authSlice.reducer

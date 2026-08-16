@@ -8,6 +8,7 @@ import { Asset } from '../models/Asset.js'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import { randomUUID } from 'node:crypto'
+import { AI_CREDIT_COSTS, getAiCredits, refundAiCredits, reserveAiCredits } from '../utils/aiCredits.js'
 
 const generateSchema = z.object({
   prompt: z.string().trim().min(3).max(4000),
@@ -104,57 +105,92 @@ function applyOperation(document, operation) {
 export async function generateDesign(req, res) {
   if (!env.openaiApiKey) return res.status(503).json({ message: 'AI generation is not configured. Add OPENAI_API_KEY to the server environment.' })
   const input = generateSchema.parse(req.body)
-  const provider = new OpenAIProvider({ apiKey: env.openaiApiKey, model: env.openaiModel })
-  const document = await provider.generateDesign(input.prompt, input.canvas || {})
-  designDocumentSchema.parse(document)
-  res.json({ document })
+  const cost = AI_CREDIT_COSTS.generateDesign
+  await reserveAiCredits(req.user._id, cost)
+  try {
+    const provider = new OpenAIProvider({ apiKey: env.openaiApiKey, model: env.openaiModel })
+    const document = await provider.generateDesign(input.prompt, input.canvas || {})
+    designDocumentSchema.parse(document)
+    const remaining = await getAiCredits(req.user._id)
+    res.json({ document, credits: { cost, remaining } })
+  } catch (error) {
+    await refundAiCredits(req.user._id, cost)
+    throw error
+  }
 }
 
 export async function generateImage(req, res) {
   if (!env.openaiApiKey) return res.status(503).json({ message: 'AI image generation is not configured. Add OPENAI_API_KEY to the server environment.' })
   const input = generateImageSchema.parse(req.body)
-  const provider = new OpenAIAssetProvider({ apiKey: env.openaiApiKey, model: env.openaiImageModel })
-  const generated = await provider.generateImage(input.prompt, { size: input.size, quality: input.quality })
+  const cost = AI_CREDIT_COSTS.generateImage
+  await reserveAiCredits(req.user._id, cost)
+  try {
+    const provider = new OpenAIAssetProvider({ apiKey: env.openaiApiKey, model: env.openaiImageModel })
+    const generated = await provider.generateImage(input.prompt, { size: input.size, quality: input.quality })
 
-  const userDir = path.join(uploadRoot, req.user._id.toString())
-  await fs.mkdir(userDir, { recursive: true })
-  const filename = `${randomUUID()}.png`
-  const destination = path.join(userDir, filename)
-  await fs.writeFile(destination, generated.buffer)
+    const userDir = path.join(uploadRoot, req.user._id.toString())
+    await fs.mkdir(userDir, { recursive: true })
+    const filename = `${randomUUID()}.png`
+    const destination = path.join(userDir, filename)
+    if (!Buffer.isBuffer(generated.buffer) || generated.buffer.length > 20 * 1024 * 1024) throw new Error('Generated image is too large.')
+    await fs.writeFile(destination, generated.buffer)
 
-  const asset = await Asset.create({
-    userId: req.user._id,
-    type: 'image',
-    url: `/uploads/${req.user._id}/${filename}`,
-    name: `AI image - ${new Date().toISOString().slice(0, 10)}`,
-    width: generated.width,
-    height: generated.height,
-    mimeType: generated.mimeType,
-    size: generated.buffer.length,
-  })
+    let asset
+    try {
+      asset = await Asset.create({
+      userId: req.user._id,
+      type: 'image',
+      url: `/uploads/${req.user._id}/${filename}`,
+      name: `AI image - ${new Date().toISOString().slice(0, 10)}`,
+      width: generated.width,
+      height: generated.height,
+      mimeType: generated.mimeType,
+      size: generated.buffer.length,
+      })
+    } catch (error) {
+      await fs.unlink(destination).catch(() => {})
+      throw error
+    }
 
-  res.status(201).json({
-    asset: {
-      id: asset._id.toString(), type: asset.type, name: asset.name, mimeType: asset.mimeType,
-      size: asset.size, width: asset.width, height: asset.height, url: asset.url, createdAt: asset.createdAt,
-    },
-  })
+    const remaining = await getAiCredits(req.user._id)
+    res.status(201).json({
+      asset: {
+        id: asset._id.toString(), type: asset.type, name: asset.name, mimeType: asset.mimeType,
+        size: asset.size, width: asset.width, height: asset.height, url: asset.url, createdAt: asset.createdAt,
+      },
+      credits: { cost, remaining },
+    })
+  } catch (error) {
+    await refundAiCredits(req.user._id, cost)
+    throw error
+  }
 }
 
 export async function modifyDesign(req, res) {
   if (!env.openaiApiKey) return res.status(503).json({ message: 'AI generation is not configured. Add OPENAI_API_KEY to the server environment.' })
   const input = modifySchema.parse(req.body)
-  const provider = new OpenAIProvider({ apiKey: env.openaiApiKey, model: env.openaiModel })
-  const result = await provider.modifyDesign(input.instruction, { design: input.design, selectedIds: input.selectedIds })
-
-  let simulated = clone(input.design)
+  const cost = AI_CREDIT_COSTS.modifyDesign
+  await reserveAiCredits(req.user._id, cost)
   try {
-    for (const operation of result.operations) simulated = applyOperation(simulated, operation)
-    designDocumentSchema.parse(simulated)
-  } catch (error) {
-    return res.status(422).json({ message: `AI operations were rejected: ${error.message}` })
-  }
+    const provider = new OpenAIProvider({ apiKey: env.openaiApiKey, model: env.openaiModel })
+    const result = await provider.modifyDesign(input.instruction, { design: input.design, selectedIds: input.selectedIds })
 
-  aiOperationsResponseSchema.parse(result)
-  res.json(result)
+    let simulated = clone(input.design)
+    try {
+      for (const operation of result.operations) simulated = applyOperation(simulated, operation)
+      designDocumentSchema.parse(simulated)
+    } catch (error) {
+      const rejection = new Error(`AI operations were rejected: ${error.message}`)
+      rejection.status = 422
+      throw rejection
+    }
+
+    aiOperationsResponseSchema.parse(result)
+    const remaining = await getAiCredits(req.user._id)
+    res.json({ ...result, credits: { cost, remaining } })
+  } catch (error) {
+    await refundAiCredits(req.user._id, cost)
+    throw error
+  }
 }
+

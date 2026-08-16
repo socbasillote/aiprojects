@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 const colorSchema = z.string().trim().min(1).max(100)
+const assetSrcSchema = z.string().regex(/^\/uploads\/[A-Za-z0-9_-]+\/[A-Za-z0-9._-]+$/, 'Asset source must reference a local uploaded asset')
 
 const base = z.object({
   id: z.string().min(1).max(100),
@@ -39,8 +40,8 @@ const rect = base.extend({
 const circle = base.extend({ type: z.literal('circle'), fill: colorSchema, stroke: colorSchema.optional(), strokeWidth: z.number().min(0).optional() })
 const ellipse = circle.extend({ type: z.literal('ellipse') })
 const line = base.extend({ type: z.literal('line'), points: z.array(z.number()).min(4), stroke: colorSchema, strokeWidth: z.number().positive() })
-const image = base.extend({ type: z.literal('image'), src: z.string().min(1), crop: z.object({ x: z.number(), y: z.number(), width: z.number().positive(), height: z.number().positive() }).optional() })
-const svg = base.extend({ type: z.literal('svg'), src: z.string().min(1) })
+const image = base.extend({ type: z.literal('image'), src: assetSrcSchema, crop: z.object({ x: z.number(), y: z.number(), width: z.number().positive(), height: z.number().positive() }).optional() })
+const svg = base.extend({ type: z.literal('svg'), src: assetSrcSchema })
 const group = base.extend({ type: z.literal('group'), children: z.array(z.string().min(1)) })
 
 export const elementSchema = z.discriminatedUnion('type', [text, rect, circle, ellipse, line, image, svg, group])

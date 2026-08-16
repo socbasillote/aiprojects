@@ -4,13 +4,16 @@ import { useDispatch, useSelector } from 'react-redux'
 import { addElement, replaceDocument } from '../../store/slices/designSlice.js'
 import { clearHistory, pushHistory } from '../../store/slices/historySlice.js'
 import { clearSelection, selectElement } from '../../store/slices/selectionSlice.js'
+import { updateAiCredits } from '../../store/slices/authSlice.js'
 import { api, API_URL } from '../../services/api.js'
+import CreditPurchaseModal from '../billing/CreditPurchaseModal.jsx'
 
 const clone = (value) => structuredClone(value)
 
 export default function AIDesignerPanel() {
   const dispatch = useDispatch()
   const design = useSelector((state) => state.design)
+  const aiCredits = useSelector((state) => state.auth.user?.aiCredits ?? 0)
   const selectedIds = useSelector((state) => state.selection.ids)
   const selectedCount = selectedIds.length
   const [mode, setMode] = useState('generate')
@@ -20,14 +23,22 @@ export default function AIDesignerPanel() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [showCreditsModal, setShowCreditsModal] = useState(false)
+  const cost = mode === 'image' ? 5 : 1
+  const hasCredits = aiCredits >= cost
+
+  const syncCredits = (result) => {
+    if (typeof result?.credits?.remaining === 'number') dispatch(updateAiCredits(result.credits.remaining))
+  }
 
   const generate = async () => {
-    if (!prompt.trim() || loading) return
+    if (!prompt.trim() || loading || !hasCredits) return
     setLoading(true)
     setError('')
     setMessage('')
     try {
       const result = await api.generateDesign({ prompt: prompt.trim(), canvas: { width: design.canvas.width, height: design.canvas.height } })
+      syncCredits(result)
       dispatch(replaceDocument(result.document))
       dispatch(clearHistory())
       dispatch(clearSelection())
@@ -41,13 +52,14 @@ export default function AIDesignerPanel() {
   }
 
   const modify = async () => {
-    if (!prompt.trim() || loading) return
+    if (!prompt.trim() || loading || !hasCredits) return
     setLoading(true)
     setError('')
     setMessage('')
     const before = clone(design)
     try {
       const result = await api.modifyDesign({ instruction: prompt.trim(), selectedIds, design })
+      syncCredits(result)
       const after = applyOperationsLocally(before, result.operations)
       dispatch(replaceDocument(after))
       dispatch(pushHistory({ before, after }))
@@ -61,10 +73,11 @@ export default function AIDesignerPanel() {
   }
 
   const generateImage = async () => {
-    if (!prompt.trim() || loading) return
+    if (!prompt.trim() || loading || !hasCredits) return
     setLoading(true); setError(''); setMessage('')
     try {
       const result = await api.generateImage({ prompt: prompt.trim(), size: imageSize, quality: imageQuality })
+      syncCredits(result)
       const asset = result.asset
       const serverOrigin = apiServerOrigin()
       const src = asset.url.startsWith('http') ? asset.url : `${serverOrigin}${asset.url}`
@@ -89,6 +102,16 @@ export default function AIDesignerPanel() {
       <div className="mb-2 flex items-center gap-2 text-xs font-semibold tracking-wide text-slate-200">
         <Bot size={15} className="text-violet-400" /> AI DESIGNER
       </div>
+      <div className="mb-2 flex items-center justify-between rounded-lg border border-white/10 bg-[#0d0f13] px-2.5 py-2">
+        <div>
+          <div className="text-[9px] uppercase tracking-wide text-slate-500">AI Credits</div>
+          <div className="text-xs font-semibold text-slate-200">{aiCredits} remaining</div>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="rounded-md bg-violet-500/10 px-2 py-1 text-[9px] text-violet-300">{cost} credit{cost === 1 ? '' : 's'} / run</div>
+          <button type="button" onClick={() => setShowCreditsModal(true)} className="rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-[9px] font-semibold text-violet-300 hover:bg-violet-500/20">+ Add</button>
+        </div>
+      </div>
       <div className="mb-2 grid grid-cols-3 rounded-lg bg-[#0d0f13] p-1 text-[10px]">
         <button type="button" onClick={() => { setMode('generate'); setError(''); setMessage('') }} className={`rounded-md px-2 py-1.5 ${mode === 'generate' ? 'bg-violet-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Design</button>
         <button type="button" onClick={() => { setMode('modify'); setError(''); setMessage('') }} className={`rounded-md px-2 py-1.5 ${mode === 'modify' ? 'bg-violet-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Modify</button>
@@ -100,6 +123,7 @@ export default function AIDesignerPanel() {
           {selectedCount ? `${selectedCount} selected layer${selectedCount === 1 ? '' : 's'}` : 'No layer selected — AI will inspect the design'}
         </div>
       )}
+      {!hasCredits && <div className="mb-2 rounded-md bg-amber-500/10 p-2 text-[10px] leading-4 text-amber-300">You have no AI credits remaining. AI is unavailable until more credits are added.</div>}
       <p className="mb-2 text-[11px] leading-4 text-slate-500">
         {mode === 'generate' ? 'Describe the design you want. The AI returns editable layers, not a flattened image.' : mode === 'modify' ? 'Describe a change. AI returns only the operations needed to modify the existing layers.' : 'Generate a raster image asset. It will be saved to your asset library and inserted as an editable image layer.'}
       </p>
@@ -115,13 +139,14 @@ export default function AIDesignerPanel() {
         <label className="text-[10px] text-slate-500">Size<select value={imageSize} onChange={(e) => setImageSize(e.target.value)} className="mt-1 w-full rounded-md border border-white/10 bg-[#0d0f13] px-2 py-1.5 text-[10px] text-slate-300 outline-none"><option value="1024x1024">Square</option><option value="1024x1536">Portrait</option><option value="1536x1024">Landscape</option></select></label>
         <label className="text-[10px] text-slate-500">Quality<select value={imageQuality} onChange={(e) => setImageQuality(e.target.value)} className="mt-1 w-full rounded-md border border-white/10 bg-[#0d0f13] px-2 py-1.5 text-[10px] text-slate-300 outline-none"><option value="low">Low — cheaper</option><option value="medium">Medium</option><option value="high">High</option></select></label>
       </div>}
-      <button type="button" onClick={submit} disabled={loading || !prompt.trim()} className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40">
+      <button type="button" onClick={submit} disabled={loading || !prompt.trim() || !hasCredits} className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40">
         {loading ? <Sparkles size={14} className="animate-pulse" /> : mode === 'image' ? <ImageIcon size={14} /> : <WandSparkles size={14} />}
         {loading ? 'Working…' : mode === 'generate' ? 'Generate Design' : mode === 'modify' ? 'Modify Design' : 'Generate Image'}
       </button>
       <div className="mt-1 text-center text-[9px] text-slate-600">Ctrl/Cmd + Enter to run</div>
       {message && <div className="mt-2 rounded-md bg-emerald-500/10 p-2 text-[10px] leading-4 text-emerald-300">{message}</div>}
       {error && <div className="mt-2 rounded-md bg-red-500/10 p-2 text-[10px] leading-4 text-red-300">{error}</div>}
+      {showCreditsModal && <CreditPurchaseModal onClose={() => setShowCreditsModal(false)} />}
     </section>
   )
 }

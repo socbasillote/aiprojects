@@ -3,12 +3,10 @@ export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/ap
 async function request(path, options = {}, timeoutMs = 10000) {
   const controller = new AbortController()
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
-  const token = localStorage.getItem('editor_token')
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) }
-  if (token) headers.Authorization = `Bearer ${token}`
   let response
   try {
-    response = await fetch(`${API_URL}${path}`, { ...options, headers, signal: controller.signal })
+    response = await fetch(`${API_URL}${path}`, { ...options, headers, credentials: 'include', signal: controller.signal })
   } catch (error) {
     if (error.name === 'AbortError') throw new Error('The server took too long to respond. Make sure the backend is running.')
     throw new Error('Unable to reach the backend server. Make sure the server is running.')
@@ -17,13 +15,20 @@ async function request(path, options = {}, timeoutMs = 10000) {
   }
   const contentType = response.headers.get('content-type') || ''
   const body = contentType.includes('application/json') ? await response.json() : null
-  if (!response.ok) throw new Error(body?.message || `Request failed with status ${response.status}`)
+  if (!response.ok) {
+    const error = new Error(body?.message || `Request failed with status ${response.status}`)
+    error.status = response.status
+    error.code = body?.code || null
+    error.remaining = body?.remaining
+    throw error
+  }
   return body
 }
 
 export const api = {
   register: (payload) => request('/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
   login: (payload) => request('/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
+  logout: () => request('/auth/logout', { method: 'POST' }),
   me: () => request('/auth/me'),
   listDesigns: () => request('/designs'),
   createDesign: (payload) => request('/designs', { method: 'POST', body: JSON.stringify(payload) }),
@@ -33,6 +38,10 @@ export const api = {
   generateDesign: (payload) => request('/ai/generate-design', { method: 'POST', body: JSON.stringify(payload) }, 60000),
   modifyDesign: (payload) => request('/ai/modify-design', { method: 'POST', body: JSON.stringify(payload) }, 60000),
   generateImage: (payload) => request('/ai/generate-image', { method: 'POST', body: JSON.stringify(payload) }, 120000),
+  getBillingPackages: () => request('/billing/packages'),
+  getAiCredits: () => request('/billing/credits'),
+  createPayPalOrder: (payload) => request('/billing/paypal/create-order', { method: 'POST', body: JSON.stringify(payload) }, 30000),
+  capturePayPalOrder: (payload) => request('/billing/paypal/capture-order', { method: 'POST', body: JSON.stringify(payload) }, 30000),
   uploadImage: async (file, width, height) => {
     if (!width || !height) {
       const objectUrl = URL.createObjectURL(file)
@@ -49,14 +58,13 @@ export const api = {
         URL.revokeObjectURL(objectUrl)
       }
     }
-    const token = localStorage.getItem('editor_token')
     const formData = new FormData()
     formData.append('file', file)
     formData.append('width', String(width))
     formData.append('height', String(height))
     const response = await fetch(`${API_URL}/uploads/image`, {
       method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: 'include',
       body: formData,
     })
     const contentType = response.headers.get('content-type') || ''

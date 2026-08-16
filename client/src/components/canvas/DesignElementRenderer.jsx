@@ -14,7 +14,7 @@ const useImage = (src) => {
   return image
 }
 
-const DesignElementRenderer = forwardRef(function DesignElementRenderer({ element, onSelect, onDoubleClick, onTransformEnd }, ref) {
+const DesignElementRenderer = forwardRef(function DesignElementRenderer({ element, onSelect, onDoubleClick, onTransformEnd, onDragMove }, ref) {
   if (!element.visible) return null
   const common = {
     ref,
@@ -26,8 +26,11 @@ const DesignElementRenderer = forwardRef(function DesignElementRenderer({ elemen
     draggable: !element.locked,
     onClick: (event) => onSelect(element.id, event.evt.shiftKey),
     onTap: (event) => onSelect(element.id, event.evt.shiftKey),
-    onDragEnd: (event) => onTransformEnd(element.id, { x: event.target.x(), y: event.target.y() }),
+    onDragStart: (event) => { event.cancelBubble = true },
+    onDragMove: (event) => { event.cancelBubble = true; onDragMove?.(element.id, event.target, event) },
+    onDragEnd: (event) => { event.cancelBubble = true; onTransformEnd(element.id, { x: event.target.x(), y: event.target.y() }) },
     onTransformEnd: (event) => {
+      event.cancelBubble = true
       const node = event.target
       const scaleX = node.scaleX()
       const scaleY = node.scaleY()

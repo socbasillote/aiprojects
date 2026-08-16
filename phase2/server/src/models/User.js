@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema({
   lastName: { type: String, required: true, trim: true, minlength: 2, maxlength: 50 },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
   passwordHash: { type: String, required: true },
+  aiCredits: { type: Number, default: 20, min: 0 },
 }, { timestamps: true })
 
 export const User = mongoose.model('User', userSchema)

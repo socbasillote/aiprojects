@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Stage, Layer, Rect as KonvaRect, Line as KonvaLine } from 'react-konva'
 import { useDispatch, useSelector } from 'react-redux'
 import DesignElementRenderer from './DesignElementRenderer.jsx'
@@ -18,12 +18,13 @@ export default function CanvasEditor({ stageRef }) {
   const snapping = useSelector((state) => state.ui.snapping)
   const [guides, setGuides] = useState([])
   const [pan, setPan] = useState({ x: 0, y: 0 })
+  const panRef = useRef({ x: 0, y: 0 })
   const [spaceDown, setSpaceDown] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [editValue, setEditValue] = useState('')
   const nodesById = useRef({})
   const textareaRef = useRef(null)
-  const orderedElements = useMemo(() => document.elementOrder.map((id) => document.elements[id]).filter(Boolean), [document])
+  const orderedElements = useMemo(() => document.elementOrder.map((id) => document.elements[id]).filter(Boolean), [document.elementOrder, document.elements])
 
   const commit = (id, changes) => {
     const before = clone(document)
@@ -33,22 +34,22 @@ export default function CanvasEditor({ stageRef }) {
     dispatch(pushHistory({ before, after }))
   }
 
-  const select = (id, multi) => dispatch(multi ? toggleSelection(id) : selectElement(id))
+  const select = useCallback((id, multi) => dispatch(multi ? toggleSelection(id) : selectElement(id)), [dispatch])
 
-  const startTextEdit = (id) => {
+  const startTextEdit = useCallback((id) => {
     const element = document.elements[id]
     if (!element || element.type !== 'text') return
     setEditingId(id)
     setEditValue(element.text)
     requestAnimationFrame(() => textareaRef.current?.focus())
-  }
+  }, [document.elements])
 
-  const finishTextEdit = () => {
+  const finishTextEdit = useCallback(() => {
     if (!editingId) return
     const element = document.elements[editingId]
     if (element && element.text !== editValue) commit(editingId, { text: editValue })
     setEditingId(null)
-  }
+  }, [editingId, editValue, document.elements])
 
   const snapPosition = (id, node) => {
     if (!snapping) return { x: node.x(), y: node.y(), guides: [] }
@@ -83,17 +84,17 @@ export default function CanvasEditor({ stageRef }) {
     return { x: sx ? sx.value : x, y: sy ? sy.value : y, guides: [...(sx ? [{ orientation: 'v', value: sx.value + width / 2 }] : []), ...(sy ? [{ orientation: 'h', value: sy.value + height / 2 }] : [])] }
   }
 
-  const handleDragStart = (event) => {
+  const handleDragStart = useCallback((event) => {
     event.cancelBubble = true
-  }
+  }, [])
 
-  const handleDragMove = (id, node, event) => {
+  const handleDragMove = useCallback((id, node, event) => {
     if (event) event.cancelBubble = true
     const snapped = snapPosition(id, node)
     if (snapped.x !== node.x()) node.x(snapped.x)
     if (snapped.y !== node.y()) node.y(snapped.y)
     setGuides(snapped.guides)
-  }
+  }, [snapping, zoom, document])
 
   const handleWheel = (event) => {
     event.evt.preventDefault()
@@ -112,8 +113,8 @@ export default function CanvasEditor({ stageRef }) {
     if (nextZoom === oldScale) return
 
     const mousePointTo = {
-      x: (pointer.x - pan.x) / oldScale,
-      y: (pointer.y - pan.y) / oldScale,
+      x: (pointer.x - panRef.current.x) / oldScale,
+      y: (pointer.y - panRef.current.y) / oldScale,
     }
 
     const nextPan = {
@@ -122,20 +123,21 @@ export default function CanvasEditor({ stageRef }) {
     }
 
     dispatch(setZoom(nextZoom))
+    panRef.current = nextPan
     setPan(nextPan)
   }
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = useCallback((event) => {
     event.cancelBubble = true
-  }
+  }, [])
 
-  const handleTransformEnd = (id, changes) => {
+  const handleTransformEnd = useCallback((id, changes) => {
     const node = nodesById.current[id]
     const snapped = node ? snapPosition(id, node) : { x: changes.x, y: changes.y, guides: [] }
     if (node) { node.x(snapped.x); node.y(snapped.y) }
     setGuides([])
     commit(id, { ...changes, x: snapped.x, y: snapped.y })
-  }
+  }, [document, snapping, zoom])
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -161,9 +163,9 @@ export default function CanvasEditor({ stageRef }) {
   }, [dispatch, editingId])
 
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-auto bg-[#171a20] p-10 scrollbar-thin">
+    <div className={`canvas-workspace flex h-full w-full items-center justify-center overflow-auto bg-[#171a20] p-10 scrollbar-thin ${spaceDown ? 'cursor-grab' : ''}`}>
       <div className="relative shrink-0 shadow-[0_24px_80px_rgba(0,0,0,.45)]" style={{ width: document.canvas.width * zoom, height: document.canvas.height * zoom }}>
-        <Stage ref={stageRef} width={document.canvas.width} height={document.canvas.height} scaleX={zoom} scaleY={zoom} onWheel={handleWheel} x={pan.x} y={pan.y} draggable={spaceDown} onDragMove={(event) => { if (spaceDown) setPan({ x: event.target.x(), y: event.target.y() }) }} onMouseDown={(e) => { if (e.target === e.target.getStage()) dispatch(clearSelection()) }}>
+        <Stage ref={stageRef} width={document.canvas.width} height={document.canvas.height} scaleX={zoom} scaleY={zoom} onWheel={handleWheel} x={pan.x} y={pan.y} draggable={spaceDown} onDragMove={(event) => { if (spaceDown) { event.target.x(event.target.x()); event.target.y(event.target.y()); panRef.current = { x: event.target.x(), y: event.target.y() } } }} onDragEnd={(event) => { if (spaceDown) { const nextPan = { x: event.target.x(), y: event.target.y() }; panRef.current = nextPan; setPan(nextPan) } }} onMouseDown={(e) => { if (e.target === e.target.getStage()) dispatch(clearSelection()) }}>
           <Layer>
             <KonvaRect x={0} y={0} width={document.canvas.width} height={document.canvas.height} fill={document.canvas.background} />
             {orderedElements.map((element) => (

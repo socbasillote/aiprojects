@@ -1,21 +1,52 @@
-import { forwardRef, useEffect, useState } from 'react'
+import { forwardRef, memo, useEffect, useState } from 'react'
 import { Text, Rect, Circle, Ellipse, Line, Image as KonvaImage, Group } from 'react-konva'
 
-const useImage = (src) => {
-  const [image, setImage] = useState(null)
+const imageCache = new Map()
+
+function useImage(src) {
+  const [image, setImage] = useState(() => imageCache.get(src) || null)
+
   useEffect(() => {
-    if (!src) return
+    if (!src) return undefined
+    const cached = imageCache.get(src)
+    if (cached) {
+      setImage(cached)
+      return undefined
+    }
+
     const img = new window.Image()
     img.crossOrigin = 'anonymous'
-    img.onload = () => setImage(img)
+    img.onload = () => {
+      imageCache.set(src, img)
+      setImage(img)
+    }
+    img.onerror = () => setImage(null)
     img.src = src
-    return () => { img.onload = null }
+
+    return () => {
+      img.onload = null
+      img.onerror = null
+    }
   }, [src])
+
   return image
 }
 
-const DesignElementRenderer = forwardRef(function DesignElementRenderer({ element, onSelect, onDoubleClick, onTransformEnd, onDragMove }, ref) {
+const ImageElement = memo(function ImageElement({ common, element }) {
+  const image = useImage(element.src)
+  if (!image) return null
+  return <KonvaImage {...common} image={image} width={element.width} height={element.height} />
+})
+
+const DesignElementRenderer = memo(forwardRef(function DesignElementRenderer({
+  element,
+  onSelect,
+  onDoubleClick,
+  onTransformEnd,
+  onDragMove,
+}, ref) {
   if (!element.visible) return null
+
   const common = {
     ref,
     id: element.id,
@@ -27,8 +58,14 @@ const DesignElementRenderer = forwardRef(function DesignElementRenderer({ elemen
     onClick: (event) => onSelect(element.id, event.evt.shiftKey),
     onTap: (event) => onSelect(element.id, event.evt.shiftKey),
     onDragStart: (event) => { event.cancelBubble = true },
-    onDragMove: (event) => { event.cancelBubble = true; onDragMove?.(element.id, event.target, event) },
-    onDragEnd: (event) => { event.cancelBubble = true; onTransformEnd(element.id, { x: event.target.x(), y: event.target.y() }) },
+    onDragMove: (event) => {
+      event.cancelBubble = true
+      onDragMove?.(element.id, event.target, event)
+    },
+    onDragEnd: (event) => {
+      event.cancelBubble = true
+      onTransformEnd(element.id, { x: event.target.x(), y: event.target.y() })
+    },
     onTransformEnd: (event) => {
       event.cancelBubble = true
       const node = event.target
@@ -37,7 +74,9 @@ const DesignElementRenderer = forwardRef(function DesignElementRenderer({ elemen
       node.scaleX(1)
       node.scaleY(1)
       onTransformEnd(element.id, {
-        x: node.x(), y: node.y(), rotation: node.rotation(),
+        x: node.x(),
+        y: node.y(),
+        rotation: node.rotation(),
         width: Math.max(10, node.width() * scaleX),
         height: Math.max(10, node.height() * scaleY),
       })
@@ -56,15 +95,15 @@ const DesignElementRenderer = forwardRef(function DesignElementRenderer({ elemen
     case 'line':
       return <Line {...common} points={element.points || [0, 0, element.width || 100, 0]} stroke={element.stroke || '#111827'} strokeWidth={element.strokeWidth || 3} />
     case 'image':
-    case 'svg': {
-      const image = useImage(element.src)
-      return image ? <KonvaImage {...common} image={image} width={element.width} height={element.height} /> : null
-    }
+    case 'svg':
+      return <ImageElement common={common} element={element} />
     case 'group':
       return <Group {...common} />
     default:
       return null
   }
-})
+}))
+
+DesignElementRenderer.displayName = 'DesignElementRenderer'
 
 export default DesignElementRenderer

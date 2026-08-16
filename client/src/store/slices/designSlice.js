@@ -61,6 +61,61 @@ const designSlice = createSlice({
       state.elementOrder = state.elementOrder.filter((id) => id !== action.payload)
       state.elementOrder.unshift(action.payload)
     },
+
+    groupElements: (state, action) => {
+      const ids = [...new Set(action.payload || [])].filter((id) => state.elements[id])
+      if (ids.length < 2) return
+      const groupId = makeId()
+      const group = {
+        id: groupId,
+        type: 'group',
+        name: 'Group',
+        x: 0, y: 0, width: 0, height: 0,
+        rotation: 0, opacity: 1, visible: true, locked: false,
+        children: ids,
+      }
+      state.elements[groupId] = group
+      for (const id of ids) state.elements[id].groupId = groupId
+      const firstIndex = Math.min(...ids.map((id) => state.elementOrder.indexOf(id)).filter((i) => i >= 0))
+      state.elementOrder = state.elementOrder.filter((id) => !ids.includes(id))
+      state.elementOrder.splice(Math.max(0, firstIndex), 0, ...ids, groupId)
+    },
+    ungroupElements: (state, action) => {
+      const groupIds = (action.payload || []).filter((id) => state.elements[id]?.type === 'group')
+      for (const groupId of groupIds) {
+        const group = state.elements[groupId]
+        for (const childId of group.children || []) {
+          if (state.elements[childId]) delete state.elements[childId].groupId
+        }
+        delete state.elements[groupId]
+        state.elementOrder = state.elementOrder.filter((id) => id !== groupId)
+      }
+    },
+
+    alignElements: (state, action) => {
+      const { ids = [], axis = 'horizontal' } = action.payload || {}
+      const valid = ids.filter((id) => state.elements[id] && state.elements[id].type !== 'group')
+      if (!valid.length) return
+      if (axis === 'horizontal') {
+        for (const id of valid) {
+          const el = state.elements[id]
+          el.x = (state.canvas.width - (el.width || 0)) / 2
+        }
+      } else {
+        for (const id of valid) {
+          const el = state.elements[id]
+          el.y = (state.canvas.height - (el.height || 0)) / 2
+        }
+      }
+    },
+    nudgeElements: (state, action) => {
+      const { ids = [], dx = 0, dy = 0 } = action.payload || {}
+      for (const id of ids) {
+        if (!state.elements[id] || state.elements[id].locked) continue
+        state.elements[id].x = (state.elements[id].x || 0) + dx
+        state.elements[id].y = (state.elements[id].y || 0) + dy
+      }
+    },
     setCanvasSize: (state, action) => {
       state.canvas.width = action.payload.width
       state.canvas.height = action.payload.height
@@ -83,6 +138,10 @@ export const {
   bringToFront,
   sendToBack,
   setCanvasSize,
+  groupElements,
+  ungroupElements,
+  nudgeElements,
+  alignElements,
   setBackground,
   replaceDocument,
 } = designSlice.actions

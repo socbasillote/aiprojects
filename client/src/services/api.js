@@ -17,7 +17,13 @@ async function request(path, options = {}, timeoutMs = 10000) {
   }
   const contentType = response.headers.get('content-type') || ''
   const body = contentType.includes('application/json') ? await response.json() : null
-  if (!response.ok) throw new Error(body?.message || `Request failed with status ${response.status}`)
+  if (!response.ok) {
+    const error = new Error(body?.message || `Request failed with status ${response.status}`)
+    error.status = response.status
+    error.code = body?.code || null
+    error.remaining = body?.remaining
+    throw error
+  }
   return body
 }
 

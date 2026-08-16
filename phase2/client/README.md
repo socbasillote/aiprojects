@@ -18,3 +18,8 @@ React + Vite + Redux Toolkit + React-Konva + Tailwind CSS.
 npm install
 npm run dev
 ```
+
+
+## Authentication security
+
+Authentication is maintained in an HttpOnly server session cookie. The client does not store a JWT access token in localStorage.

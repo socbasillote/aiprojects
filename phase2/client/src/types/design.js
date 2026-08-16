@@ -1,3 +1,5 @@
+const SERVER_ORIGIN = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api$/, '')
+
 export const ELEMENT_TYPES = Object.freeze({
   TEXT: 'text', RECT: 'rect', CIRCLE: 'circle', ELLIPSE: 'ellipse', LINE: 'line', IMAGE: 'image', SVG: 'svg', GROUP: 'group',
 })
@@ -22,10 +24,10 @@ export function normalizeDesignDocument(document) {
 
   if (Array.isArray(rawElements)) {
     for (const element of rawElements) {
-      if (element?.id) elements[element.id] = element
+      if (element?.id) elements[element.id] = { ...element, ...(typeof element.src === 'string' && element.src.startsWith('/uploads/') ? { src: `${SERVER_ORIGIN}${element.src}` } : {}) }
     }
   } else if (rawElements && typeof rawElements === 'object') {
-    elements = { ...rawElements }
+    elements = Object.fromEntries(Object.entries(rawElements).map(([id, element]) => [id, { ...element, ...(typeof element?.src === 'string' && element.src.startsWith('/uploads/') ? { src: `${SERVER_ORIGIN}${element.src}` } : {}) }]))
   }
 
   const elementOrder = Array.isArray(source.elementOrder)

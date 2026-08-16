@@ -138,6 +138,6 @@ export default function App() {
       <main className="min-h-0"><CanvasEditor stageRef={stageRef} /></main>
       <aside className="min-h-0 border-l border-white/10 bg-[#121419]"><PropertiesPanel /></aside>
     </div>
-    <div className="flex h-7 items-center justify-end gap-2 border-t border-white/10 bg-[#101216] px-3 text-[10px] text-slate-500"><Keyboard size={12}/> Ctrl/Cmd + Z undo · Shift + Z redo · Double-click text to edit</div>
+    <div className="flex h-7 items-center justify-end gap-2 border-t border-white/10 bg-[#101216] px-3 text-[10px] text-slate-500"><Keyboard size={12}/> Ctrl/Cmd + Z undo · Shift + Z redo · Shift+click multi-select · Space+drag pan · Delete remove · Arrow keys nudge · Ctrl/Cmd+D duplicate · Double-click text to edit</div>
   </div>
 }
