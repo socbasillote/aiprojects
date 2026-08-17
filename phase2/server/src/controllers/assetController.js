@@ -1,9 +1,6 @@
-import path from 'node:path'
-import fs from 'node:fs/promises'
 import { Asset } from '../models/Asset.js'
 import { Design } from '../models/Design.js'
-
-const uploadRoot = path.resolve(process.cwd(), 'uploads')
+import { deleteObject, keyFromLocalUrl } from '../services/storage.js'
 
 const toPublicAsset = (asset) => ({
   id: asset._id.toString(),
@@ -30,11 +27,8 @@ export async function deleteAsset(req, res) {
   const used = designs.some((design) => Object.values(design.document?.elements || {}).some((element) => element?.assetId === asset._id.toString()))
   if (used) return res.status(409).json({ message: 'This asset is used by a design. Replace or remove the image layer before deleting it.' })
 
-  if (!asset.url.startsWith('/uploads/')) return res.status(400).json({ message: 'Asset storage path is invalid.' })
-  const relativePath = asset.url.slice('/uploads/'.length)
-  const filePath = path.resolve(uploadRoot, relativePath)
-  if (filePath !== uploadRoot && !filePath.startsWith(`${uploadRoot}${path.sep}`)) return res.status(400).json({ message: 'Asset storage path is invalid.' })
-  await fs.unlink(filePath).catch(() => {})
+  const storageKey = asset.storageKey || keyFromLocalUrl(asset.url)
+  await deleteObject({ provider: asset.storageProvider, key: storageKey, url: asset.url })
   await Asset.deleteOne({ _id: asset._id })
   res.json({ ok: true })
 }

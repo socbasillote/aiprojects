@@ -5,9 +5,8 @@ import { aiOperationsResponseSchema } from '../schemas/aiOperationSchemas.js'
 import { env } from '../config/env.js'
 import { OpenAIAssetProvider } from '../services/ai/OpenAIAssetProvider.js'
 import { Asset } from '../models/Asset.js'
-import path from 'node:path'
-import fs from 'node:fs/promises'
 import { randomUUID } from 'node:crypto'
+import { putBuffer, deleteObject } from '../services/storage.js'
 import { AI_CREDIT_COSTS, getAiCredits, refundAiCredits, reserveAiCredits } from '../utils/aiCredits.js'
 
 const generateSchema = z.object({
@@ -21,8 +20,6 @@ const generateImageSchema = z.object({
   size: z.enum(['1024x1024', '1024x1536', '1536x1024']).default('1024x1024'),
   quality: z.enum(['low', 'medium', 'high']).default('low'),
 })
-
-const uploadRoot = path.resolve(process.cwd(), 'uploads')
 
 const modifySchema = z.object({
   instruction: z.string().trim().min(2).max(2000),
@@ -128,27 +125,26 @@ export async function generateImage(req, res) {
     const provider = new OpenAIAssetProvider({ apiKey: env.openaiApiKey, model: env.openaiImageModel })
     const generated = await provider.generateImage(input.prompt, { size: input.size, quality: input.quality })
 
-    const userDir = path.join(uploadRoot, req.user._id.toString())
-    await fs.mkdir(userDir, { recursive: true })
-    const filename = `${randomUUID()}.png`
-    const destination = path.join(userDir, filename)
     if (!Buffer.isBuffer(generated.buffer) || generated.buffer.length > 20 * 1024 * 1024) throw new Error('Generated image is too large.')
-    await fs.writeFile(destination, generated.buffer)
+    const storageKey = `users/${req.user._id.toString()}/assets/${randomUUID()}.png`
+    const stored = await putBuffer({ key: storageKey, body: generated.buffer, contentType: generated.mimeType })
 
     let asset
     try {
       asset = await Asset.create({
-      userId: req.user._id,
-      type: 'image',
-      url: `/uploads/${req.user._id}/${filename}`,
-      name: `AI image - ${new Date().toISOString().slice(0, 10)}`,
-      width: generated.width,
-      height: generated.height,
-      mimeType: generated.mimeType,
-      size: generated.buffer.length,
+        userId: req.user._id,
+        type: 'image',
+        storageProvider: stored.provider,
+        storageKey: stored.key,
+        url: stored.url,
+        name: `AI image - ${new Date().toISOString().slice(0, 10)}`,
+        width: generated.width,
+        height: generated.height,
+        mimeType: generated.mimeType,
+        size: generated.buffer.length,
       })
     } catch (error) {
-      await fs.unlink(destination).catch(() => {})
+      await deleteObject({ provider: stored.provider, key: stored.key, url: stored.url }).catch(() => {})
       throw error
     }
 
