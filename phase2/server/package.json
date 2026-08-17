@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch src/server.js",
+    "migrate:design-assets": "node src/scripts/migrateDesignAssets.js",
     "start": "node src/server.js"
   },
   "dependencies": {
