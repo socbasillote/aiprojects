@@ -1,0 +1,125 @@
+import api from "../../services/api.js";
+
+const createEbook = async (data) => {
+  const response = await api.post("/ebooks", data);
+
+  return response.data;
+};
+
+const getEbooks = async () => {
+  const response = await api.get("/ebooks");
+
+  return response.data;
+};
+
+const getEbook = async (ebookId) => {
+  const response = await api.get(`/ebooks/${ebookId}`);
+
+  return response.data;
+};
+
+const updateEbook = async (ebookId, data) => {
+  const response = await api.patch(`/ebooks/${ebookId}`, data);
+
+  return response.data;
+};
+
+const deleteEbook = async (ebookId) => {
+  const response = await api.delete(`/ebooks/${ebookId}`);
+
+  return response.data;
+};
+
+const generateSpecification = async (ebookId) => {
+  const response = await api.post(`/ebooks/${ebookId}/specification`);
+
+  return response.data;
+};
+
+const updateSpecification = async (ebookId, specification) => {
+  const response = await api.patch(
+    `/ebooks/${ebookId}/specification`,
+    specification,
+  );
+
+  return response.data;
+};
+
+const approveSpecification = async (ebookId) => {
+  const response = await api.post(`/ebooks/${ebookId}/specification/approve`);
+
+  return response.data;
+};
+
+const generateOutline = async (ebookId) => {
+  const response = await api.post(`/ebooks/${ebookId}/outline`);
+
+  return response.data;
+};
+
+const updateOutline = async (ebookId, outline) => {
+  const response = await api.patch(`/ebooks/${ebookId}/outline`, outline);
+
+  return response.data;
+};
+
+const approveOutline = async (ebookId) => {
+  const response = await api.post(`/ebooks/${ebookId}/outline/approve`);
+
+  return response.data;
+};
+
+const addOutlineChapter = async (ebookId, chapter) => {
+  const response = await api.post(
+    `/ebooks/${ebookId}/outline/chapters`,
+    chapter,
+  );
+
+  return response.data;
+};
+
+const updateOutlineChapter = async (ebookId, chapterNumber, chapter) => {
+  const response = await api.patch(
+    `/ebooks/${ebookId}/outline/chapters/${chapterNumber}`,
+    chapter,
+  );
+
+  return response.data;
+};
+
+const deleteOutlineChapter = async (ebookId, chapterNumber) => {
+  const response = await api.delete(
+    `/ebooks/${ebookId}/outline/chapters/${chapterNumber}`,
+  );
+
+  return response.data;
+};
+
+const reorderOutlineChapters = async (ebookId, chapterOrder) => {
+  const response = await api.patch(`/ebooks/${ebookId}/outline/reorder`, {
+    chapterOrder,
+  });
+
+  return response.data;
+};
+
+export default {
+  createEbook,
+  getEbooks,
+  getEbook,
+  updateEbook,
+  deleteEbook,
+
+  generateSpecification,
+  updateSpecification,
+  approveSpecification,
+
+  generateOutline,
+  updateOutline,
+  approveOutline,
+
+  addOutlineChapter,
+  updateOutlineChapter,
+  deleteOutlineChapter,
+  reorderOutlineChapters,
+};
