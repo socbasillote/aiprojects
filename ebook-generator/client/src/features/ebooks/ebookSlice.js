@@ -283,6 +283,40 @@ export const approveCover = createAsyncThunk(
   },
 );
 
+export const generateAssembly = createAsyncThunk(
+  "ebooks/generateAssembly",
+  async (ebookId, thunkAPI) => {
+    try {
+      const ebook = await ebookApi.generateAssembly(ebookId);
+
+      console.log("GENERATE ASSEMBLY EBOOK:", ebook);
+
+      return ebook;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Unable to assemble ebook.",
+      );
+    }
+  },
+);
+
+export const approveAssembly = createAsyncThunk(
+  "ebooks/approveAssembly",
+  async (ebookId, thunkAPI) => {
+    try {
+      const ebook = await ebookApi.approveAssembly(ebookId);
+
+      console.log("APPROVE ASSEMBLY EBOOK:", ebook);
+
+      return ebook;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Unable to approve ebook assembly.",
+      );
+    }
+  },
+);
+
 const ebookSlice = createSlice({
   name: "ebooks",
 
@@ -566,6 +600,31 @@ const ebookSlice = createSlice({
       .addCase(approveCover.rejected, (state, action) => {
         state.operationLoading = false;
         state.error = action.payload;
+      })
+
+      //assembly
+      .addCase(generateAssembly.fulfilled, (state, action) => {
+        state.currentEbook = action.payload;
+
+        const index = state.ebooks.findIndex(
+          (ebook) => ebook._id === action.payload._id,
+        );
+
+        if (index !== -1) {
+          state.ebooks[index] = action.payload;
+        }
+      })
+
+      .addCase(approveAssembly.fulfilled, (state, action) => {
+        state.currentEbook = action.payload;
+
+        const index = state.ebooks.findIndex(
+          (ebook) => ebook._id === action.payload._id,
+        );
+
+        if (index !== -1) {
+          state.ebooks[index] = action.payload;
+        }
       });
   },
 });

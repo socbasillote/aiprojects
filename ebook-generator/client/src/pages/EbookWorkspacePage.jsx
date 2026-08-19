@@ -23,6 +23,8 @@ import {
   approveImages,
   generateCover,
   approveCover,
+  generateAssembly,
+  approveAssembly,
 } from "../features/ebooks/ebookSlice.js";
 
 import ChaptersEditor from "./ChaptersEditor.jsx";
@@ -30,6 +32,7 @@ import ImagesEditor from "./ImagesEditor.jsx";
 
 import { toast } from "sonner";
 import CoverEditor from "./CoverEditor.jsx";
+import AssemblyEditor from "../components/ebook/AssemblyEditor.jsx";
 
 const EbookWorkspacePage = () => {
   const { id } = useParams();
@@ -265,6 +268,7 @@ const EbookWorkspacePage = () => {
        * Stay on cover for now so the user
        * can see the completed state.
        */
+      setActiveTab("assembly");
     }
   };
 
@@ -309,6 +313,7 @@ const EbookWorkspacePage = () => {
               ["chapters", "Chapters"],
               ["images", "Images"],
               ["cover", "Cover"],
+              ["assembly", "Assembly"],
             ].map(([value, label]) => (
               <button
                 key={value}
@@ -385,6 +390,24 @@ const EbookWorkspacePage = () => {
                 onGenerate={handleGenerateCover}
                 onApprove={handleApproveCover}
                 loading={operationLoading}
+              />
+            )}
+
+            {activeTab === "assembly" && (
+              <AssemblyEditor
+                ebook={ebook}
+                loading={loading}
+                onGenerate={() => {
+                  dispatch(generateAssembly(ebook._id));
+                }}
+                onApprove={async () => {
+                  const result = await dispatch(approveAssembly(ebook._id));
+
+                  if (approveAssembly.fulfilled.match(result)) {
+                    // We'll route this to Export next.
+                    setActiveTab("export");
+                  }
+                }}
               />
             )}
           </div>

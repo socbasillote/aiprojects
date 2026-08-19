@@ -7,6 +7,7 @@ import ebookService from "../services/ebook/ebook.service.js";
 import chapterService from "../services/ebook/chapter.service.js";
 import imageService from "../services/ebook/image.service.js";
 import coverService from "../services/ebook/cover.service.js";
+import assemblyService from "../services/ebook/assembly.service.js";
 
 const createEbook = async (req, res) => {
   const ebook = await ebookService.createEbook({
@@ -364,6 +365,36 @@ const approveCover = async (req, res) => {
   });
 };
 
+const generateAssembly = async (req, res) => {
+  const ebook = await assemblyService.generateAssembly({
+    ebookId: req.params.id,
+    userId: req.user._id,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Ebook assembled successfully.",
+    data: {
+      ebook,
+    },
+  });
+};
+
+const approveAssembly = async (req, res) => {
+  const ebook = await assemblyService.approveAssembly({
+    ebookId: req.params.id,
+    userId: req.user._id,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Ebook assembly approved successfully.",
+    data: {
+      ebook,
+    },
+  });
+};
+
 export {
   createEbook,
   getEbooks,
@@ -388,4 +419,6 @@ export {
   approveImages,
   generateCover,
   approveCover,
+  generateAssembly,
+  approveAssembly,
 };

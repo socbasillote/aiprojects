@@ -153,10 +153,9 @@ const generateCover = async ({ ebookId, userId }) => {
         base64: generated.value,
       });
     } else if (generated?.type === "url" && generated?.value) {
-
-    /*
-     * Hosted image URL returned by OpenAI.
-     */
+      /*
+       * Hosted image URL returned by OpenAI.
+       */
       coverUrl = await imageStorage.saveImageFromUrl({
         ebookId: ebook._id,
         imageNumber: "cover",
@@ -293,12 +292,12 @@ const approveCover = async ({ ebookId, userId }) => {
 
   ebook.markModified("cover");
 
-  ebook.status = "completed";
+  ebook.status = "ready_for_review";
 
   ebook.generationProgress = {
     stage: "cover",
     status: "approved",
-    message: "Ebook cover approved. Ebook generation complete.",
+    message: "Ebook cover approved. Ready for final assembly.",
     percentage: 100,
     updatedAt: new Date(),
   };

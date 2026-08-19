@@ -319,6 +319,165 @@ const ebookCoverSchema = new mongoose.Schema(
   },
 );
 
+const ebookAssemblyImageSchema = new mongoose.Schema(
+  {
+    imageNumber: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+
+    title: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    url: {
+      type: String,
+      default: "",
+    },
+
+    altText: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    type: {
+      type: String,
+      enum: ["diagram", "illustration", "flowchart", "concept", "editorial"],
+      default: "editorial",
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
+const ebookAssemblyChapterSchema = new mongoose.Schema(
+  {
+    chapterNumber: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+
+    title: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    summary: {
+      type: String,
+      default: "",
+    },
+
+    content: {
+      type: String,
+      default: "",
+    },
+
+    wordCount: {
+      type: Number,
+      default: 0,
+    },
+
+    images: {
+      type: [ebookAssemblyImageSchema],
+      default: [],
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
+const ebookAssemblySchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: ["pending", "assembling", "ready_for_review", "approved", "error"],
+      default: "pending",
+    },
+
+    title: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    subtitle: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    authorName: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    coverUrl: {
+      type: String,
+      default: "",
+    },
+
+    tableOfContents: {
+      type: [
+        {
+          chapterNumber: {
+            type: Number,
+            required: true,
+          },
+
+          title: {
+            type: String,
+            required: true,
+            trim: true,
+          },
+        },
+      ],
+      default: [],
+    },
+
+    chapters: {
+      type: [ebookAssemblyChapterSchema],
+      default: [],
+    },
+
+    wordCount: {
+      type: Number,
+      default: 0,
+    },
+
+    chapterCount: {
+      type: Number,
+      default: 0,
+    },
+
+    assembledAt: {
+      type: Date,
+      default: null,
+    },
+
+    approvedAt: {
+      type: Date,
+      default: null,
+    },
+
+    errorMessage: {
+      type: String,
+      default: "",
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
 const ebookSchema = new mongoose.Schema(
   {
     userId: {
@@ -472,6 +631,17 @@ const ebookSchema = new mongoose.Schema(
         "error",
       ],
       default: "draft",
+    },
+
+    /*
+    |--------------------------------------------------------------------------
+    | Assembly 
+    |--------------------------------------------------------------------------
+    */
+
+    assembly: {
+      type: ebookAssemblySchema,
+      default: null,
     },
 
     /*

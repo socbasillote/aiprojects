@@ -160,6 +160,19 @@ const approveCover = async (ebookId) => {
 
   return response.data.data.ebook;
 };
+
+const generateAssembly = async (ebookId) => {
+  const response = await api.post(`/ebooks/${ebookId}/assembly`);
+
+  return response.data.data.ebook;
+};
+
+const approveAssembly = async (ebookId) => {
+  const response = await api.post(`/ebooks/${ebookId}/assembly/approve`);
+
+  return response.data.data.ebook;
+};
+
 export default {
   createEbook,
   getEbooks,
@@ -191,4 +204,7 @@ export default {
 
   generateCover,
   approveCover,
+
+  generateAssembly,
+  approveAssembly,
 };
