@@ -21,12 +21,15 @@ import {
   setCurrentEbook,
   generateImages,
   approveImages,
+  generateCover,
+  approveCover,
 } from "../features/ebooks/ebookSlice.js";
 
 import ChaptersEditor from "./ChaptersEditor.jsx";
 import ImagesEditor from "./ImagesEditor.jsx";
 
 import { toast } from "sonner";
+import CoverEditor from "./CoverEditor.jsx";
 
 const EbookWorkspacePage = () => {
   const { id } = useParams();
@@ -227,6 +230,48 @@ const EbookWorkspacePage = () => {
     }
   };
 
+  const handleGenerateCover = async () => {
+    console.log("GENERATE COVER CLICKED");
+
+    const result = await dispatch(generateCover(id));
+
+    console.log("GENERATE COVER RESULT:", result);
+
+    if (generateCover.fulfilled.match(result)) {
+      const generatedEbook = result.payload;
+
+      console.log("GENERATED COVER EBOOK:", generatedEbook);
+      console.log("GENERATED COVER:", generatedEbook?.cover);
+      console.log("GENERATED COVER STATUS:", generatedEbook?.cover?.status);
+      console.log("GENERATED COVER URL:", generatedEbook?.cover?.url);
+
+      dispatch(setCurrentEbook(generatedEbook));
+
+      toast.success("Cover generated successfully.");
+    }
+  };
+
+  const handleApproveCover = async () => {
+    const result = await dispatch(approveCover(id));
+
+    if (approveCover.fulfilled.match(result)) {
+      const completedEbook = result.payload;
+
+      dispatch(setCurrentEbook(completedEbook));
+
+      toast.success("Ebook completed successfully.");
+
+      /*
+       * Stay on cover for now so the user
+       * can see the completed state.
+       */
+    }
+  };
+
+  console.log("COVER FROM BACKEND:", ebook?.cover);
+  console.log("COVER STATUS:", ebook?.cover?.status);
+  console.log("EBOOK STATUS:", ebook?.status);
+
   return (
     <div className="min-h-screen bg-zinc-50">
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
@@ -335,14 +380,12 @@ const EbookWorkspacePage = () => {
             )}
 
             {activeTab === "cover" && (
-              <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center">
-                <h2 className="font-semibold">Coming in the next phase</h2>
-
-                <p className="mt-2 text-sm text-zinc-500">
-                  This section will be implemented as the ebook generation
-                  pipeline is built.
-                </p>
-              </div>
+              <CoverEditor
+                ebook={ebook}
+                onGenerate={handleGenerateCover}
+                onApprove={handleApproveCover}
+                loading={operationLoading}
+              />
             )}
           </div>
         </main>

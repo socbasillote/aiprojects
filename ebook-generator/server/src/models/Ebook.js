@@ -273,6 +273,52 @@ const ebookImageSchema = new mongoose.Schema(
   },
 );
 
+/*
+|--------------------------------------------------------------------------
+| Ebook Cover
+|--------------------------------------------------------------------------
+|
+| Keep the cover as a real Mongoose subdocument instead of Mixed.
+| This prevents cover.status / cover.url from becoming stale or
+| inconsistently persisted.
+|
+*/
+
+const ebookCoverSchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: ["generating", "generated", "approved", "error"],
+      default: "generating",
+    },
+
+    url: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    prompt: {
+      type: String,
+      default: "",
+    },
+
+    altText: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    errorMessage: {
+      type: String,
+      default: "",
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
 const ebookSchema = new mongoose.Schema(
   {
     userId: {
@@ -315,24 +361,49 @@ const ebookSchema = new mongoose.Schema(
       maxlength: 150,
     },
 
+    /*
+    |--------------------------------------------------------------------------
+    | Specification
+    |--------------------------------------------------------------------------
+    */
+
     specification: {
       type: ebookSpecificationSchema,
       default: null,
     },
+
     specificationApproved: {
       type: Boolean,
       default: false,
     },
+
+    /*
+    |--------------------------------------------------------------------------
+    | Settings
+    |--------------------------------------------------------------------------
+    */
 
     settings: {
       type: ebookSettingsSchema,
       default: () => ({}),
     },
 
+    /*
+    |--------------------------------------------------------------------------
+    | Outline
+    |--------------------------------------------------------------------------
+    */
+
     outline: {
       type: mongoose.Schema.Types.Mixed,
       default: null,
     },
+
+    /*
+    |--------------------------------------------------------------------------
+    | Chapters
+    |--------------------------------------------------------------------------
+    */
 
     chapters: {
       type: [ebookChapterSchema],
@@ -344,6 +415,12 @@ const ebookSchema = new mongoose.Schema(
       default: false,
     },
 
+    /*
+    |--------------------------------------------------------------------------
+    | Images
+    |--------------------------------------------------------------------------
+    */
+
     images: {
       type: [ebookImageSchema],
       default: [],
@@ -354,15 +431,33 @@ const ebookSchema = new mongoose.Schema(
       default: false,
     },
 
+    /*
+    |--------------------------------------------------------------------------
+    | Book Memory
+    |--------------------------------------------------------------------------
+    */
+
     bookMemory: {
       type: mongoose.Schema.Types.Mixed,
       default: null,
     },
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cover
+    |--------------------------------------------------------------------------
+    */
+
     cover: {
-      type: mongoose.Schema.Types.Mixed,
+      type: ebookCoverSchema,
       default: null,
     },
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ebook Status
+    |--------------------------------------------------------------------------
+    */
 
     status: {
       type: String,
@@ -379,10 +474,22 @@ const ebookSchema = new mongoose.Schema(
       default: "draft",
     },
 
+    /*
+    |--------------------------------------------------------------------------
+    | Generation Progress
+    |--------------------------------------------------------------------------
+    */
+
     generationProgress: {
       type: mongoose.Schema.Types.Mixed,
       default: null,
     },
+
+    /*
+    |--------------------------------------------------------------------------
+    | Statistics
+    |--------------------------------------------------------------------------
+    */
 
     wordCount: {
       type: Number,

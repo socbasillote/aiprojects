@@ -145,6 +145,21 @@ const approveImages = async (ebookId) => {
   return response.data.data.ebook;
 };
 
+const generateCover = async (ebookId) => {
+  const response = await api.post(`/ebooks/${ebookId}/cover`);
+
+  console.log("GENERATE COVER API RESPONSE:", response.data);
+
+  console.log("GENERATE COVER API EBOOK:", response.data?.data?.ebook);
+
+  return response.data?.data?.ebook;
+};
+
+const approveCover = async (ebookId) => {
+  const response = await api.post(`/ebooks/${ebookId}/cover/approve`);
+
+  return response.data.data.ebook;
+};
 export default {
   createEbook,
   getEbooks,
@@ -173,4 +188,7 @@ export default {
 
   generateImages,
   approveImages,
+
+  generateCover,
+  approveCover,
 };

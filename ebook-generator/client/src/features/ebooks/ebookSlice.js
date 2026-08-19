@@ -251,6 +251,38 @@ export const approveImages = createAsyncThunk(
   },
 );
 
+export const generateCover = createAsyncThunk(
+  "ebooks/generateCover",
+  async (ebookId, thunkAPI) => {
+    try {
+      const ebook = await ebookApi.generateCover(ebookId);
+
+      console.log("GENERATE COVER THUNK EBOOK:", ebook);
+
+      return ebook;
+    } catch (error) {
+      console.error("GENERATE COVER THUNK ERROR:", error);
+
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Unable to generate cover.",
+      );
+    }
+  },
+);
+
+export const approveCover = createAsyncThunk(
+  "ebooks/approveCover",
+  async (ebookId, thunkAPI) => {
+    try {
+      return await ebookApi.approveCover(ebookId);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Unable to approve cover.",
+      );
+    }
+  },
+);
+
 const ebookSlice = createSlice({
   name: "ebooks",
 
@@ -479,6 +511,59 @@ const ebookSlice = createSlice({
       })
 
       .addCase(approveImagePlan.rejected, (state, action) => {
+        state.operationLoading = false;
+        state.error = action.payload;
+      })
+
+      // Image cover
+      .addCase(generateCover.pending, (state) => {
+        state.operationLoading = true;
+        state.error = null;
+      })
+
+      .addCase(generateCover.fulfilled, (state, action) => {
+        state.operationLoading = false;
+
+        console.log("GENERATE COVER REDUCER:", action.payload);
+
+        state.current = action.payload;
+
+        /*
+         * Also keep the list synchronized.
+         */
+        const index = state.items.findIndex(
+          (item) => item._id === action.payload._id,
+        );
+
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+
+      .addCase(generateCover.rejected, (state, action) => {
+        state.operationLoading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(approveCover.pending, (state) => {
+        state.operationLoading = true;
+        state.error = null;
+      })
+
+      .addCase(approveCover.fulfilled, (state, action) => {
+        state.operationLoading = false;
+        state.current = action.payload;
+
+        const index = state.items.findIndex(
+          (item) => item._id === action.payload._id,
+        );
+
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+
+      .addCase(approveCover.rejected, (state, action) => {
         state.operationLoading = false;
         state.error = action.payload;
       });
