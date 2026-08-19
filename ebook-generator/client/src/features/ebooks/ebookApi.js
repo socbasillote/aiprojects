@@ -121,6 +121,18 @@ const approveChapters = async (ebookId) => {
   return response.data.data.ebook;
 };
 
+const generateImagePlan = async (ebookId) => {
+  const response = await api.post(`/ebooks/${ebookId}/images`);
+
+  return response.data.data.ebook;
+};
+
+const approveImagePlan = async (ebookId) => {
+  const response = await api.post(`/ebooks/${ebookId}/images/approve`);
+
+  return response.data.data.ebook;
+};
+
 export default {
   createEbook,
   getEbooks,
@@ -143,4 +155,7 @@ export default {
 
   generateChapters,
   approveChapters,
+
+  generateImagePlan,
+  approveImagePlan,
 };

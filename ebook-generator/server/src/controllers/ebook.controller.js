@@ -5,6 +5,7 @@ import reorderOutlineSchema from "../validators/reorderOutline.validator.js";
 
 import ebookService from "../services/ebook/ebook.service.js";
 import chapterService from "../services/ebook/chapter.service.js";
+import imageService from "../services/ebook/image.service.js";
 
 const createEbook = async (req, res) => {
   const ebook = await ebookService.createEbook({
@@ -272,6 +273,36 @@ const approveChapters = async (req, res) => {
   });
 };
 
+const generateImagePlan = async (req, res) => {
+  const ebook = await imageService.generateImagePlan({
+    ebookId: req.params.id,
+    userId: req.user._id,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Ebook image plan generated successfully.",
+    data: {
+      ebook,
+    },
+  });
+};
+
+const approveImagePlan = async (req, res) => {
+  const ebook = await imageService.approveImagePlan({
+    ebookId: req.params.id,
+    userId: req.user._id,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Ebook image plan approved successfully.",
+    data: {
+      ebook,
+    },
+  });
+};
+
 export {
   createEbook,
   getEbooks,
@@ -290,4 +321,6 @@ export {
   approveOutline,
   generateChapters,
   approveChapters,
+  generateImagePlan,
+  approveImagePlan,
 };

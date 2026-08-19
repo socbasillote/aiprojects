@@ -208,6 +208,66 @@ const ebookChapterSchema = new mongoose.Schema(
   },
 );
 
+const ebookImageSchema = new mongoose.Schema(
+  {
+    imageNumber: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+
+    chapterNumber: {
+      type: Number,
+      default: null,
+    },
+
+    type: {
+      type: String,
+      enum: ["diagram", "illustration", "flowchart", "concept", "editorial"],
+      default: "editorial",
+    },
+
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    prompt: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    status: {
+      type: String,
+      enum: ["pending", "generating", "generated", "approved", "error"],
+      default: "pending",
+    },
+
+    url: {
+      type: String,
+      default: "",
+    },
+
+    altText: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+  },
+  {
+    _id: true,
+    timestamps: true,
+  },
+);
+
 const ebookSchema = new mongoose.Schema(
   {
     userId: {
@@ -275,6 +335,16 @@ const ebookSchema = new mongoose.Schema(
     },
 
     chaptersApproved: {
+      type: Boolean,
+      default: false,
+    },
+
+    images: {
+      type: [ebookImageSchema],
+      default: [],
+    },
+
+    imagesApproved: {
       type: Boolean,
       default: false,
     },

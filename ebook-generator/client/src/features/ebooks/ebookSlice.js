@@ -195,6 +195,36 @@ export const approveChapters = createAsyncThunk(
   },
 );
 
+export const generateImagePlan = createAsyncThunk(
+  "ebooks/generateImagePlan",
+  async (ebookId, thunkAPI) => {
+    try {
+      const ebook = await ebookApi.generateImagePlan(ebookId);
+
+      return ebook;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Unable to generate image plan.",
+      );
+    }
+  },
+);
+
+export const approveImagePlan = createAsyncThunk(
+  "ebooks/approveImagePlan",
+  async (ebookId, thunkAPI) => {
+    try {
+      const ebook = await ebookApi.approveImagePlan(ebookId);
+
+      return ebook;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Unable to approve image plan.",
+      );
+    }
+  },
+);
+
 const ebookSlice = createSlice({
   name: "ebooks",
 
@@ -375,6 +405,54 @@ const ebookSlice = createSlice({
       })
 
       .addCase(approveChapters.rejected, (state, action) => {
+        state.operationLoading = false;
+        state.error = action.payload;
+      })
+
+      // Image
+
+      .addCase(generateImagePlan.pending, (state) => {
+        state.operationLoading = true;
+        state.error = null;
+      })
+
+      .addCase(generateImagePlan.fulfilled, (state, action) => {
+        state.operationLoading = false;
+        state.current = action.payload;
+
+        const index = state.items.findIndex(
+          (item) => item._id === action.payload._id,
+        );
+
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+
+      .addCase(generateImagePlan.rejected, (state, action) => {
+        state.operationLoading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(approveImagePlan.pending, (state) => {
+        state.operationLoading = true;
+        state.error = null;
+      })
+
+      .addCase(approveImagePlan.fulfilled, (state, action) => {
+        state.operationLoading = false;
+        state.current = action.payload;
+
+        const index = state.items.findIndex(
+          (item) => item._id === action.payload._id,
+        );
+
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+
+      .addCase(approveImagePlan.rejected, (state, action) => {
         state.operationLoading = false;
         state.error = action.payload;
       });

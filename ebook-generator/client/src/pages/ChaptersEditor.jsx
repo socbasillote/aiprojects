@@ -17,8 +17,12 @@ const ChaptersEditor = ({ ebook, onGenerate, onApprove, loading }) => {
     ebook?.generationProgress?.stage === "chapters" &&
     ebook?.generationProgress?.status === "generating";
 
-  const allGenerated =
-    hasChapters && chapters.every((chapter) => chapter.status === "generated");
+  const allGenerated = chapters.every(
+    (chapter) =>
+      chapter.status === "generated" || chapter.status === "approved",
+  );
+
+  const chaptersApproved = ebook?.chaptersApproved === true;
 
   const hasFailedChapter = chapters.some(
     (chapter) => chapter.status === "error",
@@ -91,7 +95,7 @@ const ChaptersEditor = ({ ebook, onGenerate, onApprove, loading }) => {
             </button>
           )}
 
-          {allGenerated && (
+          {allGenerated && !chaptersApproved && (
             <button
               type="button"
               onClick={onApprove}
@@ -100,6 +104,12 @@ const ChaptersEditor = ({ ebook, onGenerate, onApprove, loading }) => {
             >
               {loading ? "Approving..." : "Approve chapters"}
             </button>
+          )}
+
+          {chaptersApproved && (
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-medium text-zinc-700">
+              Chapters approved
+            </div>
           )}
         </div>
       </div>

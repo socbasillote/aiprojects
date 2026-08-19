@@ -14,12 +14,15 @@ import {
   generateOutline,
   updateOutline,
   approveOutline,
-  setCurrentEbook,
   generateChapters,
   approveChapters,
+  generateImagePlan,
+  approveImagePlan,
+  setCurrentEbook,
 } from "../features/ebooks/ebookSlice.js";
 
 import ChaptersEditor from "./ChaptersEditor.jsx";
+import ImagesEditor from "./ImagesEditor.jsx";
 
 import { toast } from "sonner";
 
@@ -176,6 +179,27 @@ const EbookWorkspacePage = () => {
       dispatch(setCurrentEbook(approvedEbook));
 
       toast.success("Chapters approved.");
+      setActiveTab("images");
+    }
+  };
+
+  const handleGenerateImagePlan = async () => {
+    const result = await dispatch(generateImagePlan(id));
+
+    if (generateImagePlan.fulfilled.match(result)) {
+      toast.success("Image plan generated.");
+    }
+  };
+
+  const handleApproveImagePlan = async () => {
+    const result = await dispatch(approveImagePlan(id));
+
+    if (approveImagePlan.fulfilled.match(result)) {
+      const approvedEbook = result.payload;
+
+      dispatch(setCurrentEbook(approvedEbook));
+
+      toast.success("Image plan approved.");
     }
   };
 
@@ -273,6 +297,26 @@ const EbookWorkspacePage = () => {
                 onApprove={handleApproveChapters}
                 loading={operationLoading}
               />
+            )}
+
+            {activeTab === "images" && (
+              <ImagesEditor
+                ebook={ebook}
+                onGenerate={handleGenerateImagePlan}
+                onApprove={handleApproveImagePlan}
+                loading={operationLoading}
+              />
+            )}
+
+            {activeTab === "cover" && (
+              <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center">
+                <h2 className="font-semibold">Coming in the next phase</h2>
+
+                <p className="mt-2 text-sm text-zinc-500">
+                  This section will be implemented as the ebook generation
+                  pipeline is built.
+                </p>
+              </div>
             )}
           </div>
         </main>
