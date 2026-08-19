@@ -20,6 +20,8 @@ import {
   approveChapters,
   generateImagePlan,
   approveImagePlan,
+  generateImages,
+  approveImages,
 } from "../controllers/ebook.controller.js";
 
 import authMiddleware from "../middleware/auth.middleware.js";
@@ -95,12 +97,22 @@ router.post("/:id/chapters/approve", approveChapters);
 
 /*
 |--------------------------------------------------------------------------
-| Images
+| Image plan
 |--------------------------------------------------------------------------
 */
 
 router.post("/:id/images", generateImagePlan);
 
 router.post("/:id/images/approve", approveImagePlan);
+
+/*
+|--------------------------------------------------------------------------
+| Image generation
+|--------------------------------------------------------------------------
+*/
+
+router.post("/:id/images/generate", generateImages);
+
+router.post("/:id/images/finalize", approveImages);
 
 export default router;

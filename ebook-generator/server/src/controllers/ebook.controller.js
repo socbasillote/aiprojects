@@ -303,6 +303,36 @@ const approveImagePlan = async (req, res) => {
   });
 };
 
+const generateImages = async (req, res) => {
+  const ebook = await imageService.generateImages({
+    ebookId: req.params.id,
+    userId: req.user._id,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Ebook images generated successfully.",
+    data: {
+      ebook,
+    },
+  });
+};
+
+const approveImages = async (req, res) => {
+  const ebook = await imageService.approveImages({
+    ebookId: req.params.id,
+    userId: req.user._id,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Ebook images approved successfully.",
+    data: {
+      ebook,
+    },
+  });
+};
+
 export {
   createEbook,
   getEbooks,
@@ -323,4 +353,6 @@ export {
   approveChapters,
   generateImagePlan,
   approveImagePlan,
+  generateImages,
+  approveImages,
 };

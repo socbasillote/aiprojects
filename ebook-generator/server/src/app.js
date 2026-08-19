@@ -13,8 +13,16 @@ import notFoundMiddleware from "./middleware/notFound.middleware.js";
 import errorMiddleware from "./middleware/error.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
 
+import path from "path";
+import { fileURLToPath } from "url";
+
 const app = express();
 
+const __filename = fileURLToPath(import.meta.url);
+
+const __dirname = path.dirname(__filename);
+
+app.use("/uploads", express.static(path.resolve(__dirname, "../uploads")));
 /*
 |--------------------------------------------------------------------------
 | Security

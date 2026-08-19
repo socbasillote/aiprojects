@@ -261,6 +261,11 @@ const ebookImageSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+
+    errorMessage: {
+      type: String,
+      default: "",
+    },
   },
   {
     _id: true,

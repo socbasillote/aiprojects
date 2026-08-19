@@ -19,6 +19,8 @@ import {
   generateImagePlan,
   approveImagePlan,
   setCurrentEbook,
+  generateImages,
+  approveImages,
 } from "../features/ebooks/ebookSlice.js";
 
 import ChaptersEditor from "./ChaptersEditor.jsx";
@@ -203,6 +205,28 @@ const EbookWorkspacePage = () => {
     }
   };
 
+  const handleGenerateImages = async () => {
+    const result = await dispatch(generateImages(id));
+
+    if (generateImages.fulfilled.match(result)) {
+      toast.success("Images generated successfully.");
+    }
+  };
+
+  const handleApproveImages = async () => {
+    const result = await dispatch(approveImages(id));
+
+    if (approveImages.fulfilled.match(result)) {
+      const approvedEbook = result.payload;
+
+      dispatch(setCurrentEbook(approvedEbook));
+
+      toast.success("Images approved.");
+
+      setActiveTab("cover");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-50">
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
@@ -304,6 +328,8 @@ const EbookWorkspacePage = () => {
                 ebook={ebook}
                 onGenerate={handleGenerateImagePlan}
                 onApprove={handleApproveImagePlan}
+                onGenerateImages={handleGenerateImages}
+                onApproveImages={handleApproveImages}
                 loading={operationLoading}
               />
             )}

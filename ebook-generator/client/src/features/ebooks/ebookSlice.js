@@ -225,6 +225,32 @@ export const approveImagePlan = createAsyncThunk(
   },
 );
 
+export const generateImages = createAsyncThunk(
+  "ebooks/generateImages",
+  async (ebookId, thunkAPI) => {
+    try {
+      return await ebookApi.generateImages(ebookId);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Unable to generate images.",
+      );
+    }
+  },
+);
+
+export const approveImages = createAsyncThunk(
+  "ebooks/approveImages",
+  async (ebookId, thunkAPI) => {
+    try {
+      return await ebookApi.approveImages(ebookId);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Unable to approve images.",
+      );
+    }
+  },
+);
+
 const ebookSlice = createSlice({
   name: "ebooks",
 
