@@ -107,12 +107,14 @@ export const approveSpecification = createAsyncThunk(
   "ebooks/approveSpecification",
   async (ebookId, thunkAPI) => {
     try {
-      const response = await ebookApi.approveSpecification(ebookId);
+      const ebook = await ebookApi.approveSpecification(ebookId);
 
-      return response.data.ebook;
+      console.log("APPROVE THUNK EBOOK:", ebook);
+
+      return ebook;
     } catch (error) {
       return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Unable to approve specification.",
+        error.response?.data?.message || "Failed to approve specification.",
       );
     }
   },
@@ -152,12 +154,42 @@ export const approveOutline = createAsyncThunk(
   "ebooks/approveOutline",
   async (ebookId, thunkAPI) => {
     try {
-      const response = await ebookApi.approveOutline(ebookId);
+      const ebook = await ebookApi.approveOutline(ebookId);
 
-      return response.data.ebook;
+      return ebook;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || "Unable to approve outline.",
+      );
+    }
+  },
+);
+
+export const generateChapters = createAsyncThunk(
+  "ebooks/generateChapters",
+  async (ebookId, thunkAPI) => {
+    try {
+      const ebook = await ebookApi.generateChapters(ebookId);
+
+      return ebook;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Unable to generate chapters.",
+      );
+    }
+  },
+);
+
+export const approveChapters = createAsyncThunk(
+  "ebooks/approveChapters",
+  async (ebookId, thunkAPI) => {
+    try {
+      const ebook = await ebookApi.approveChapters(ebookId);
+
+      return ebook;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Unable to approve chapters.",
       );
     }
   },
@@ -245,8 +277,35 @@ const ebookSlice = createSlice({
         state.current = action.payload;
       })
 
+      // ApproveSpecification
+
+      .addCase(approveSpecification.pending, (state) => {
+        state.operationLoading = true;
+        state.error = null;
+      })
+
       .addCase(approveSpecification.fulfilled, (state, action) => {
-        state.current = action.payload;
+        state.operationLoading = false;
+
+        const ebook = action.payload;
+
+        if (!ebook) {
+          state.error = "Specification approval returned no ebook.";
+          return;
+        }
+
+        state.current = ebook;
+
+        const index = state.items.findIndex((item) => item._id === ebook._id);
+
+        if (index !== -1) {
+          state.items[index] = ebook;
+        }
+      })
+
+      .addCase(approveSpecification.rejected, (state, action) => {
+        state.operationLoading = false;
+        state.error = action.payload;
       })
 
       .addCase(generateOutline.pending, (state) => {
@@ -270,6 +329,54 @@ const ebookSlice = createSlice({
 
       .addCase(approveOutline.fulfilled, (state, action) => {
         state.current = action.payload;
+      })
+
+      // Chapter
+
+      .addCase(generateChapters.pending, (state) => {
+        state.operationLoading = true;
+        state.error = null;
+      })
+
+      .addCase(generateChapters.fulfilled, (state, action) => {
+        state.operationLoading = false;
+        state.current = action.payload;
+
+        const index = state.items.findIndex(
+          (item) => item._id === action.payload._id,
+        );
+
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+
+      .addCase(generateChapters.rejected, (state, action) => {
+        state.operationLoading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(approveChapters.pending, (state) => {
+        state.operationLoading = true;
+        state.error = null;
+      })
+
+      .addCase(approveChapters.fulfilled, (state, action) => {
+        state.operationLoading = false;
+        state.current = action.payload;
+
+        const index = state.items.findIndex(
+          (item) => item._id === action.payload._id,
+        );
+
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+
+      .addCase(approveChapters.rejected, (state, action) => {
+        state.operationLoading = false;
+        state.error = action.payload;
       });
   },
 });

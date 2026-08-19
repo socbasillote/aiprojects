@@ -106,7 +106,7 @@ const generateSpecification = async ({ ebookId, userId }) => {
      * existing valid specification when
      * regeneration fails.
      */
-    ebook.status = "error";
+    ebook.status = "planning";
 
     ebook.generationProgress = {
       stage: "specification",
@@ -189,13 +189,21 @@ const approveSpecification = async ({ ebookId, userId }) => {
 
   if (!ebook.specification) {
     const error = new Error(
-      "Generate an ebook specification before approving it.",
+      "Generate the ebook specification before approving it.",
     );
 
     error.statusCode = 400;
 
     throw error;
   }
+
+  /*
+   * Validate the specification one more time
+   * before allowing it to become approved.
+   */
+  const validatedSpecification = specificationSchema.parse(ebook.specification);
+
+  ebook.specification = validatedSpecification;
 
   ebook.specificationApproved = true;
 
@@ -205,7 +213,7 @@ const approveSpecification = async ({ ebookId, userId }) => {
     stage: "specification",
     status: "approved",
     message: "Ebook specification approved.",
-    percentage: 25,
+    percentage: 30,
     updatedAt: new Date(),
   };
 

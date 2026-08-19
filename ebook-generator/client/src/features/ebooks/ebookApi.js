@@ -48,7 +48,13 @@ const updateSpecification = async (ebookId, specification) => {
 const approveSpecification = async (ebookId) => {
   const response = await api.post(`/ebooks/${ebookId}/specification/approve`);
 
-  return response.data;
+  console.log("APPROVE API RAW RESPONSE:", response);
+
+  console.log("APPROVE API DATA:", response.data);
+
+  console.log("APPROVE API EBOOK:", response.data?.data?.ebook);
+
+  return response.data?.data?.ebook;
 };
 
 const generateOutline = async (ebookId) => {
@@ -66,7 +72,7 @@ const updateOutline = async (ebookId, outline) => {
 const approveOutline = async (ebookId) => {
   const response = await api.post(`/ebooks/${ebookId}/outline/approve`);
 
-  return response.data;
+  return response.data.data.ebook;
 };
 
 const addOutlineChapter = async (ebookId, chapter) => {
@@ -103,6 +109,18 @@ const reorderOutlineChapters = async (ebookId, chapterOrder) => {
   return response.data;
 };
 
+const generateChapters = async (ebookId) => {
+  const response = await api.post(`/ebooks/${ebookId}/chapters`);
+
+  return response.data.data.ebook;
+};
+
+const approveChapters = async (ebookId) => {
+  const response = await api.post(`/ebooks/${ebookId}/chapters/approve`);
+
+  return response.data.data.ebook;
+};
+
 export default {
   createEbook,
   getEbooks,
@@ -122,4 +140,7 @@ export default {
   updateOutlineChapter,
   deleteOutlineChapter,
   reorderOutlineChapters,
+
+  generateChapters,
+  approveChapters,
 };

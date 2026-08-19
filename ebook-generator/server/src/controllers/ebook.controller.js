@@ -4,6 +4,7 @@ import outlineService from "../services/ebook/outline.service.js";
 import reorderOutlineSchema from "../validators/reorderOutline.validator.js";
 
 import ebookService from "../services/ebook/ebook.service.js";
+import chapterService from "../services/ebook/chapter.service.js";
 
 const createEbook = async (req, res) => {
   const ebook = await ebookService.createEbook({
@@ -241,6 +242,36 @@ const reorderOutlineChapters = async (req, res) => {
   });
 };
 
+const generateChapters = async (req, res) => {
+  const ebook = await chapterService.generateChapters({
+    ebookId: req.params.id,
+    userId: req.user._id,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Ebook chapters generated successfully.",
+    data: {
+      ebook,
+    },
+  });
+};
+
+const approveChapters = async (req, res) => {
+  const ebook = await chapterService.approveChapters({
+    ebookId: req.params.id,
+    userId: req.user._id,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Ebook chapters approved successfully.",
+    data: {
+      ebook,
+    },
+  });
+};
+
 export {
   createEbook,
   getEbooks,
@@ -257,4 +288,6 @@ export {
   deleteOutlineChapter,
   reorderOutlineChapters,
   approveOutline,
+  generateChapters,
+  approveChapters,
 };

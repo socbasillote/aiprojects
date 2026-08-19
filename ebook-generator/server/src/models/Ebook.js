@@ -160,6 +160,54 @@ const ebookSettingsSchema = new mongoose.Schema(
   },
 );
 
+const ebookChapterSchema = new mongoose.Schema(
+  {
+    chapterNumber: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 300,
+    },
+
+    content: {
+      type: String,
+      default: "",
+    },
+
+    summary: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    wordCount: {
+      type: Number,
+      default: 0,
+    },
+
+    status: {
+      type: String,
+      enum: ["pending", "generating", "generated", "approved", "error"],
+      default: "pending",
+    },
+
+    generationProgress: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+  },
+  {
+    _id: true,
+    timestamps: true,
+  },
+);
+
 const ebookSchema = new mongoose.Schema(
   {
     userId: {
@@ -206,6 +254,10 @@ const ebookSchema = new mongoose.Schema(
       type: ebookSpecificationSchema,
       default: null,
     },
+    specificationApproved: {
+      type: Boolean,
+      default: false,
+    },
 
     settings: {
       type: ebookSettingsSchema,
@@ -215,6 +267,16 @@ const ebookSchema = new mongoose.Schema(
     outline: {
       type: mongoose.Schema.Types.Mixed,
       default: null,
+    },
+
+    chapters: {
+      type: [ebookChapterSchema],
+      default: [],
+    },
+
+    chaptersApproved: {
+      type: Boolean,
+      default: false,
     },
 
     bookMemory: {

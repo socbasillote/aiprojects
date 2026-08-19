@@ -16,6 +16,8 @@ import {
   deleteOutlineChapter,
   reorderOutlineChapters,
   approveOutline,
+  generateChapters,
+  approveChapters,
 } from "../controllers/ebook.controller.js";
 
 import authMiddleware from "../middleware/auth.middleware.js";
@@ -78,5 +80,15 @@ router.delete("/:id/outline/chapters/:chapterNumber", deleteOutlineChapter);
 router.patch("/:id/outline/reorder", reorderOutlineChapters);
 
 router.post("/:id/outline/approve", approveOutline);
+
+/*
+|--------------------------------------------------------------------------
+| Chapters
+|--------------------------------------------------------------------------
+*/
+
+router.post("/:id/chapters", generateChapters);
+
+router.post("/:id/chapters/approve", approveChapters);
 
 export default router;

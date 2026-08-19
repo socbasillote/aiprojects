@@ -17,11 +17,11 @@ const specificationSchema = z.object({
 
   language: z.string().min(1).max(100),
 
-  estimatedWordCount: z.number().int().positive(),
+  estimatedWordCount: z.coerce.number().int().positive(),
 
-  estimatedPageCount: z.number().int().positive(),
+  estimatedPageCount: z.coerce.number().int().positive(),
 
-  chapterCount: z.number().int().positive().max(100),
+  chapterCount: z.coerce.number().int().positive().max(100),
 
   themes: z.array(z.string()).default([]),
 

@@ -14,7 +14,12 @@ import {
   generateOutline,
   updateOutline,
   approveOutline,
+  setCurrentEbook,
+  generateChapters,
+  approveChapters,
 } from "../features/ebooks/ebookSlice.js";
+
+import ChaptersEditor from "./ChaptersEditor.jsx";
 
 import { toast } from "sonner";
 
@@ -105,7 +110,15 @@ const EbookWorkspacePage = () => {
     const result = await dispatch(approveSpecification(id));
 
     if (approveSpecification.fulfilled.match(result)) {
+      const approvedEbook = result.payload;
+
+      console.log("APPROVED EBOOK:", approvedEbook);
+
+      console.log("APPROVED:", approvedEbook?.specificationApproved);
+
       toast.success("Specification approved.");
+
+      setActiveTab("outline");
     }
   };
 
@@ -136,7 +149,33 @@ const EbookWorkspacePage = () => {
     const result = await dispatch(approveOutline(id));
 
     if (approveOutline.fulfilled.match(result)) {
+      const approvedEbook = result.payload;
+
       toast.success("Outline approved.");
+
+      dispatch(setCurrentEbook(approvedEbook));
+
+      setActiveTab("chapters");
+    }
+  };
+
+  const handleGenerateChapters = async () => {
+    const result = await dispatch(generateChapters(id));
+
+    if (generateChapters.fulfilled.match(result)) {
+      toast.success("Chapters generated successfully.");
+    }
+  };
+
+  const handleApproveChapters = async () => {
+    const result = await dispatch(approveChapters(id));
+
+    if (approveChapters.fulfilled.match(result)) {
+      const approvedEbook = result.payload;
+
+      dispatch(setCurrentEbook(approvedEbook));
+
+      toast.success("Chapters approved.");
     }
   };
 
@@ -227,15 +266,13 @@ const EbookWorkspacePage = () => {
               />
             )}
 
-            {["chapters", "images", "cover"].includes(activeTab) && (
-              <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center">
-                <h2 className="font-semibold">Coming in the next phase</h2>
-
-                <p className="mt-2 text-sm text-zinc-500">
-                  This section will be implemented as the ebook generation
-                  pipeline is built.
-                </p>
-              </div>
+            {activeTab === "chapters" && (
+              <ChaptersEditor
+                ebook={ebook}
+                onGenerate={handleGenerateChapters}
+                onApprove={handleApproveChapters}
+                loading={operationLoading}
+              />
             )}
           </div>
         </main>
