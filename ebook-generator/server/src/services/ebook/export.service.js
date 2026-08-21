@@ -1,6 +1,7 @@
 import Ebook from "../../models/Ebook.js";
 
 import pdfExportService from "../export/pdfExport.service.js";
+import epubExportService from "../export/epubExport.service.js";
 
 const exportPdf = async ({ ebookId, userId }) => {
   /*
@@ -229,18 +230,60 @@ const exportEpub = async ({ ebookId, userId }) => {
   ebook.generationProgress = {
     stage: "export",
     status: "generating",
-    message: "Preparing EPUB export.",
-    percentage: 0,
+    message: "Generating EPUB.",
+    percentage: 10,
     updatedAt: new Date(),
   };
 
   await ebook.save();
 
-  /*
-   * EPUB generation will be implemented next.
-   */
+  try {
+    const epubUrl = await epubExportService.createEpub({ ebook });
 
-  return ebook;
+    if (!epubUrl) {
+      throw new Error("EPUB generation returned no file URL.");
+    }
+
+    ebook.export.epub.status = "ready";
+    ebook.export.epub.url = epubUrl;
+    ebook.export.epub.generatedAt = new Date();
+    ebook.export.epub.errorMessage = "";
+
+    ebook.export.status = "ready";
+    ebook.status = "ready_for_export";
+
+    ebook.generationProgress = {
+      stage: "export",
+      status: "ready_for_export",
+      message: "EPUB generated successfully.",
+      percentage: 100,
+      updatedAt: new Date(),
+    };
+
+    await ebook.save();
+
+    return ebook;
+  } catch (error) {
+    console.error("EPUB EXPORT ERROR:", error);
+
+    ebook.export.epub.status = "error";
+    ebook.export.epub.errorMessage =
+      error?.message || "EPUB generation failed.";
+    ebook.export.status = "error";
+    ebook.status = "ready_for_export";
+
+    ebook.generationProgress = {
+      stage: "export",
+      status: "failed",
+      message: error?.message || "EPUB generation failed.",
+      percentage: 0,
+      updatedAt: new Date(),
+    };
+
+    await ebook.save();
+
+    throw error;
+  }
 };
 
 const getExportStatus = async ({ ebookId, userId }) => {

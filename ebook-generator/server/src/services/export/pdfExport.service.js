@@ -197,6 +197,76 @@ const getChapterImages = ({ ebook, chapter }) => {
   );
 };
 
+const splitContentIntoSections = (content) => {
+  const sections = String(content || "")
+    .split(/\n\s*\n/)
+    .map((section) => section.trim())
+    .filter(Boolean);
+
+  if (sections.length > 1) {
+    return sections;
+  }
+
+  const sentences = String(content || "")
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+
+  const chunkSize = 4;
+  const chunks = [];
+
+  for (let index = 0; index < sentences.length; index += chunkSize) {
+    chunks.push(sentences.slice(index, index + chunkSize).join(" "));
+  }
+
+  return chunks.length ? chunks : sections;
+};
+
+const addChapterImage = async ({ doc, image }) => {
+  if (!image?.url) {
+    console.warn("PDF IMAGE HAS NO URL:", image);
+    return;
+  }
+
+  console.log("ADDING PDF IMAGE:", {
+    imageNumber: image.imageNumber,
+    title: image.title,
+    url: image.url,
+  });
+
+  try {
+    const imageSource = await getImageSource(image.url);
+
+    doc.moveDown();
+    doc.image(imageSource, {
+      fit: [450, 300],
+      align: "center",
+    });
+
+    if (image.altText) {
+      doc.moveDown(0.5);
+      doc.fontSize(9).font("Helvetica-Oblique").text(image.altText, {
+        align: "center",
+      });
+    }
+
+    doc.moveDown();
+  } catch (error) {
+    console.error("PDF IMAGE COULD NOT BE ADDED:", {
+      imageNumber: image.imageNumber,
+      title: image.title,
+      url: image.url,
+      error: error?.message,
+    });
+
+    throw new Error(
+      `Failed to add image "${image.title || image.imageNumber}": ${
+        error?.message || "Unknown error"
+      }`,
+    );
+  }
+};
+
 /*
 |--------------------------------------------------------------------------
 | Create PDF
@@ -272,6 +342,37 @@ const createPdf = async ({ ebook }) => {
   const stream = createWriteStream(filepath);
 
   doc.pipe(stream);
+
+  let pageNumber = 0;
+
+  doc.on("pageAdded", () => {
+    pageNumber += 1;
+
+    const previousX = doc.x;
+    const previousY = doc.y;
+    const footerWidth =
+      doc.page.width - doc.page.margins.left - doc.page.margins.right;
+
+    doc
+      .save()
+      .font("Helvetica")
+      .fontSize(9)
+      .fillColor("#666666")
+      .text(
+        String(pageNumber),
+        doc.page.margins.left,
+        doc.page.height - doc.page.margins.bottom - 14,
+        {
+          width: footerWidth,
+          align: "right",
+          lineBreak: false,
+        },
+      )
+      .restore();
+
+    doc.x = previousX;
+    doc.y = previousY;
+  });
 
   /*
   |--------------------------------------------------------------------------
@@ -409,88 +510,39 @@ const createPdf = async ({ ebook }) => {
      * Chapter content
      */
 
-    if (chapter.content) {
-      doc.fontSize(11).font("Helvetica").text(chapter.content, {
-        align: "left",
-        lineGap: 4,
-      });
-    }
+    const contentSections = splitContentIntoSections(chapter.content);
+    const imageInsertions = new Map();
 
-    /*
-     |--------------------------------------------------------------------------
-     | Chapter images
-     |--------------------------------------------------------------------------
-     */
+    images.forEach((image, imageIndex) => {
+      const sectionIndex = Math.min(
+        contentSections.length,
+        Math.floor(
+          ((imageIndex + 1) * contentSections.length) / (images.length + 1),
+        ),
+      );
 
-    for (const image of images) {
-      if (!image?.url) {
-        console.warn("PDF IMAGE HAS NO URL:", image);
+      const sectionImages = imageInsertions.get(sectionIndex) || [];
+      sectionImages.push(image);
+      imageInsertions.set(sectionIndex, sectionImages);
+    });
 
-        continue;
+    for (
+      let sectionIndex = 0;
+      sectionIndex <= contentSections.length;
+      sectionIndex += 1
+    ) {
+      for (const image of imageInsertions.get(sectionIndex) || []) {
+        await addChapterImage({ doc, image });
       }
 
-      console.log("");
-      console.log("ADDING PDF IMAGE:");
-      console.log({
-        imageNumber: image.imageNumber,
-        title: image.title,
-        url: image.url,
-      });
+      const section = contentSections[sectionIndex];
 
-      try {
-        /*
-         * Resolve actual filesystem image.
-         */
-        const imageSource = await getImageSource(image.url);
-
-        console.log("PDF IMAGE SOURCE:", imageSource);
-
-        /*
-         * Add spacing.
-         */
-        doc.moveDown();
-
-        /*
-         * Add image.
-         */
-        doc.image(imageSource, {
-          fit: [450, 300],
-          align: "center",
+      if (section) {
+        doc.fontSize(11).font("Helvetica").text(section, {
+          align: "left",
+          lineGap: 4,
         });
-
-        console.log("PDF IMAGE ADDED:", image.url);
-
-        /*
-         * Alt text / caption
-         */
-        if (image.altText) {
-          doc.moveDown(0.5);
-
-          doc.fontSize(9).font("Helvetica-Oblique").text(image.altText, {
-            align: "center",
-          });
-        }
-
         doc.moveDown();
-      } catch (error) {
-        console.error("PDF IMAGE COULD NOT BE ADDED:", {
-          imageNumber: image.imageNumber,
-          title: image.title,
-          url: image.url,
-          error: error?.message,
-          stack: error?.stack,
-        });
-
-        /*
-         * IMPORTANT:
-         *
-         * Don't generate a broken PDF silently.
-         */
-        throw new Error(
-          `Failed to add image "${image.title || image.imageNumber}": ${
-            error?.message || "Unknown error"
-          }`,
-        );
       }
     }
   }
