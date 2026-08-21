@@ -35,12 +35,18 @@ const AssemblyEditor = ({ ebook, onGenerate, onApprove, loading }) => {
   const chapters = assembly.chapters || [];
 
   const isAssembling = assembly.status === "assembling";
-
   const isReadyForReview = assembly.status === "ready_for_review";
-
   const isApproved = assembly.status === "approved";
-
   const hasError = assembly.status === "error";
+
+  /*
+   * An assembly can be rebuilt after it has already been generated
+   * or approved.
+   *
+   * This is useful when the assembly structure changes, such as
+   * attaching images to chapters.
+   */
+  const canReassemble = isReadyForReview || isApproved || hasError;
 
   const chapter = chapters[selectedChapter];
 
@@ -73,6 +79,16 @@ const AssemblyEditor = ({ ebook, onGenerate, onApprove, loading }) => {
    */
   const staleAssembly = isAssembling && !loading;
 
+  /*
+   * Count all images in the assembled ebook.
+   */
+  const imageCount =
+    assembly.imageCount ??
+    chapters.reduce(
+      (total, chapterItem) => total + (chapterItem.images?.length || 0),
+      0,
+    );
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -86,28 +102,43 @@ const AssemblyEditor = ({ ebook, onGenerate, onApprove, loading }) => {
         </div>
 
         <div className="flex flex-wrap gap-3">
+          {/* Stale assembly */}
           {staleAssembly && (
             <button
               type="button"
               onClick={onGenerate}
               disabled={loading}
-              className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-medium text-white disabled:opacity-50"
+              className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? "Retrying..." : "Retry assembly"}
             </button>
           )}
 
+          {/* Re-assemble */}
+          {canReassemble && (
+            <button
+              type="button"
+              onClick={onGenerate}
+              disabled={loading}
+              className="rounded-xl border border-zinc-300 bg-white px-5 py-3 text-sm font-medium text-zinc-900 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? "Re-assembling..." : "Re-assemble ebook"}
+            </button>
+          )}
+
+          {/* Approve */}
           {isReadyForReview && (
             <button
               type="button"
               onClick={onApprove}
               disabled={loading}
-              className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-medium text-white disabled:opacity-50"
+              className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? "Approving..." : "Approve ebook"}
             </button>
           )}
 
+          {/* Approved */}
           {isApproved && (
             <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-medium text-zinc-700">
               Ebook approved
@@ -222,26 +253,37 @@ const AssemblyEditor = ({ ebook, onGenerate, onApprove, loading }) => {
           <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
             {/* Sidebar */}
             <div className="border-r border-zinc-200 bg-zinc-50 p-3">
-              {chapters.map((item, index) => (
-                <button
-                  key={item.chapterNumber}
-                  type="button"
-                  onClick={() => setSelectedChapter(index)}
-                  className={`w-full rounded-xl px-3 py-3 text-left ${
-                    selectedChapter === index
-                      ? "bg-white shadow-sm"
-                      : "hover:bg-white/70"
-                  }`}
-                >
-                  <div className="text-xs text-zinc-400">
-                    Chapter {item.chapterNumber}
-                  </div>
+              {chapters.map((item, index) => {
+                const chapterImageCount = item.images?.length || 0;
 
-                  <div className="mt-1 text-sm font-medium text-zinc-900">
-                    {item.title}
-                  </div>
-                </button>
-              ))}
+                return (
+                  <button
+                    key={item.chapterNumber}
+                    type="button"
+                    onClick={() => setSelectedChapter(index)}
+                    className={`w-full rounded-xl px-3 py-3 text-left ${
+                      selectedChapter === index
+                        ? "bg-white shadow-sm"
+                        : "hover:bg-white/70"
+                    }`}
+                  >
+                    <div className="text-xs text-zinc-400">
+                      Chapter {item.chapterNumber}
+                    </div>
+
+                    <div className="mt-1 text-sm font-medium text-zinc-900">
+                      {item.title}
+                    </div>
+
+                    {chapterImageCount > 0 && (
+                      <div className="mt-2 text-xs text-zinc-400">
+                        {chapterImageCount}{" "}
+                        {chapterImageCount === 1 ? "image" : "images"}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Chapter content */}
@@ -287,6 +329,13 @@ const AssemblyEditor = ({ ebook, onGenerate, onApprove, loading }) => {
                     ))}
                   </div>
                 )}
+
+                {/* No images */}
+                {(!chapter.images || chapter.images.length === 0) && (
+                  <div className="mt-10 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-400">
+                    No images assigned to this chapter.
+                  </div>
+                )}
               </div>
             </article>
           </div>
@@ -294,12 +343,12 @@ const AssemblyEditor = ({ ebook, onGenerate, onApprove, loading }) => {
       </div>
 
       {/* Statistics */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-4">
         <div className="rounded-2xl border border-zinc-200 bg-white p-5">
           <div className="text-xs text-zinc-400">Chapters</div>
 
           <div className="mt-2 text-2xl font-semibold text-zinc-900">
-            {assembly.chapterCount}
+            {assembly.chapterCount ?? chapters.length}
           </div>
         </div>
 
@@ -307,7 +356,15 @@ const AssemblyEditor = ({ ebook, onGenerate, onApprove, loading }) => {
           <div className="text-xs text-zinc-400">Words</div>
 
           <div className="mt-2 text-2xl font-semibold text-zinc-900">
-            {assembly.wordCount?.toLocaleString()}
+            {Number(assembly.wordCount || 0).toLocaleString()}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+          <div className="text-xs text-zinc-400">Images</div>
+
+          <div className="mt-2 text-2xl font-semibold text-zinc-900">
+            {imageCount}
           </div>
         </div>
 
@@ -315,11 +372,12 @@ const AssemblyEditor = ({ ebook, onGenerate, onApprove, loading }) => {
           <div className="text-xs text-zinc-400">Status</div>
 
           <div className="mt-2 text-2xl font-semibold capitalize text-zinc-900">
-            {assembly.status.replaceAll("_", " ")}
+            {String(assembly.status || "").replaceAll("_", " ")}
           </div>
         </div>
       </div>
 
+      {/* Approved */}
       {isApproved && (
         <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-6">
           <p className="text-sm font-semibold text-zinc-900">

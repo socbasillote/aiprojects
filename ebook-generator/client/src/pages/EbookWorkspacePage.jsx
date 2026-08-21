@@ -25,6 +25,8 @@ import {
   approveCover,
   generateAssembly,
   approveAssembly,
+  exportPdf,
+  exportEpub,
 } from "../features/ebooks/ebookSlice.js";
 
 import ChaptersEditor from "./ChaptersEditor.jsx";
@@ -33,6 +35,7 @@ import ImagesEditor from "./ImagesEditor.jsx";
 import { toast } from "sonner";
 import CoverEditor from "./CoverEditor.jsx";
 import AssemblyEditor from "../components/ebook/AssemblyEditor.jsx";
+import ExportEditor from "../components/ebook/ExportEditor";
 
 const EbookWorkspacePage = () => {
   const { id } = useParams();
@@ -314,6 +317,7 @@ const EbookWorkspacePage = () => {
               ["images", "Images"],
               ["cover", "Cover"],
               ["assembly", "Assembly"],
+              ["export", "Export"],
             ].map(([value, label]) => (
               <button
                 key={value}
@@ -407,6 +411,18 @@ const EbookWorkspacePage = () => {
                     // We'll route this to Export next.
                     setActiveTab("export");
                   }
+                }}
+              />
+            )}
+            {activeTab === "export" && (
+              <ExportEditor
+                ebook={ebook}
+                loading={loading}
+                onExportPdf={() => {
+                  dispatch(exportPdf(ebook._id));
+                }}
+                onExportEpub={() => {
+                  dispatch(exportEpub(ebook._id));
                 }}
               />
             )}

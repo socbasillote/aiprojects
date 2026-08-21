@@ -26,6 +26,9 @@ import {
   approveCover,
   generateAssembly,
   approveAssembly,
+  exportPdf,
+  exportEpub,
+  getExportStatus,
 } from "../controllers/ebook.controller.js";
 
 import authMiddleware from "../middleware/auth.middleware.js";
@@ -138,5 +141,17 @@ router.post("/:id/cover/approve", approveCover);
 router.post("/:id/assembly", generateAssembly);
 
 router.post("/:id/assembly/approve", approveAssembly);
+
+/*
+|--------------------------------------------------------------------------
+| Export
+|--------------------------------------------------------------------------
+*/
+
+router.post("/:id/export/pdf", exportPdf);
+
+router.post("/:id/export/epub", exportEpub);
+
+router.get("/:id/export", getExportStatus);
 
 export default router;

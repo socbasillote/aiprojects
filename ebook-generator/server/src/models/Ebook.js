@@ -626,6 +626,7 @@ const ebookSchema = new mongoose.Schema(
         "outline_ready",
         "generating",
         "ready_for_review",
+        "ready_for_export",
         "completed",
         "exporting",
         "error",
@@ -669,6 +670,70 @@ const ebookSchema = new mongoose.Schema(
     chapterCount: {
       type: Number,
       default: 0,
+    },
+
+    /*
+    |--------------------------------------------------------------------------
+    | Export
+    |--------------------------------------------------------------------------
+    */
+    export: {
+      status: {
+        type: String,
+        enum: ["pending", "exporting", "ready", "error"],
+        default: "pending",
+      },
+
+      pdf: {
+        status: {
+          type: String,
+          enum: ["pending", "generating", "ready", "error"],
+          default: "pending",
+        },
+
+        url: {
+          type: String,
+          default: "",
+        },
+
+        errorMessage: {
+          type: String,
+          default: "",
+        },
+
+        generatedAt: {
+          type: Date,
+          default: null,
+        },
+      },
+
+      epub: {
+        status: {
+          type: String,
+          enum: ["pending", "generating", "ready", "error"],
+          default: "pending",
+        },
+
+        url: {
+          type: String,
+          default: "",
+        },
+
+        errorMessage: {
+          type: String,
+          default: "",
+        },
+
+        generatedAt: {
+          type: Date,
+          default: null,
+        },
+      },
+
+      errorMessage: {
+        type: String,
+        default: "",
+      },
     },
   },
   {

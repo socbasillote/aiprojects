@@ -8,6 +8,7 @@ import chapterService from "../services/ebook/chapter.service.js";
 import imageService from "../services/ebook/image.service.js";
 import coverService from "../services/ebook/cover.service.js";
 import assemblyService from "../services/ebook/assembly.service.js";
+import exportService from "../services/ebook/export.service.js";
 
 const createEbook = async (req, res) => {
   const ebook = await ebookService.createEbook({
@@ -395,6 +396,50 @@ const approveAssembly = async (req, res) => {
   });
 };
 
+const exportPdf = async (req, res) => {
+  const ebook = await exportService.exportPdf({
+    ebookId: req.params.id,
+    userId: req.user._id,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "PDF export started.",
+    data: {
+      ebook,
+    },
+  });
+};
+
+const exportEpub = async (req, res) => {
+  const ebook = await exportService.exportEpub({
+    ebookId: req.params.id,
+    userId: req.user._id,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "EPUB export started.",
+    data: {
+      ebook,
+    },
+  });
+};
+
+const getExportStatus = async (req, res) => {
+  const ebook = await ebookService.getEbookById({
+    ebookId: req.params.id,
+    userId: req.user._id,
+  });
+
+  res.status(200).json({
+    success: true,
+    data: {
+      ebook,
+    },
+  });
+};
+
 export {
   createEbook,
   getEbooks,
@@ -421,4 +466,7 @@ export {
   approveCover,
   generateAssembly,
   approveAssembly,
+  exportPdf,
+  exportEpub,
+  getExportStatus,
 };

@@ -173,6 +173,35 @@ const approveAssembly = async (ebookId) => {
   return response.data.data.ebook;
 };
 
+const exportPdf = async (ebookId) => {
+  console.log("EXPORT PDF API REQUEST:", ebookId);
+
+  try {
+    const response = await api.post(`/ebooks/${ebookId}/export/pdf`);
+
+    console.log("EXPORT PDF API RESPONSE:", response.data);
+
+    return response.data.data.ebook;
+  } catch (error) {
+    console.error("EXPORT PDF API ERROR:", error);
+    console.error("EXPORT PDF API ERROR DATA:", error?.response?.data);
+
+    throw error;
+  }
+};
+
+const exportEpub = async (ebookId) => {
+  const response = await api.post(`/ebooks/${ebookId}/export/epub`);
+
+  return response.data.data.ebook;
+};
+
+const getExportStatus = async (ebookId) => {
+  const response = await api.get(`/ebooks/${ebookId}/export`);
+
+  return response.data.data.ebook;
+};
+
 export default {
   createEbook,
   getEbooks,
@@ -207,4 +236,8 @@ export default {
 
   generateAssembly,
   approveAssembly,
+
+  exportPdf,
+  exportEpub,
+  getExportStatus,
 };

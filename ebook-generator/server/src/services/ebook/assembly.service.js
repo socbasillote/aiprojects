@@ -44,7 +44,9 @@ const generateAssembly = async ({ ebookId, userId }) => {
 
   if (!ebook.chapters?.length) {
     const error = new Error("Ebook chapters are required.");
+
     error.statusCode = 400;
+
     throw error;
   }
 
@@ -66,6 +68,16 @@ const generateAssembly = async ({ ebookId, userId }) => {
     errorMessage: "",
   };
 
+  /*
+   * The previous PDF belongs to the old assembly.
+   * It must not remain downloadable after rebuilding.
+   */
+  ebook.export.status = "pending";
+  ebook.export.pdf.status = "pending";
+  ebook.export.pdf.url = "";
+  ebook.export.pdf.errorMessage = "";
+  ebook.export.pdf.generatedAt = null;
+
   ebook.status = "generating";
 
   ebook.generationProgress = {
@@ -80,50 +92,90 @@ const generateAssembly = async ({ ebookId, userId }) => {
 
   try {
     /*
-     * Sort chapters to guarantee correct order.
+     * Sort chapters into their final order.
      */
     const chapters = [...ebook.chapters].sort(
       (a, b) => a.chapterNumber - b.chapterNumber,
     );
 
+    /*
+     * Build table of contents.
+     */
     const tableOfContents = chapters.map((chapter) => ({
       chapterNumber: chapter.chapterNumber,
       title: chapter.title,
     }));
 
     /*
-     * Build the final chapter representation.
+     * Build final chapter representation.
+     *
+     * IMPORTANT:
+     * Images are taken from ebook.images and attached
+     * to the matching chapter.
      */
     const assembledChapters = chapters.map((chapter) => {
-      const chapterImages = ebook.images
-        .filter(
-          (image) =>
-            image.chapterNumber === chapter.chapterNumber &&
-            image.status === "approved",
-        )
+      const chapterNumber = Number(chapter.chapterNumber);
+
+      const chapterImages = (ebook.images || [])
+        .filter((image) => {
+          const imageChapterNumber =
+            image.chapterNumber === null || image.chapterNumber === undefined
+              ? null
+              : Number(image.chapterNumber);
+
+          const validStatus =
+            image.status === "generated" || image.status === "approved";
+
+          return (
+            imageChapterNumber === chapterNumber &&
+            validStatus &&
+            Boolean(image.url)
+          );
+        })
+        .sort((a, b) => Number(a.imageNumber || 0) - Number(b.imageNumber || 0))
         .map((image) => ({
-          imageNumber: image.imageNumber,
-          title: image.title,
-          url: image.url,
-          altText: image.altText,
-          type: image.type,
+          imageNumber: Number(image.imageNumber),
+          title: image.title || "",
+          url: image.url || "",
+          altText: image.altText || "",
+          type: image.type || "editorial",
         }));
 
+      console.log(`ASSEMBLY CHAPTER ${chapterNumber}:`, {
+        title: chapter.title,
+        imageCount: chapterImages.length,
+        images: chapterImages,
+      });
+
       return {
-        chapterNumber: chapter.chapterNumber,
+        chapterNumber,
         title: chapter.title,
         summary: chapter.summary || "",
         content: chapter.content || "",
-        wordCount: chapter.wordCount || 0,
+        wordCount: Number(chapter.wordCount || 0),
         images: chapterImages,
       };
     });
 
+    /*
+     * Calculate total word count.
+     */
     const wordCount = assembledChapters.reduce(
-      (total, chapter) => total + (chapter.wordCount || 0),
+      (total, chapter) => total + Number(chapter.wordCount || 0),
       0,
     );
 
+    /*
+     * Calculate total image count for debugging/verification.
+     */
+    const imageCount = assembledChapters.reduce(
+      (total, chapter) => total + (chapter.images?.length || 0),
+      0,
+    );
+
+    /*
+     * Save final assembly.
+     */
     ebook.assembly = {
       status: "ready_for_review",
       title: ebook.title,
@@ -134,6 +186,7 @@ const generateAssembly = async ({ ebookId, userId }) => {
       chapters: assembledChapters,
       wordCount,
       chapterCount: assembledChapters.length,
+      imageCount,
       assembledAt: new Date(),
       approvedAt: null,
       errorMessage: "",
@@ -151,8 +204,34 @@ const generateAssembly = async ({ ebookId, userId }) => {
 
     await ebook.save();
 
-    return ebook;
+    /*
+     * Read the document back from MongoDB.
+     *
+     * This verifies that the assembly, including
+     * chapter images, was actually persisted.
+     */
+    const savedEbook = await Ebook.findOne({
+      _id: ebook._id,
+      userId,
+    });
+
+    console.log("ASSEMBLY SAVED:", {
+      status: savedEbook.status,
+      assemblyStatus: savedEbook.assembly?.status,
+      chapterCount: savedEbook.assembly?.chapters?.length || 0,
+      imageCount: savedEbook.assembly?.imageCount || 0,
+      chapters: savedEbook.assembly?.chapters?.map((chapter) => ({
+        chapterNumber: chapter.chapterNumber,
+        title: chapter.title,
+        imageCount: chapter.images?.length || 0,
+        images: chapter.images,
+      })),
+    });
+
+    return savedEbook;
   } catch (error) {
+    console.error("ASSEMBLY GENERATION ERROR:", error);
+
     ebook.assembly.status = "error";
     ebook.assembly.errorMessage = error?.message || "Ebook assembly failed.";
 
@@ -180,7 +259,9 @@ const approveAssembly = async ({ ebookId, userId }) => {
 
   if (!ebook) {
     const error = new Error("Ebook not found.");
+
     error.statusCode = 404;
+
     throw error;
   }
 
@@ -188,6 +269,7 @@ const approveAssembly = async ({ ebookId, userId }) => {
     const error = new Error("Assemble the ebook before approving it.");
 
     error.statusCode = 400;
+
     throw error;
   }
 
@@ -195,18 +277,48 @@ const approveAssembly = async ({ ebookId, userId }) => {
     const error = new Error("The assembled ebook is not ready for approval.");
 
     error.statusCode = 400;
+
+    throw error;
+  }
+
+  /*
+   * Make sure the assembly actually contains
+   * the expected chapters.
+   */
+  if (!ebook.assembly.chapters?.length) {
+    const error = new Error("The ebook assembly contains no chapters.");
+
+    error.statusCode = 400;
+
+    throw error;
+  }
+
+  /*
+   * Make sure every chapter has content.
+   */
+  const emptyChapter = ebook.assembly.chapters.find(
+    (chapter) => !chapter.content?.trim(),
+  );
+
+  if (emptyChapter) {
+    const error = new Error(
+      `Chapter ${emptyChapter.chapterNumber} has no content.`,
+    );
+
+    error.statusCode = 400;
+
     throw error;
   }
 
   ebook.assembly.status = "approved";
   ebook.assembly.approvedAt = new Date();
 
-  ebook.status = "completed";
+  ebook.status = "ready_for_export";
 
   ebook.generationProgress = {
     stage: "assembly",
     status: "approved",
-    message: "Ebook assembly approved. Ebook is complete.",
+    message: "Ebook assembly approved. Ready for export.",
     percentage: 100,
     updatedAt: new Date(),
   };

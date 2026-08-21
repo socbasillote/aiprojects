@@ -317,6 +317,51 @@ export const approveAssembly = createAsyncThunk(
   },
 );
 
+export const exportPdf = createAsyncThunk(
+  "ebooks/exportPdf",
+  async (ebookId, thunkAPI) => {
+    try {
+      const ebook = await ebookApi.exportPdf(ebookId);
+
+      return ebook;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Unable to export PDF.",
+      );
+    }
+  },
+);
+
+export const exportEpub = createAsyncThunk(
+  "ebooks/exportEpub",
+  async (ebookId, thunkAPI) => {
+    try {
+      const ebook = await ebookApi.exportEpub(ebookId);
+
+      return ebook;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Unable to export EPUB.",
+      );
+    }
+  },
+);
+
+export const getExportStatus = createAsyncThunk(
+  "ebooks/getExportStatus",
+  async (ebookId, thunkAPI) => {
+    try {
+      const ebook = await ebookApi.getExportStatus(ebookId);
+
+      return ebook;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Unable to get export status.",
+      );
+    }
+  },
+);
+
 const ebookSlice = createSlice({
   name: "ebooks",
 
@@ -606,25 +651,98 @@ const ebookSlice = createSlice({
       .addCase(generateAssembly.fulfilled, (state, action) => {
         state.currentEbook = action.payload;
 
-        const index = state.ebooks.findIndex(
+        const index = state.items.findIndex(
           (ebook) => ebook._id === action.payload._id,
         );
 
         if (index !== -1) {
-          state.ebooks[index] = action.payload;
+          state.items[index] = action.payload;
         }
       })
 
       .addCase(approveAssembly.fulfilled, (state, action) => {
         state.currentEbook = action.payload;
 
-        const index = state.ebooks.findIndex(
+        const index = state.items.findIndex(
           (ebook) => ebook._id === action.payload._id,
         );
 
         if (index !== -1) {
-          state.ebooks[index] = action.payload;
+          state.items[index] = action.payload;
         }
+      })
+
+      // export pdf
+      .addCase(exportPdf.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(exportPdf.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentEbook = action.payload;
+        state.error = null;
+
+        if (Array.isArray(state.ebooks)) {
+          const index = state.ebooks.findIndex(
+            (ebook) => ebook._id === action.payload._id,
+          );
+
+          if (index !== -1) {
+            state.ebooks[index] = action.payload;
+          }
+        }
+      })
+      .addCase(exportPdf.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      //epub
+
+      .addCase(exportEpub.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(exportEpub.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentEbook = action.payload;
+        state.error = null;
+
+        if (Array.isArray(state.ebooks)) {
+          const index = state.ebooks.findIndex(
+            (ebook) => ebook._id === action.payload._id,
+          );
+
+          if (index !== -1) {
+            state.ebooks[index] = action.payload;
+          }
+        }
+      })
+      .addCase(exportEpub.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // status
+      .addCase(getExportStatus.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(getExportStatus.fulfilled, (state, action) => {
+        state.currentEbook = action.payload;
+        state.error = null;
+
+        if (Array.isArray(state.ebooks)) {
+          const index = state.ebooks.findIndex(
+            (ebook) => ebook._id === action.payload._id,
+          );
+
+          if (index !== -1) {
+            state.ebooks[index] = action.payload;
+          }
+        }
+      })
+      .addCase(getExportStatus.rejected, (state, action) => {
+        state.error = action.payload;
       });
   },
 });
