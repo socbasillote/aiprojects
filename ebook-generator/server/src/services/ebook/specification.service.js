@@ -65,7 +65,11 @@ const generateSpecification = async ({ ebookId, userId }) => {
      * Never save the AI response directly.
      * Validate it first.
      */
-    const specification = specificationSchema.parse(generatedSpecification);
+    const specification = specificationSchema.parse({
+      ...generatedSpecification,
+      contentType:
+        generatedSpecification.contentType || ebook.settings?.contentType,
+    });
 
     /*
      * The generated specification is a

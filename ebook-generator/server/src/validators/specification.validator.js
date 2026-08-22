@@ -9,6 +9,16 @@ const specificationSchema = z.object({
 
   objective: z.string().min(1).max(2000),
 
+  contentType: z
+    .enum([
+      "Fiction",
+      "Children's Books",
+      "Non-Fiction",
+      "Specialized / Lifestyle",
+      "Professional & Practical",
+    ])
+    .default("Non-Fiction"),
+
   tone: z.string().min(1).max(200),
 
   writingStyle: z.string().min(1).max(500),

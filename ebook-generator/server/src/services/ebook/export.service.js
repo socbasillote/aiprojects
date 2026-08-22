@@ -3,6 +3,25 @@ import Ebook from "../../models/Ebook.js";
 import pdfExportService from "../export/pdfExport.service.js";
 import epubExportService from "../export/epubExport.service.js";
 
+const updateExportCompletionStatus = (ebook, message) => {
+  const pdfReady =
+    ebook.export.pdf.status === "ready" && Boolean(ebook.export.pdf.url);
+  const epubReady =
+    ebook.export.epub.status === "ready" && Boolean(ebook.export.epub.url);
+  const completed = pdfReady && epubReady;
+
+  ebook.export.status = "ready";
+  ebook.status = completed ? "completed" : "ready_for_export";
+
+  ebook.generationProgress = {
+    stage: "export",
+    status: completed ? "completed" : "ready_for_export",
+    message: completed ? "PDF and EPUB generated successfully." : message,
+    percentage: 100,
+    updatedAt: new Date(),
+  };
+};
+
 const exportPdf = async ({ ebookId, userId }) => {
   /*
    * Always fetch a fresh document from MongoDB.
@@ -140,22 +159,7 @@ const exportPdf = async ({ ebookId, userId }) => {
     ebook.export.pdf.generatedAt = new Date();
     ebook.export.pdf.errorMessage = "";
 
-    /*
-     * PDF is ready.
-     *
-     * EPUB may still need to be generated.
-     */
-    ebook.export.status = "ready";
-
-    ebook.status = "ready_for_export";
-
-    ebook.generationProgress = {
-      stage: "export",
-      status: "ready_for_export",
-      message: "PDF generated successfully.",
-      percentage: 100,
-      updatedAt: new Date(),
-    };
+    updateExportCompletionStatus(ebook, "PDF generated successfully.");
 
     await ebook.save();
 
@@ -249,16 +253,7 @@ const exportEpub = async ({ ebookId, userId }) => {
     ebook.export.epub.generatedAt = new Date();
     ebook.export.epub.errorMessage = "";
 
-    ebook.export.status = "ready";
-    ebook.status = "ready_for_export";
-
-    ebook.generationProgress = {
-      stage: "export",
-      status: "ready_for_export",
-      message: "EPUB generated successfully.",
-      percentage: 100,
-      updatedAt: new Date(),
-    };
+    updateExportCompletionStatus(ebook, "EPUB generated successfully.");
 
     await ebook.save();
 

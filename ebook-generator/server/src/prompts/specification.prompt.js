@@ -19,6 +19,7 @@ The JSON object MUST contain exactly these fields:
   "subtitle": "string",
   "targetAudience": "string",
   "objective": "string",
+  "contentType": "string",
   "tone": "string",
   "writingStyle": "string",
   "difficultyLevel": "string",
@@ -40,6 +41,7 @@ STRICT TYPE REQUIREMENTS:
 - subtitle MUST be a string.
 - targetAudience MUST be a string.
 - objective MUST be a string.
+- contentType MUST be one of: "Fiction", "Children's Books", "Non-Fiction", "Specialized / Lifestyle", "Professional & Practical".
 - tone MUST be a string.
 - writingStyle MUST be a string.
 - difficultyLevel MUST be a string.

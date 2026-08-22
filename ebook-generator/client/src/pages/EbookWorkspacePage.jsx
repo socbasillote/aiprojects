@@ -543,6 +543,12 @@ const SpecificationEditor = ({
           textarea
         />
 
+        <SelectField
+          label="Book category"
+          value={specification.contentType}
+          onChange={(value) => update("contentType", value)}
+        />
+
         <div className="grid gap-5 sm:grid-cols-2">
           <EditorField
             label="Tone"
@@ -774,6 +780,29 @@ const EditorField = ({
         className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none focus:border-zinc-900"
       />
     )}
+  </div>
+);
+
+const SelectField = ({ label, value, onChange }) => (
+  <div>
+    <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-zinc-500">
+      {label}
+    </label>
+
+    <select
+      value={value || ""}
+      onChange={(event) => onChange(event.target.value)}
+      className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-zinc-900"
+    >
+      <option value="" disabled>
+        Select a book category
+      </option>
+      <option>Fiction</option>
+      <option>Children's Books</option>
+      <option>Non-Fiction</option>
+      <option>Specialized / Lifestyle</option>
+      <option>Professional &amp; Practical</option>
+    </select>
   </div>
 );
 

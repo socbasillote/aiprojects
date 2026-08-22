@@ -56,7 +56,7 @@ const CreateEbookPage = () => {
       ebookLength: "15,000–25,000 words",
       chapterCount: 10,
       writingStyle: "Clear and practical",
-      contentType: "Non-fiction",
+      contentType: "Non-Fiction",
     },
   });
 
@@ -230,16 +230,15 @@ const CreateEbookPage = () => {
               />
 
               <Field
-                label="Content type"
+                label="Book category"
                 error={errors.contentType?.message}
                 input={
                   <select {...register("contentType")} className={inputClass}>
-                    <option>Non-fiction</option>
-                    <option>Guide</option>
-                    <option>Tutorial</option>
-                    <option>Educational</option>
-                    <option>Business</option>
-                    <option>Self-help</option>
+                    <option>Fiction</option>
+                    <option>Children's Books</option>
+                    <option>Non-Fiction</option>
+                    <option>Specialized / Lifestyle</option>
+                    <option>Professional &amp; Practical</option>
                   </select>
                 }
               />
