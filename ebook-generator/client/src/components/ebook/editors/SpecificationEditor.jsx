@@ -1,9 +1,9 @@
 import { Check, Save } from "lucide-react";
 
-import EditorField from "../EditorField.jsx";
-import SelectField from "../SelectField.jsx";
-import ArrayEditor from "../ArrayEditor.jsx";
-import EmptyState from "../EmptyState.jsx";
+import EditorField from "./EditorField.jsx";
+import SelectField from "./SelectField.jsx";
+import ArrayEditor from "./ArrayEditor.jsx";
+import EmptyState from "./EmptyState.jsx";
 
 const SpecificationEditor = ({
   specification,

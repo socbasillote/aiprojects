@@ -337,32 +337,7 @@ const EbookWorkspacePages = () => {
       </header>
 
       <div className="flex min-h-[calc(100vh-4rem)]">
-        <aside className="hidden w-60 shrink-0 border-r border-zinc-200 bg-white p-4 md:block">
-          <nav className="space-y-1">
-            {[
-              ["overview", "Overview"],
-              ["specification", "Specification"],
-              ["outline", "Outline"],
-              ["chapters", "Chapters"],
-              ["images", "Images"],
-              ["cover", "Cover"],
-              ["assembly", "Assembly"],
-              ["export", "Export"],
-            ].map(([value, label]) => (
-              <button
-                key={value}
-                onClick={() => setActiveTab(value)}
-                className={`w-full rounded-lg px-3 py-2.5 text-left text-sm ${
-                  activeTab === value
-                    ? "bg-zinc-100 font-medium"
-                    : "text-zinc-500 hover:bg-zinc-50"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-        </aside>
+        <EbookWorkspaceSidebar activeTab={activeTab} onChange={setActiveTab} />
 
         <main className="min-w-0 flex-1 p-6">
           <div className="mx-auto max-w-5xl">

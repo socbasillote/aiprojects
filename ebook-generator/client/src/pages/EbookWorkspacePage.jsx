@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 import { useParams, Link } from "react-router-dom";
 
 import { useDispatch, useSelector } from "react-redux";
 
-import { ArrowLeft, Check, Loader2, RefreshCw, Save } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 
 import {
   fetchEbook,
@@ -18,7 +18,6 @@ import {
   approveChapters,
   generateImagePlan,
   approveImagePlan,
-  setCurrentEbook,
   generateImages,
   approveImages,
   generateCover,
@@ -27,15 +26,59 @@ import {
   approveAssembly,
   exportPdf,
   exportEpub,
+  setCurrentEbook,
 } from "../features/ebooks/ebookSlice.js";
 
-import ChaptersEditor from "./ChaptersEditor.jsx";
-import ImagesEditor from "./ImagesEditor.jsx";
-
 import { toast } from "sonner";
-import CoverEditor from "./CoverEditor.jsx";
-import AssemblyEditor from "../components/ebook/AssemblyEditor.jsx";
-import ExportEditor from "../components/ebook/ExportEditor";
+
+import EbookWorkspaceSidebar from "../components/EbookWorkspaceSidebar.jsx";
+
+import Overview from "../components/ebook/Overview.jsx";
+
+import SpecificationEditor from "../components/ebook/editors/SpecificationEditor.jsx";
+
+import OutlineEditor from "../components/ebook/editors/OutlineEditor.jsx";
+
+/*
+ * Lazy-loaded editors.
+ *
+ * These components are only downloaded when
+ * the corresponding workspace section is rendered.
+ */
+const ChaptersEditor = lazy(
+  () => import("../components/ebook/editors/ChaptersEditor.jsx"),
+);
+
+const ImagesEditor = lazy(
+  () => import("../components/ebook/editors/ImagesEditor.jsx"),
+);
+
+const CoverEditor = lazy(
+  () => import("../components/ebook/editors/CoverEditor.jsx"),
+);
+
+const AssemblyEditor = lazy(
+  () => import("../components/ebook/editors/AssemblyEditor.jsx"),
+);
+
+const ExportEditor = lazy(
+  () => import("../components/ebook/editors/ExportEditor.jsx"),
+);
+
+/*
+ * Loading UI displayed while a lazy editor
+ * is being downloaded.
+ */
+const EditorLoading = () => {
+  return (
+    <div className="flex min-h-[400px] items-center justify-center">
+      <div className="flex items-center gap-2 text-sm text-zinc-500">
+        <Loader2 size={18} className="animate-spin" />
+        Loading editor...
+      </div>
+    </div>
+  );
+};
 
 const EbookWorkspacePage = () => {
   const { id } = useParams();
@@ -55,10 +98,17 @@ const EbookWorkspacePage = () => {
 
   const [outline, setOutline] = useState(null);
 
+  /*
+   * Fetch ebook.
+   */
   useEffect(() => {
     dispatch(fetchEbook(id));
   }, [dispatch, id]);
 
+  /*
+   * Synchronize editable local state
+   * with the currently loaded ebook.
+   */
   useEffect(() => {
     if (ebook?.specification) {
       setSpecification(ebook.specification);
@@ -69,12 +119,18 @@ const EbookWorkspacePage = () => {
     }
   }, [ebook]);
 
+  /*
+   * Display Redux errors.
+   */
   useEffect(() => {
     if (error) {
       toast.error(error);
     }
   }, [error]);
 
+  /*
+   * Initial loading state.
+   */
   if (loading && !ebook) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -83,6 +139,9 @@ const EbookWorkspacePage = () => {
     );
   }
 
+  /*
+   * Ebook not found.
+   */
   if (!ebook) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -96,6 +155,12 @@ const EbookWorkspacePage = () => {
       </div>
     );
   }
+
+  /*
+   * --------------------------------------------------
+   * Specification
+   * --------------------------------------------------
+   */
 
   const handleGenerateSpecification = async () => {
     const result = await dispatch(generateSpecification(id));
@@ -126,15 +191,19 @@ const EbookWorkspacePage = () => {
     if (approveSpecification.fulfilled.match(result)) {
       const approvedEbook = result.payload;
 
-      console.log("APPROVED EBOOK:", approvedEbook);
-
-      console.log("APPROVED:", approvedEbook?.specificationApproved);
+      dispatch(setCurrentEbook(approvedEbook));
 
       toast.success("Specification approved.");
 
       setActiveTab("outline");
     }
   };
+
+  /*
+   * --------------------------------------------------
+   * Outline
+   * --------------------------------------------------
+   */
 
   const handleGenerateOutline = async () => {
     const result = await dispatch(generateOutline(id));
@@ -165,13 +234,19 @@ const EbookWorkspacePage = () => {
     if (approveOutline.fulfilled.match(result)) {
       const approvedEbook = result.payload;
 
-      toast.success("Outline approved.");
-
       dispatch(setCurrentEbook(approvedEbook));
+
+      toast.success("Outline approved.");
 
       setActiveTab("chapters");
     }
   };
+
+  /*
+   * --------------------------------------------------
+   * Chapters
+   * --------------------------------------------------
+   */
 
   const handleGenerateChapters = async () => {
     const result = await dispatch(generateChapters(id));
@@ -190,9 +265,16 @@ const EbookWorkspacePage = () => {
       dispatch(setCurrentEbook(approvedEbook));
 
       toast.success("Chapters approved.");
+
       setActiveTab("images");
     }
   };
+
+  /*
+   * --------------------------------------------------
+   * Images
+   * --------------------------------------------------
+   */
 
   const handleGenerateImagePlan = async () => {
     const result = await dispatch(generateImagePlan(id));
@@ -236,6 +318,12 @@ const EbookWorkspacePage = () => {
     }
   };
 
+  /*
+   * --------------------------------------------------
+   * Cover
+   * --------------------------------------------------
+   */
+
   const handleGenerateCover = async () => {
     console.log("GENERATE COVER CLICKED");
 
@@ -245,11 +333,6 @@ const EbookWorkspacePage = () => {
 
     if (generateCover.fulfilled.match(result)) {
       const generatedEbook = result.payload;
-
-      console.log("GENERATED COVER EBOOK:", generatedEbook);
-      console.log("GENERATED COVER:", generatedEbook?.cover);
-      console.log("GENERATED COVER STATUS:", generatedEbook?.cover?.status);
-      console.log("GENERATED COVER URL:", generatedEbook?.cover?.url);
 
       dispatch(setCurrentEbook(generatedEbook));
 
@@ -267,20 +350,68 @@ const EbookWorkspacePage = () => {
 
       toast.success("Ebook completed successfully.");
 
-      /*
-       * Stay on cover for now so the user
-       * can see the completed state.
-       */
       setActiveTab("assembly");
     }
   };
 
-  console.log("COVER FROM BACKEND:", ebook?.cover);
-  console.log("COVER STATUS:", ebook?.cover?.status);
-  console.log("EBOOK STATUS:", ebook?.status);
+  /*
+   * --------------------------------------------------
+   * Assembly
+   * --------------------------------------------------
+   */
+
+  const handleGenerateAssembly = async () => {
+    const result = await dispatch(generateAssembly(id));
+
+    if (generateAssembly.fulfilled.match(result)) {
+      dispatch(setCurrentEbook(result.payload));
+
+      toast.success("Ebook assembled successfully.");
+    }
+  };
+
+  const handleApproveAssembly = async () => {
+    const result = await dispatch(approveAssembly(id));
+
+    if (approveAssembly.fulfilled.match(result)) {
+      dispatch(setCurrentEbook(result.payload));
+
+      toast.success("Assembly approved.");
+
+      setActiveTab("export");
+    }
+  };
+
+  /*
+   * --------------------------------------------------
+   * Export
+   * --------------------------------------------------
+   */
+
+  const handleExportPdf = async () => {
+    const result = await dispatch(exportPdf(id));
+
+    if (exportPdf.fulfilled.match(result)) {
+      dispatch(setCurrentEbook(result.payload));
+
+      toast.success("PDF generated successfully.");
+    }
+  };
+
+  const handleExportEpub = async () => {
+    const result = await dispatch(exportEpub(id));
+
+    if (exportEpub.fulfilled.match(result)) {
+      dispatch(setCurrentEbook(result.payload));
+
+      toast.success("EPUB generated successfully.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-zinc-50">
+      {/* Header */}
+
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center gap-4">
@@ -307,546 +438,95 @@ const EbookWorkspacePage = () => {
       </header>
 
       <div className="flex min-h-[calc(100vh-4rem)]">
-        <aside className="hidden w-60 shrink-0 border-r border-zinc-200 bg-white p-4 md:block">
-          <nav className="space-y-1">
-            {[
-              ["overview", "Overview"],
-              ["specification", "Specification"],
-              ["outline", "Outline"],
-              ["chapters", "Chapters"],
-              ["images", "Images"],
-              ["cover", "Cover"],
-              ["assembly", "Assembly"],
-              ["export", "Export"],
-            ].map(([value, label]) => (
-              <button
-                key={value}
-                onClick={() => setActiveTab(value)}
-                className={`w-full rounded-lg px-3 py-2.5 text-left text-sm ${
-                  activeTab === value
-                    ? "bg-zinc-100 font-medium"
-                    : "text-zinc-500 hover:bg-zinc-50"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-        </aside>
+        <EbookWorkspaceSidebar activeTab={activeTab} onChange={setActiveTab} />
 
         <main className="min-w-0 flex-1 p-6">
           <div className="mx-auto max-w-5xl">
-            {activeTab === "overview" && (
-              <Overview
-                ebook={ebook}
-                onGenerateSpecification={handleGenerateSpecification}
-                operationLoading={operationLoading}
-              />
-            )}
+            <Suspense fallback={<EditorLoading />}>
+              {activeTab === "overview" && (
+                <Overview
+                  ebook={ebook}
+                  onGenerateSpecification={handleGenerateSpecification}
+                  operationLoading={operationLoading}
+                />
+              )}
 
-            {activeTab === "specification" && (
-              <SpecificationEditor
-                specification={specification}
-                setSpecification={setSpecification}
-                approved={ebook.specificationApproved}
-                onSave={handleSaveSpecification}
-                onApprove={handleApproveSpecification}
-                onGenerate={handleGenerateSpecification}
-                loading={operationLoading}
-              />
-            )}
+              {activeTab === "specification" && (
+                <SpecificationEditor
+                  specification={specification}
+                  setSpecification={setSpecification}
+                  approved={ebook.specificationApproved}
+                  onSave={handleSaveSpecification}
+                  onApprove={handleApproveSpecification}
+                  onGenerate={handleGenerateSpecification}
+                  loading={operationLoading}
+                />
+              )}
 
-            {activeTab === "outline" && (
-              <OutlineEditor
-                outline={outline}
-                setOutline={setOutline}
-                specificationApproved={ebook.specificationApproved}
-                onGenerate={handleGenerateOutline}
-                onSave={handleSaveOutline}
-                onApprove={handleApproveOutline}
-                loading={operationLoading}
-              />
-            )}
+              {activeTab === "outline" && (
+                <OutlineEditor
+                  outline={outline}
+                  setOutline={setOutline}
+                  specificationApproved={ebook.specificationApproved}
+                  onGenerate={handleGenerateOutline}
+                  onSave={handleSaveOutline}
+                  onApprove={handleApproveOutline}
+                  loading={operationLoading}
+                />
+              )}
 
-            {activeTab === "chapters" && (
-              <ChaptersEditor
-                ebook={ebook}
-                onGenerate={handleGenerateChapters}
-                onApprove={handleApproveChapters}
-                loading={operationLoading}
-              />
-            )}
+              {activeTab === "chapters" && (
+                <ChaptersEditor
+                  ebook={ebook}
+                  onGenerate={handleGenerateChapters}
+                  onApprove={handleApproveChapters}
+                  loading={operationLoading}
+                />
+              )}
 
-            {activeTab === "images" && (
-              <ImagesEditor
-                ebook={ebook}
-                onGenerate={handleGenerateImagePlan}
-                onApprove={handleApproveImagePlan}
-                onGenerateImages={handleGenerateImages}
-                onApproveImages={handleApproveImages}
-                loading={operationLoading}
-              />
-            )}
+              {activeTab === "images" && (
+                <ImagesEditor
+                  ebook={ebook}
+                  onGenerate={handleGenerateImagePlan}
+                  onApprove={handleApproveImagePlan}
+                  onGenerateImages={handleGenerateImages}
+                  onApproveImages={handleApproveImages}
+                  loading={operationLoading}
+                />
+              )}
 
-            {activeTab === "cover" && (
-              <CoverEditor
-                ebook={ebook}
-                onGenerate={handleGenerateCover}
-                onApprove={handleApproveCover}
-                loading={operationLoading}
-              />
-            )}
+              {activeTab === "cover" && (
+                <CoverEditor
+                  ebook={ebook}
+                  onGenerate={handleGenerateCover}
+                  onApprove={handleApproveCover}
+                  loading={operationLoading}
+                />
+              )}
 
-            {activeTab === "assembly" && (
-              <AssemblyEditor
-                ebook={ebook}
-                loading={loading}
-                onGenerate={() => {
-                  dispatch(generateAssembly(ebook._id));
-                }}
-                onApprove={async () => {
-                  const result = await dispatch(approveAssembly(ebook._id));
+              {activeTab === "assembly" && (
+                <AssemblyEditor
+                  ebook={ebook}
+                  loading={operationLoading}
+                  onGenerate={handleGenerateAssembly}
+                  onApprove={handleApproveAssembly}
+                />
+              )}
 
-                  if (approveAssembly.fulfilled.match(result)) {
-                    // We'll route this to Export next.
-                    setActiveTab("export");
-                  }
-                }}
-              />
-            )}
-            {activeTab === "export" && (
-              <ExportEditor
-                ebook={ebook}
-                loading={loading}
-                onExportPdf={() => {
-                  dispatch(exportPdf(ebook._id));
-                }}
-                onExportEpub={() => {
-                  dispatch(exportEpub(ebook._id));
-                }}
-              />
-            )}
+              {activeTab === "export" && (
+                <ExportEditor
+                  ebook={ebook}
+                  loading={operationLoading}
+                  onExportPdf={handleExportPdf}
+                  onExportEpub={handleExportEpub}
+                />
+              )}
+            </Suspense>
           </div>
         </main>
       </div>
     </div>
   );
 };
-
-const Overview = ({ ebook, onGenerateSpecification, operationLoading }) => (
-  <section>
-    <h2 className="text-2xl font-semibold">Ebook overview</h2>
-
-    <p className="mt-2 text-sm text-zinc-500">
-      Move through the planning stages before generating chapters.
-    </p>
-
-    <div className="mt-8 grid gap-5 sm:grid-cols-3">
-      <Stat label="Status" value={ebook.status?.replace(/_/g, " ")} />
-
-      <Stat label="Chapters" value={ebook.chapterCount || 0} />
-
-      <Stat label="Words" value={ebook.wordCount || 0} />
-    </div>
-
-    {!ebook.specification && (
-      <button
-        onClick={onGenerateSpecification}
-        disabled={operationLoading}
-        className="mt-8 inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-      >
-        {operationLoading && <Loader2 size={16} className="animate-spin" />}
-        Generate specification
-      </button>
-    )}
-  </section>
-);
-
-const Stat = ({ label, value }) => (
-  <div className="rounded-xl border border-zinc-200 bg-white p-5">
-    <p className="text-xs uppercase tracking-wide text-zinc-400">{label}</p>
-
-    <p className="mt-2 text-xl font-semibold capitalize">{value}</p>
-  </div>
-);
-
-const SpecificationEditor = ({
-  specification,
-  setSpecification,
-  approved,
-  onSave,
-  onApprove,
-  onGenerate,
-  loading,
-}) => {
-  if (!specification) {
-    return (
-      <EmptyState
-        title="No specification yet"
-        description="Generate a specification from your original ebook prompt."
-        action={onGenerate}
-        actionLabel="Generate specification"
-        loading={loading}
-      />
-    );
-  }
-
-  const update = (field, value) => {
-    setSpecification((current) => ({
-      ...current,
-      [field]: value,
-    }));
-  };
-
-  return (
-    <section>
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-        <div>
-          <h2 className="text-2xl font-semibold">Ebook specification</h2>
-
-          <p className="mt-2 text-sm text-zinc-500">
-            Review and refine the AI-generated plan.
-          </p>
-        </div>
-
-        {approved && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium">
-            <Check size={14} />
-            Approved
-          </span>
-        )}
-      </div>
-
-      <div className="mt-8 space-y-6">
-        <EditorField
-          label="Title"
-          value={specification.title}
-          onChange={(value) => update("title", value)}
-        />
-
-        <EditorField
-          label="Subtitle"
-          value={specification.subtitle}
-          onChange={(value) => update("subtitle", value)}
-        />
-
-        <EditorField
-          label="Target audience"
-          value={specification.targetAudience}
-          onChange={(value) => update("targetAudience", value)}
-        />
-
-        <EditorField
-          label="Objective"
-          value={specification.objective}
-          onChange={(value) => update("objective", value)}
-          textarea
-        />
-
-        <SelectField
-          label="Book category"
-          value={specification.contentType}
-          onChange={(value) => update("contentType", value)}
-        />
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <EditorField
-            label="Tone"
-            value={specification.tone}
-            onChange={(value) => update("tone", value)}
-          />
-
-          <EditorField
-            label="Writing style"
-            value={specification.writingStyle}
-            onChange={(value) => update("writingStyle", value)}
-          />
-
-          <EditorField
-            label="Difficulty"
-            value={specification.difficultyLevel}
-            onChange={(value) => update("difficultyLevel", value)}
-          />
-
-          <EditorField
-            label="Language"
-            value={specification.language}
-            onChange={(value) => update("language", value)}
-          />
-        </div>
-
-        <ArrayEditor
-          label="Themes"
-          values={specification.themes}
-          onChange={(values) => update("themes", values)}
-        />
-
-        <ArrayEditor
-          label="Required topics"
-          values={specification.requiredTopics}
-          onChange={(values) => update("requiredTopics", values)}
-        />
-
-        <ArrayEditor
-          label="Excluded topics"
-          values={specification.excludedTopics}
-          onChange={(values) => update("excludedTopics", values)}
-        />
-      </div>
-
-      <div className="mt-8 flex flex-wrap gap-3 border-t border-zinc-200 pt-6">
-        <button
-          onClick={onSave}
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium hover:bg-zinc-50 disabled:opacity-50"
-        >
-          <Save size={16} />
-          Save changes
-        </button>
-
-        {!approved && (
-          <button
-            onClick={onApprove}
-            disabled={loading}
-            className="inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-          >
-            <Check size={16} />
-            Approve specification
-          </button>
-        )}
-      </div>
-    </section>
-  );
-};
-
-const OutlineEditor = ({
-  outline,
-  setOutline,
-  specificationApproved,
-  onGenerate,
-  onSave,
-  onApprove,
-  loading,
-}) => {
-  if (!specificationApproved) {
-    return (
-      <EmptyState
-        title="Approve the specification first"
-        description="The outline can only be generated after the ebook specification has been reviewed and approved."
-      />
-    );
-  }
-
-  if (!outline) {
-    return (
-      <EmptyState
-        title="No outline yet"
-        description="Generate an outline from the approved specification."
-        action={onGenerate}
-        actionLabel="Generate outline"
-        loading={loading}
-      />
-    );
-  }
-
-  const updateChapter = (index, field, value) => {
-    setOutline((current) => ({
-      ...current,
-      chapters: current.chapters.map((chapter, chapterIndex) =>
-        chapterIndex === index
-          ? {
-              ...chapter,
-              [field]: value,
-            }
-          : chapter,
-      ),
-    }));
-  };
-
-  return (
-    <section>
-      <div className="flex justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold">Ebook outline</h2>
-
-          <p className="mt-2 text-sm text-zinc-500">
-            Review the structure before chapter generation.
-          </p>
-        </div>
-
-        <button
-          onClick={onGenerate}
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium hover:bg-zinc-50 disabled:opacity-50"
-        >
-          <RefreshCw size={15} />
-          Regenerate
-        </button>
-      </div>
-
-      <div className="mt-8 space-y-5">
-        {outline.chapters.map((chapter, index) => (
-          <div
-            key={`${chapter.chapterNumber}-${index}`}
-            className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm"
-          >
-            <div className="flex items-start gap-4">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-sm font-semibold">
-                {index + 1}
-              </div>
-
-              <div className="min-w-0 flex-1 space-y-4">
-                <EditorField
-                  label="Chapter title"
-                  value={chapter.title}
-                  onChange={(value) => updateChapter(index, "title", value)}
-                />
-
-                <EditorField
-                  label="Purpose"
-                  value={chapter.purpose}
-                  onChange={(value) => updateChapter(index, "purpose", value)}
-                  textarea
-                />
-
-                <EditorField
-                  label="Summary"
-                  value={chapter.summary}
-                  onChange={(value) => updateChapter(index, "summary", value)}
-                  textarea
-                />
-
-                <EditorField
-                  label="Estimated words"
-                  type="number"
-                  value={chapter.estimatedWordCount}
-                  onChange={(value) =>
-                    updateChapter(index, "estimatedWordCount", Number(value))
-                  }
-                />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-8 flex flex-wrap gap-3 border-t border-zinc-200 pt-6">
-        <button
-          onClick={onSave}
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium hover:bg-zinc-50 disabled:opacity-50"
-        >
-          <Save size={16} />
-          Save outline
-        </button>
-
-        <button
-          onClick={onApprove}
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-        >
-          <Check size={16} />
-          Approve outline
-        </button>
-      </div>
-    </section>
-  );
-};
-
-const EditorField = ({
-  label,
-  value,
-  onChange,
-  textarea = false,
-  type = "text",
-}) => (
-  <div>
-    <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-zinc-500">
-      {label}
-    </label>
-
-    {textarea ? (
-      <textarea
-        value={value || ""}
-        onChange={(event) => onChange(event.target.value)}
-        rows={4}
-        className="w-full resize-y rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none focus:border-zinc-900"
-      />
-    ) : (
-      <input
-        type={type}
-        value={value ?? ""}
-        onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none focus:border-zinc-900"
-      />
-    )}
-  </div>
-);
-
-const SelectField = ({ label, value, onChange }) => (
-  <div>
-    <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-zinc-500">
-      {label}
-    </label>
-
-    <select
-      value={value || ""}
-      onChange={(event) => onChange(event.target.value)}
-      className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-zinc-900"
-    >
-      <option value="" disabled>
-        Select a book category
-      </option>
-      <option>Fiction</option>
-      <option>Children's Books</option>
-      <option>Non-Fiction</option>
-      <option>Specialized / Lifestyle</option>
-      <option>Professional &amp; Practical</option>
-    </select>
-  </div>
-);
-
-const ArrayEditor = ({ label, values = [], onChange }) => (
-  <div>
-    <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-zinc-500">
-      {label}
-    </label>
-
-    <textarea
-      value={values.join("\n")}
-      onChange={(event) =>
-        onChange(
-          event.target.value
-            .split("\n")
-            .map((item) => item.trim())
-            .filter(Boolean),
-        )
-      }
-      rows={5}
-      placeholder="One item per line"
-      className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none focus:border-zinc-900"
-    />
-  </div>
-);
-
-const EmptyState = ({ title, description, action, actionLabel, loading }) => (
-  <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center">
-    <h2 className="font-semibold">{title}</h2>
-
-    <p className="mx-auto mt-2 max-w-md text-sm text-zinc-500">{description}</p>
-
-    {action && (
-      <button
-        onClick={action}
-        disabled={loading}
-        className="mt-6 inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-      >
-        {loading && <Loader2 size={16} className="animate-spin" />}
-
-        {actionLabel}
-      </button>
-    )}
-  </div>
-);
 
 export default EbookWorkspacePage;

@@ -1,7 +1,7 @@
 import { Check, RefreshCw, Save } from "lucide-react";
 
-import EditorField from "../EditorField.jsx";
-import EmptyState from "../EmptyState.jsx";
+import EditorField from "./EditorField.jsx";
+import EmptyState from "./EmptyState.jsx";
 
 const OutlineEditor = ({
   outline,
