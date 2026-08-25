@@ -1,14 +1,22 @@
+import { useState } from "react";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
+
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 import { createEbook } from "../features/ebooks/ebookSlice.js";
 
+import DesignTemplateCard from "../components/ebook/DesignTemplateCard.jsx";
+import BookSpreadPreview from "../components/ebook/BookSpreadPreview.jsx";
 import BookCategoryCard from "../components/ebook/BookCategoryCard.jsx";
+
+import { getDesignTemplatesForCategory } from "../config/ebookDesignTemplates.js";
 
 import {
   EBOOK_CATEGORIES,
@@ -18,6 +26,8 @@ import {
 
 const schema = z.object({
   category: z.string().min(1, "Please select a book category."),
+
+  designTemplate: z.string().min(1, "Please select a visual style."),
 
   title: z.string().min(1, "Ebook title is required.").max(200),
 
@@ -44,6 +54,8 @@ const CreateEbookPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const [previewTemplate, setPreviewTemplate] = useState(null);
+
   const {
     register,
     handleSubmit,
@@ -55,6 +67,8 @@ const CreateEbookPage = () => {
 
     defaultValues: {
       category: DEFAULT_EBOOK_CATEGORY,
+
+      designTemplate: "custom-minimal",
 
       title: "",
       subtitle: "",
@@ -74,10 +88,17 @@ const CreateEbookPage = () => {
 
   const selectedCategory = getEbookCategory(selectedCategoryId);
 
+  const selectedDesignTemplate = watch("designTemplate");
+
+  const designTemplates = getDesignTemplatesForCategory(selectedCategoryId);
+
+  /*
+   * ---------------------------------------------------------
+   * Category selection
+   * ---------------------------------------------------------
+   */
+
   const handleCategorySelect = (category) => {
-    /*
-     * Save the selected category.
-     */
     setValue("category", category.id, {
       shouldDirty: true,
       shouldValidate: true,
@@ -86,16 +107,85 @@ const CreateEbookPage = () => {
     /*
      * Apply category defaults.
      *
-     * These are still editable after
-     * the category is selected.
+     * Example:
+     *
+     * Children's Book
+     * -> friendly tone
+     * -> shorter chapters
+     * -> playful writing style
+     *
+     * Non-Fiction
+     * -> practical tone
+     * -> instructional style
      */
-    Object.entries(category.defaults).forEach(([field, value]) => {
+    Object.entries(category.defaults || {}).forEach(([field, value]) => {
       setValue(field, value, {
         shouldDirty: true,
         shouldValidate: true,
       });
     });
+
+    /*
+     * Automatically select the first
+     * visual design available for the category.
+     */
+    const templates = getDesignTemplatesForCategory(category.id);
+
+    if (templates.length > 0) {
+      setValue("designTemplate", templates[0].id, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    } else {
+      setValue("designTemplate", "", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
   };
+
+  /*
+   * ---------------------------------------------------------
+   * Design selection
+   * ---------------------------------------------------------
+   */
+
+  const handleDesignSelect = (template) => {
+    setValue("designTemplate", template.id, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+
+    toast.success(`${template.name} style selected.`);
+  };
+
+  /*
+   * ---------------------------------------------------------
+   * Design preview
+   * ---------------------------------------------------------
+   */
+
+  const handleDesignPreview = (template) => {
+    setPreviewTemplate(template);
+  };
+
+  /*
+   * ---------------------------------------------------------
+   * Use design from preview
+   * ---------------------------------------------------------
+   */
+
+  const handleUsePreviewDesign = (template) => {
+    handleDesignSelect(template);
+
+    setPreviewTemplate(null);
+  };
+
+  /*
+   * ---------------------------------------------------------
+   * Submit
+   * ---------------------------------------------------------
+   */
 
   const onSubmit = async (data) => {
     const result = await dispatch(createEbook(data));
@@ -104,29 +194,35 @@ const CreateEbookPage = () => {
       toast.success("Ebook created.");
 
       navigate(`/ebooks/${result.payload._id}`);
-    } else {
-      toast.error(result.payload || "Unable to create ebook.");
+
+      return;
     }
+
+    toast.error(result.payload || "Unable to create ebook.");
   };
 
   return (
     <div className="min-h-screen bg-zinc-50">
+      {/* ------------------------------------------------ */}
       {/* Header */}
+      {/* ------------------------------------------------ */}
+
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-6 py-4">
           <button
             type="button"
             onClick={() => navigate("/")}
             className="rounded-lg p-2 hover:bg-zinc-100"
+            aria-label="Back"
           >
             <ArrowLeft size={18} />
           </button>
 
           <div>
-            <h1 className="font-semibold">Create ebook</h1>
+            <h1 className="font-semibold text-zinc-900">Create ebook</h1>
 
             <p className="text-xs text-zinc-500">
-              Choose a book type and configure your ebook.
+              Choose a book type, visual style, and configure your ebook.
             </p>
           </div>
         </div>
@@ -137,10 +233,18 @@ const CreateEbookPage = () => {
           {/* Hidden category field */}
           <input type="hidden" {...register("category")} />
 
-          {/* Book category */}
+          {/* Hidden design template field */}
+          <input type="hidden" {...register("designTemplate")} />
+
+          {/* ------------------------------------------------ */}
+          {/* BOOK CATEGORY */}
+          {/* ------------------------------------------------ */}
+
           <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
             <div>
-              <h2 className="text-lg font-semibold">Choose a book type</h2>
+              <h2 className="text-lg font-semibold text-zinc-900">
+                Choose a book type
+              </h2>
 
               <p className="mt-1 text-sm text-zinc-500">
                 Your selection will apply recommended default settings. You can
@@ -165,7 +269,6 @@ const CreateEbookPage = () => {
               </p>
             )}
 
-            {/* Selected category */}
             {selectedCategory && (
               <div className="mt-5 rounded-xl bg-zinc-50 px-4 py-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">
@@ -179,9 +282,63 @@ const CreateEbookPage = () => {
             )}
           </section>
 
-          {/* Ebook basics */}
+          {/* ------------------------------------------------ */}
+          {/* VISUAL DESIGN */}
+          {/* ------------------------------------------------ */}
+
           <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold">Ebook basics</h2>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-zinc-900">
+                  Choose a visual style
+                </h2>
+
+                <p className="mt-1 text-sm text-zinc-500">
+                  Select the visual design that will guide the ebook layout,
+                  typography, spacing, and image placement.
+                </p>
+              </div>
+
+              {selectedDesignTemplate && (
+                <div className="text-xs text-zinc-400">Style selected</div>
+              )}
+            </div>
+
+            {designTemplates.length > 0 ? (
+              <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                {designTemplates.map((template) => (
+                  <DesignTemplateCard
+                    key={template.id}
+                    template={template}
+                    selected={selectedDesignTemplate === template.id}
+                    onPreview={handleDesignPreview}
+                    onSelect={handleDesignSelect}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="mt-6 rounded-xl border border-dashed border-zinc-300 p-8 text-center">
+                <p className="text-sm text-zinc-500">
+                  No design templates are available for this category yet.
+                </p>
+              </div>
+            )}
+
+            {errors.designTemplate?.message && (
+              <p className="mt-3 text-xs text-red-600">
+                {errors.designTemplate.message}
+              </p>
+            )}
+          </section>
+
+          {/* ------------------------------------------------ */}
+          {/* EBOOK BASICS */}
+          {/* ------------------------------------------------ */}
+
+          <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-zinc-900">
+              Ebook basics
+            </h2>
 
             <div className="mt-6 space-y-5">
               <Field
@@ -235,10 +392,15 @@ const CreateEbookPage = () => {
             </div>
           </section>
 
-          {/* Writing settings */}
+          {/* ------------------------------------------------ */}
+          {/* WRITING SETTINGS */}
+          {/* ------------------------------------------------ */}
+
           <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
             <div>
-              <h2 className="text-lg font-semibold">Writing settings</h2>
+              <h2 className="text-lg font-semibold text-zinc-900">
+                Writing settings
+              </h2>
 
               <p className="mt-1 text-sm text-zinc-500">
                 These settings start with recommendations for your selected book
@@ -295,9 +457,13 @@ const CreateEbookPage = () => {
                 input={
                   <select {...register("ebookLength")} className={inputClass}>
                     <option>5,000–10,000 words</option>
+
                     <option>10,000–15,000 words</option>
+
                     <option>15,000–25,000 words</option>
+
                     <option>25,000–40,000 words</option>
+
                     <option>40,000+ words</option>
                   </select>
                 }
@@ -327,12 +493,26 @@ const CreateEbookPage = () => {
             </div>
           </section>
 
-          {/* Summary */}
+          {/* ------------------------------------------------ */}
+          {/* SUMMARY */}
+          {/* ------------------------------------------------ */}
+
           <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold">Ready to create</h2>
+            <h2 className="text-lg font-semibold text-zinc-900">
+              Ready to create
+            </h2>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <SummaryItem label="Book type" value={selectedCategory?.name} />
+
+              <SummaryItem
+                label="Visual style"
+                value={
+                  designTemplates.find(
+                    (template) => template.id === selectedDesignTemplate,
+                  )?.name
+                }
+              />
 
               <SummaryItem label="Language" value={watch("language")} />
 
@@ -352,7 +532,10 @@ const CreateEbookPage = () => {
             </div>
           </section>
 
-          {/* Submit */}
+          {/* ------------------------------------------------ */}
+          {/* SUBMIT */}
+          {/* ------------------------------------------------ */}
+
           <div className="flex justify-end">
             <button
               type="submit"
@@ -364,9 +547,25 @@ const CreateEbookPage = () => {
           </div>
         </form>
       </main>
+
+      {/* -------------------------------------------------- */}
+      {/* DESIGN PREVIEW MODAL */}
+      {/* -------------------------------------------------- */}
+
+      {previewTemplate && (
+        <BookSpreadPreview
+          template={previewTemplate}
+          onClose={() => setPreviewTemplate(null)}
+          onSelect={handleUsePreviewDesign}
+        />
+      )}
     </div>
   );
 };
+
+/* ---------------------------------------------------------- */
+/* Summary item */
+/* ---------------------------------------------------------- */
 
 const SummaryItem = ({ label, value }) => (
   <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
@@ -378,12 +577,18 @@ const SummaryItem = ({ label, value }) => (
   </div>
 );
 
+/* ---------------------------------------------------------- */
+/* Form field */
+/* ---------------------------------------------------------- */
+
 const inputClass =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900";
 
 const Field = ({ label, error, input }) => (
   <div>
-    <label className="mb-2 block text-sm font-medium">{label}</label>
+    <label className="mb-2 block text-sm font-medium text-zinc-900">
+      {label}
+    </label>
 
     {input}
 
