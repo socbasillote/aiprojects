@@ -1,5 +1,7 @@
 import Ebook from "../../models/Ebook.js";
 
+import { getDesign, isChildrenDesign } from "../design/designRegistry.js";
+
 const generateAssembly = async ({ ebookId, userId }) => {
   const ebook = await Ebook.findOne({
     _id: ebookId,
@@ -146,6 +148,10 @@ const generateAssembly = async ({ ebookId, userId }) => {
         imageCount: chapterImages.length,
         images: chapterImages,
       });
+
+      const templateId = ebook.design?.templateId || "custom";
+
+      const design = getDesign(templateId);
 
       return {
         chapterNumber,

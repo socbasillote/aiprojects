@@ -1,3 +1,7 @@
+import { getDesign } from "../../ebook/design/designRegistry.js";
+
+import renderStorybookPdf from "./renderers/childrens/storybookPdf.renderer.js";
+
 import fs from "fs/promises";
 import path from "path";
 import PDFDocument from "pdfkit";
@@ -280,6 +284,30 @@ const createPdf = async ({ ebook }) => {
 
   if (!ebook.assembly) {
     throw new Error("Ebook assembly does not exist.");
+  }
+
+  const templateId =
+    ebook.assembly?.design?.templateId || ebook.design?.templateId || "custom";
+
+  const design = getDesign(templateId);
+
+  // create PDF document...
+
+  if (design.id === "storybook") {
+    await renderStorybookPdf({
+      doc,
+      ebook,
+      design,
+      uploadsRoot,
+    });
+  } else {
+    // Keep your current generic renderer
+    // temporarily for other designs.
+    await renderGenericPdf({
+      doc,
+      ebook,
+      uploadsRoot,
+    });
   }
 
   console.log("");

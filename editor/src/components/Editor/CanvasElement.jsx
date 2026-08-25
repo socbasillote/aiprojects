@@ -67,6 +67,14 @@ export default function CanvasElement({ element }) {
   const pageSize = useSelector(
     (state) => state.editor.present.document.settings,
   );
+  const pages = useSelector((state) => state.editor.present.document.pages);
+
+  const activePageId = useSelector(
+    (state) => state.editor.present.document.activePageId,
+  );
+
+  const page = pages.find((page) => page.id === activePageId);
+  const otherElements = page?.elements ?? [];
 
   const { containerRef, viewport, setSnapGuides } = useViewport();
 
@@ -203,6 +211,8 @@ export default function CanvasElement({ element }) {
           proposedX,
           proposedY,
           page,
+
+          otherElements: page?.elements ?? [],
         });
 
     setSnapGuides(snapped.guides);
@@ -536,14 +546,12 @@ export default function CanvasElement({ element }) {
               className="h-full w-full resize-none overflow-hidden border-none bg-transparent p-0 outline-none"
               style={{
                 fontSize: element.style.fontSize,
-
                 fontFamily: element.style.fontFamily,
-
                 fontWeight: element.style.fontWeight,
-
                 color: element.style.color,
-
                 textAlign: element.style.textAlign,
+
+                lineHeight: element.style.lineHeight ?? 1.2,
               }}
             />
           ) : (
@@ -551,14 +559,12 @@ export default function CanvasElement({ element }) {
               className="h-full w-full overflow-hidden"
               style={{
                 fontSize: element.style.fontSize,
-
                 fontFamily: element.style.fontFamily,
-
                 fontWeight: element.style.fontWeight,
-
                 color: element.style.color,
-
                 textAlign: element.style.textAlign,
+
+                lineHeight: element.style.lineHeight ?? 1.2,
               }}
             >
               {element.content}
@@ -572,7 +578,7 @@ export default function CanvasElement({ element }) {
           src={element.src}
           alt=""
           draggable={false}
-          className="h-full w-full object-contain"
+          className="h-full w-full object-fill"
         />
       )}
 

@@ -636,6 +636,38 @@ const ebookSchema = new mongoose.Schema(
 
     /*
     |--------------------------------------------------------------------------
+    | Design 
+    |--------------------------------------------------------------------------
+    */
+
+    design: {
+      category: {
+        type: String,
+        enum: ["custom", "non-fiction", "childrens-book"],
+        default: "custom",
+      },
+
+      templateId: {
+        type: String,
+        default: "custom",
+        trim: true,
+      },
+
+      templateName: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+
+      version: {
+        type: Number,
+        default: 1,
+        min: 1,
+      },
+    },
+
+    /*
+    |--------------------------------------------------------------------------
     | Assembly 
     |--------------------------------------------------------------------------
     */

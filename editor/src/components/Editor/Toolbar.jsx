@@ -11,9 +11,11 @@ import ZoomControls from "./ZoomControls";
 import { undo, redo } from "../../features/editor/historyActions";
 
 import { requestFitViewport } from "../../features/editor/viewportEvents";
+import { downloadDocumentAsPdf } from "../../features/pdf/pdfReader";
 
 export default function Toolbar() {
   const dispatch = useDispatch();
+  const document = useSelector((state) => state.editor.present.document);
 
   function handleAddText() {
     dispatch(addTextElement());
@@ -63,7 +65,9 @@ export default function Toolbar() {
         </Button>
         <ZoomControls />
 
-        <Button size="sm">Download PDF</Button>
+        <Button onClick={() => downloadDocumentAsPdf(document)}>
+          Download PDF
+        </Button>
       </div>
     </header>
   );
