@@ -15,6 +15,8 @@ import { Label } from "../ui/label";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
 
+import { FONT_FAMILIES } from "../../features/pdf/fonts";
+
 export default function PropertiesPanel() {
   const dispatch = useDispatch();
 
@@ -189,14 +191,28 @@ export default function PropertiesPanel() {
                 <div className="space-y-2">
                   <Label>Font Family</Label>
 
-                  <Input
-                    value={element.style.fontFamily}
-                    onChange={(event) =>
-                      updateStyle({
-                        fontFamily: event.target.value,
-                      })
-                    }
-                  />
+                  <select
+                    value={element.style?.fontFamily ?? "Roboto"}
+                    onChange={(event) => {
+                      dispatch(
+                        updateElement({
+                          elementId: element.id,
+                          changes: {
+                            style: {
+                              ...element.style,
+                              fontFamily: event.target.value,
+                            },
+                          },
+                        }),
+                      );
+                    }}
+                  >
+                    {FONT_FAMILIES.map((font) => (
+                      <option key={font} value={font}>
+                        {font}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <PropertyInput

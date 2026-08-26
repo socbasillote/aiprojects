@@ -1,6 +1,9 @@
 import jsPDF from "jspdf";
 
 import { renderText, hexToRgb } from "./renderText";
+import { registerPdfFont } from "./registerPdfFont";
+
+import { PDF_FONTS } from "./fonts";
 
 export async function renderDocumentToPdf(document) {
   const { width, height } = document.settings;
@@ -12,6 +15,9 @@ export async function renderDocumentToPdf(document) {
 
     format: [width, height],
   });
+
+  await prepareFonts(pdf, document);
+  console.log("REGISTERED PDF FONTS:", pdf.getFontList());
 
   for (let pageIndex = 0; pageIndex < document.pages.length; pageIndex++) {
     const page = document.pages[pageIndex];
@@ -51,8 +57,6 @@ function renderBackground(pdf, settings) {
 }
 
 async function renderElement(pdf, element) {
-  console.log("PDF element:", element.type, "rotation:", element.rotation);
-
   switch (element.type) {
     case "text":
       renderText(pdf, element);
@@ -339,4 +343,65 @@ function getImageFormat(src) {
   }
 
   return "JPEG";
+}
+
+async function prepareFonts(pdf, document) {
+  const fonts = new Map();
+
+  for (const page of document.pages) {
+    for (const element of page.elements) {
+      if (element.type !== "text") {
+        continue;
+      }
+
+      const requestedFamily = element.style?.fontFamily;
+
+      const family = resolvePdfFontFamily(requestedFamily);
+
+      const weight = normalizeFontWeight(element.style?.fontWeight);
+
+      const key = `${family}-${weight}`;
+
+      if (!fonts.has(key)) {
+        fonts.set(key, {
+          family,
+          weight,
+        });
+      }
+    }
+  }
+
+  for (const { family, weight } of fonts.values()) {
+    try {
+      const registered = await registerPdfFont(pdf, family, weight);
+
+      if (!registered) {
+        console.warn(`PDF font not available: ${family} ${weight}`);
+      }
+    } catch (error) {
+      console.warn(`Unable to load PDF font ${family} ${weight}`, error);
+    }
+  }
+}
+
+function resolvePdfFontFamily(fontFamily) {
+  /*
+   * Currently Roboto is our
+   * only bundled PDF font.
+   */
+  if (PDF_FONTS[fontFamily]) {
+    return fontFamily;
+  }
+
+  return "Roboto";
+}
+
+function normalizeFontWeight(weight) {
+  if (weight === "bold") {
+    return 700;
+  }
+
+  const numeric = Number(weight);
+
+  return Number.isFinite(numeric) ? numeric : 400;
 }

@@ -1,15 +1,34 @@
-import { withElementTransform } from "./withElementTransform";
 import { rotatePointAroundCenter } from "./geometry";
+
+import { PDF_FONTS } from "./fonts";
 
 export function renderText(pdf, element) {
   const {
     fontSize = 16,
-    fontFamily,
-    fontWeight,
+    fontFamily = "Roboto",
+    fontWeight = 400,
     color,
     textAlign = "left",
     lineHeight = 1.2,
-  } = element.style;
+  } = element.style ?? {};
+
+  const weight = normalizeFontWeight(fontWeight);
+
+  const fontStyle = weight >= 700 ? "bold" : "normal";
+
+  /*
+   * Only use fonts that are actually
+   * bundled and registered with jsPDF.
+   *
+   * For now that is Roboto.
+   */
+  const requestedFontFamily = fontFamily || "Roboto";
+
+  const pdfFontFamily = PDF_FONTS[requestedFontFamily]
+    ? requestedFontFamily
+    : "Roboto";
+
+  console.log("PDF TEXT FONT:", fontFamily, "→", pdfFontFamily, fontStyle);
 
   const textColor = hexToRgb(color);
 
@@ -19,7 +38,11 @@ export function renderText(pdf, element) {
 
   pdf.setFontSize(fontSize);
 
-  pdf.setFont(resolveFontFamily(fontFamily), resolveFontStyle(fontWeight));
+  /*
+   * Fonts have already been registered
+   * by prepareFonts().
+   */
+  pdf.setFont(pdfFontFamily, fontStyle);
 
   const lines = pdf.splitTextToSize(element.content || "", element.width);
 
@@ -39,45 +62,21 @@ export function renderText(pdf, element) {
 
   const centerY = element.y + element.height / 2;
 
+  const rotation = element.rotation || 0;
+
   const rotatedAnchor = rotatePointAroundCenter({
     x,
     y,
     centerX,
     centerY,
-    degrees: element.rotation || 0,
+    degrees: rotation,
   });
 
   pdf.text(lines, rotatedAnchor.x, rotatedAnchor.y, {
     align: textAlign,
-
-    angle: -(element.rotation || 0),
-
+    angle: -rotation,
     lineHeightFactor: lineHeight,
   });
-}
-
-function resolveFontFamily(fontFamily) {
-  switch (fontFamily) {
-    case "Arial":
-      return "helvetica";
-
-    case "Times New Roman":
-      return "times";
-
-    case "Courier New":
-      return "courier";
-
-    default:
-      return "helvetica";
-  }
-}
-
-function resolveFontStyle(fontWeight) {
-  if (fontWeight === "bold" || Number(fontWeight) >= 700) {
-    return "bold";
-  }
-
-  return "normal";
 }
 
 export function hexToRgb(color) {
@@ -93,9 +92,17 @@ export function hexToRgb(color) {
 
   return [
     parseInt(hex.slice(0, 2), 16),
-
     parseInt(hex.slice(2, 4), 16),
-
     parseInt(hex.slice(4, 6), 16),
   ];
+}
+
+function normalizeFontWeight(weight) {
+  if (weight === "bold") {
+    return 700;
+  }
+
+  const numeric = Number(weight);
+
+  return Number.isFinite(numeric) ? numeric : 400;
 }
