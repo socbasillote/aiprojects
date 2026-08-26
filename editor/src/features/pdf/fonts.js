@@ -1,4 +1,6 @@
 import robotoRegular from "../../assets/fonts/Roboto-Regular.ttf";
+import robotoMedium from "../../assets/fonts/Roboto-Medium.ttf";
+import robotoSemiBold from "../../assets/fonts/Roboto-SemiBold.ttf";
 import robotoBold from "../../assets/fonts/Roboto-Bold.ttf";
 
 import interRegular from "../../assets/fonts/Inter_28pt-Regular.ttf";
@@ -14,6 +16,14 @@ export const PDF_FONTS = {
   Roboto: {
     400: {
       file: robotoRegular,
+      style: "normal",
+    },
+    500: {
+      file: robotoMedium,
+      style: "normal",
+    },
+    600: {
+      file: robotoSemiBold,
       style: "normal",
     },
 

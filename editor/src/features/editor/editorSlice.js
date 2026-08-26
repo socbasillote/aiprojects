@@ -25,7 +25,7 @@ function createTextElement() {
 
     style: {
       fontSize: 24,
-      fontFamily: "Arial",
+      fontFamily: "Roboto",
       fontWeight: 400,
       color: "#111111",
       textAlign: "left",

@@ -225,15 +225,31 @@ export default function PropertiesPanel() {
                   }
                 />
 
-                <PropertyInput
-                  label="Font Weight"
-                  value={element.style.fontWeight}
-                  onChange={(value) =>
-                    updateStyle({
-                      fontWeight: value,
-                    })
-                  }
-                />
+                <div className="space-y-2">
+                  <Label>Font Weight</Label>
+
+                  <select
+                    value={element.style?.fontWeight ?? 400}
+                    onChange={(event) => {
+                      dispatch(
+                        updateElement({
+                          elementId: element.id,
+                          changes: {
+                            style: {
+                              ...element.style,
+                              fontWeight: Number(event.target.value),
+                            },
+                          },
+                        }),
+                      );
+                    }}
+                  >
+                    <option value={400}>Regular</option>
+                    <option value={500}>Medium</option>
+                    <option value={600}>Semi Bold</option>
+                    <option value={700}>Bold</option>
+                  </select>
+                </div>
 
                 <div className="space-y-2">
                   <Label>Color</Label>

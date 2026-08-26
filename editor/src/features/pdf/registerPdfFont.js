@@ -12,7 +12,9 @@ export async function registerPdfFont(pdf, fontFamily, weight = 400) {
     return false;
   }
 
-  const font = family[weight] ?? family[400];
+  const resolvedWeight = resolveClosestWeight(family, weight);
+
+  const font = family[resolvedWeight];
 
   if (!font) {
     console.warn(`PDF font weight not found: ${fontFamily} ${weight}`);
@@ -40,9 +42,33 @@ export async function registerPdfFont(pdf, fontFamily, weight = 400) {
 
   pdf.addFileToVFS(fileName, binary);
 
-  pdf.addFont(fileName, fontFamily, font.style);
+  const pdfFontName = `${fontFamily}-${resolvedWeight}`;
+
+  pdf.addFont(fileName, pdfFontName, "normal");
 
   pdfFonts.add(key);
 
   return true;
+}
+
+function resolveClosestWeight(family, requestedWeight) {
+  const availableWeights = Object.keys(family)
+    .map(Number)
+    .filter(Number.isFinite);
+
+  if (availableWeights.length === 0) {
+    return null;
+  }
+
+  if (family[requestedWeight]) {
+    return requestedWeight;
+  }
+
+  return availableWeights.reduce((closest, current) => {
+    const currentDistance = Math.abs(current - requestedWeight);
+
+    const closestDistance = Math.abs(closest - requestedWeight);
+
+    return currentDistance < closestDistance ? current : closest;
+  });
 }

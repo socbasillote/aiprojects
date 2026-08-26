@@ -1,5 +1,4 @@
 import { rotatePointAroundCenter } from "./geometry";
-
 import { PDF_FONTS } from "./fonts";
 
 export function renderText(pdf, element) {
@@ -14,13 +13,11 @@ export function renderText(pdf, element) {
 
   const weight = normalizeFontWeight(fontWeight);
 
-  const fontStyle = weight >= 700 ? "bold" : "normal";
-
   /*
-   * Only use fonts that are actually
-   * bundled and registered with jsPDF.
+   * Resolve the requested family.
    *
-   * For now that is Roboto.
+   * If the document contains an unsupported
+   * or legacy font, fall back to Roboto.
    */
   const requestedFontFamily = fontFamily || "Roboto";
 
@@ -28,7 +25,10 @@ export function renderText(pdf, element) {
     ? requestedFontFamily
     : "Roboto";
 
-  console.log("PDF TEXT FONT:", fontFamily, "→", pdfFontFamily, fontStyle);
+  /*
+   * Find the closest bundled weight.
+   */
+  const resolved = resolvePdfFont(pdfFontFamily, weight);
 
   const textColor = hexToRgb(color);
 
@@ -39,10 +39,15 @@ export function renderText(pdf, element) {
   pdf.setFontSize(fontSize);
 
   /*
-   * Fonts have already been registered
-   * by prepareFonts().
+   * Each weight is registered as its
+   * own jsPDF font family:
+   *
+   * Roboto-400
+   * Roboto-500
+   * Roboto-600
+   * Roboto-700
    */
-  pdf.setFont(pdfFontFamily, fontStyle);
+  pdf.setFont(resolved.pdfFontFamily, "normal");
 
   const lines = pdf.splitTextToSize(element.content || "", element.width);
 
@@ -105,4 +110,41 @@ function normalizeFontWeight(weight) {
   const numeric = Number(weight);
 
   return Number.isFinite(numeric) ? numeric : 400;
+}
+
+function resolvePdfFont(fontFamily, requestedWeight) {
+  const family = PDF_FONTS[fontFamily];
+
+  if (!family) {
+    return {
+      pdfFontFamily: "Roboto-400",
+      weight: 400,
+    };
+  }
+
+  const availableWeights = Object.keys(family)
+    .map(Number)
+    .filter(Number.isFinite);
+
+  if (availableWeights.length === 0) {
+    return {
+      pdfFontFamily: "Roboto-400",
+      weight: 400,
+    };
+  }
+
+  const resolvedWeight = availableWeights.includes(requestedWeight)
+    ? requestedWeight
+    : availableWeights.reduce((closest, current) => {
+        return Math.abs(current - requestedWeight) <
+          Math.abs(closest - requestedWeight)
+          ? current
+          : closest;
+      });
+
+  return {
+    pdfFontFamily: `${fontFamily}-${resolvedWeight}`,
+
+    weight: resolvedWeight,
+  };
 }
