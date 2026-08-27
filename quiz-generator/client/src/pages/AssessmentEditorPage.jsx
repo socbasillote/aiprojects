@@ -1,25 +1,20 @@
-import { useLocation } from "react-router-dom";
-
-import AppShell from "../components/layout/AppShell";
+import EditorHeader from "../features/editor/components/EditorHeader";
+import QuestionSidebar from "../features/editor/components/QuestionSidebar";
+import EditorCanvas from "../features/editor/components/EditorCanvas";
+import PropertiesPanel from "../features/editor/components/PropertiesPanel";
 
 export default function AssessmentEditorPage() {
-  const location = useLocation();
-
-  const assessment = location.state?.assessment;
-
   return (
-    <AppShell>
-      <div>
-        <p className="text-sm font-medium text-slate-500">Assessment Editor</p>
+    <div className="flex h-screen flex-col overflow-hidden bg-white">
+      <EditorHeader />
 
-        <h1 className="mt-1 text-3xl font-bold text-slate-900">
-          {assessment?.title || "Untitled Assessment"}
-        </h1>
+      <div className="flex min-h-0 flex-1">
+        <QuestionSidebar />
 
-        <pre className="mt-6 overflow-auto rounded-xl bg-slate-900 p-5 text-sm text-white">
-          {JSON.stringify(assessment, null, 2)}
-        </pre>
+        <EditorCanvas />
+
+        <PropertiesPanel />
       </div>
-    </AppShell>
+    </div>
   );
 }
