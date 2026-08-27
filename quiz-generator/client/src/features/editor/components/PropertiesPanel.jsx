@@ -31,12 +31,16 @@ export default function PropertiesPanel() {
   }
 
   function handleTypeChange(type) {
-    const changes = { type };
+    const changes = {
+      type,
+    };
 
     if (type === "multiple_choice") {
+      const firstOptionId = `${question.id}-option-1`;
+
       changes.options = [
         {
-          id: `${question.id}-option-1`,
+          id: firstOptionId,
           text: "Option A",
           correct: true,
         },
@@ -47,7 +51,7 @@ export default function PropertiesPanel() {
         },
       ];
 
-      changes.answer = `${question.id}-option-1`;
+      changes.answer = firstOptionId;
     }
 
     if (type === "true_false") {
@@ -144,6 +148,12 @@ export default function PropertiesPanel() {
             }
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
           />
+        </div>
+
+        <div className="rounded-lg bg-slate-50 p-3">
+          <p className="text-xs font-medium text-slate-500">Question status</p>
+
+          <p className="mt-1 text-sm font-medium text-slate-900">Ready</p>
         </div>
 
         <div className="border-t border-slate-200 pt-5">

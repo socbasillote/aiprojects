@@ -3,40 +3,12 @@ import { useSelector, useDispatch } from "react-redux";
 import RichTextEditor from "./RichTextEditor";
 
 import { updateQuestion } from "../editorSlice";
+
 import MultipleChoiceEditor from "./MultipleChoiceEditor";
-
-function TrueFalseQuestion({ question }) {
-  return (
-    <div className="mt-6 flex gap-3">
-      {["True", "False"].map((value) => (
-        <div
-          key={value}
-          className="rounded-lg border border-slate-200 px-6 py-3 text-sm text-slate-700"
-        >
-          {value}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ShortAnswerQuestion() {
-  return (
-    <div className="mt-6 rounded-lg border border-dashed border-slate-300 p-6">
-      <p className="text-sm text-slate-400">Student response area</p>
-    </div>
-  );
-}
-
-function EssayQuestion() {
-  return (
-    <div className="mt-6 space-y-3">
-      {[1, 2, 3, 4].map((line) => (
-        <div key={line} className="border-b border-slate-200" />
-      ))}
-    </div>
-  );
-}
+import TrueFalseEditor from "./TrueFalseEditor";
+import ShortAnswerEditor from "./ShortAnswerEditor";
+import EssayEditor from "./EssayEditor";
+import FillBlankEditor from "./FillBlankEditor";
 
 export default function EditorCanvas() {
   const dispatch = useDispatch();
@@ -88,12 +60,18 @@ export default function EditorCanvas() {
           )}
 
           {question.type === "true_false" && (
-            <TrueFalseQuestion question={question} />
+            <TrueFalseEditor question={question} />
           )}
 
-          {question.type === "short_answer" && <ShortAnswerQuestion />}
+          {question.type === "short_answer" && (
+            <ShortAnswerEditor question={question} />
+          )}
 
-          {question.type === "essay" && <EssayQuestion />}
+          {question.type === "essay" && <EssayEditor question={question} />}
+
+          {question.type === "fill_in_the_blank" && (
+            <FillBlankEditor question={question} />
+          )}
         </div>
       </div>
     </section>
