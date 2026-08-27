@@ -9,6 +9,8 @@ import AssessmentsPage from "../pages/AssessmentsPage";
 import QuestionBankPage from "../pages/QuestionBankPage";
 import TemplatesPage from "../pages/TemplatesPage";
 
+import AssessmentEditorPage from "../pages/AssessmentEditorPage";
+
 export default function AppRouter() {
   return (
     <Routes>
@@ -22,6 +24,11 @@ export default function AppRouter() {
       <Route path="/assessments" element={<AssessmentsPage />} />
       <Route path="/question-bank" element={<QuestionBankPage />} />
       <Route path="/templates" element={<TemplatesPage />} />
+
+      <Route
+        path="/assessments/new/editor"
+        element={<AssessmentEditorPage />}
+      />
 
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
