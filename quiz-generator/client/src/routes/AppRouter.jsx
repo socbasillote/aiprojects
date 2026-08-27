@@ -13,6 +13,8 @@ import AssessmentEditorPage from "../pages/AssessmentEditorPage";
 
 import AssessmentPreviewPage from "../pages/AssessmentPreviewPage";
 
+import PaperDesignerPage from "../pages/PaperDesignerPage";
+
 export default function AppRouter() {
   return (
     <Routes>
@@ -32,6 +34,8 @@ export default function AppRouter() {
         element={<AssessmentEditorPage />}
       />
       <Route path="/assessments/preview" element={<AssessmentPreviewPage />} />
+
+      <Route path="/assessments/paper" element={<PaperDesignerPage />} />
 
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
