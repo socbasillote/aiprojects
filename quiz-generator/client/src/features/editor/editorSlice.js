@@ -1,5 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+import { arrayMove } from "@dnd-kit/sortable";
+
 import { initialQuestions } from "./mockQuestions";
 
 const initialState = {
@@ -124,6 +126,18 @@ const editorSlice = createSlice({
 
       state.status = "unsaved";
     },
+
+    reorderQuestions(state, action) {
+      const { oldIndex, newIndex } = action.payload;
+
+      state.questions = arrayMove(state.questions, oldIndex, newIndex);
+
+      state.questions.forEach((question, index) => {
+        question.order = index + 1;
+      });
+
+      state.status = "unsaved";
+    },
   },
 });
 
@@ -134,6 +148,7 @@ export const {
   setCorrectOption,
   addOption,
   deleteOption,
+  reorderQuestions,
   addQuestion,
   deleteQuestion,
 } = editorSlice.actions;

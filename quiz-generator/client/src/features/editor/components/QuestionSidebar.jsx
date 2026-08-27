@@ -1,12 +1,44 @@
+import { DndContext, closestCenter } from "@dnd-kit/core";
+
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+
 import { useDispatch, useSelector } from "react-redux";
 
 import QuestionListItem from "./QuestionListItem";
-import { addQuestion } from "../editorSlice";
+import { addQuestion, reorderQuestions } from "../editorSlice";
 
 export default function QuestionSidebar() {
   const dispatch = useDispatch();
 
   const questions = useSelector((state) => state.editor.questions);
+
+  function handleDragEnd(event) {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = questions.findIndex(
+      (question) => question.id === active.id,
+    );
+
+    const newIndex = questions.findIndex((question) => question.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
+
+    dispatch(
+      reorderQuestions({
+        oldIndex,
+        newIndex,
+      }),
+    );
+  }
 
   function handleAddQuestion() {
     const id = `question-${Date.now()}`;
@@ -16,6 +48,7 @@ export default function QuestionSidebar() {
         id,
         type: "multiple_choice",
         order: questions.length + 1,
+
         content: {
           type: "doc",
           content: [
@@ -30,6 +63,7 @@ export default function QuestionSidebar() {
             },
           ],
         },
+
         options: [
           {
             id: `${id}-option-1`,
@@ -42,6 +76,7 @@ export default function QuestionSidebar() {
             correct: false,
           },
         ],
+
         answer: `${id}-option-1`,
         points: 1,
         difficulty: "medium",
@@ -52,21 +87,29 @@ export default function QuestionSidebar() {
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-slate-200 bg-white">
       <div className="border-b border-slate-200 p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">Questions</h2>
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900">Questions</h2>
 
-            <p className="text-xs text-slate-400">
-              {questions.length} questions
-            </p>
-          </div>
+          <p className="text-xs text-slate-400">{questions.length} questions</p>
         </div>
       </div>
 
-      <div className="flex-1 space-y-1 overflow-y-auto p-3">
-        {questions.map((question) => (
-          <QuestionListItem key={question.id} question={question} />
-        ))}
+      <div className="flex-1 overflow-y-auto p-3">
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={questions.map((question) => question.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-1">
+              {questions.map((question) => (
+                <QuestionListItem key={question.id} question={question} />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
 
       <div className="border-t border-slate-200 p-3">
