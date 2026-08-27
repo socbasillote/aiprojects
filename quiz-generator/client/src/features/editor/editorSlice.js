@@ -4,11 +4,18 @@ import { arrayMove } from "@dnd-kit/sortable";
 
 import { initialQuestions } from "./mockQuestions";
 
+import { validateAssessment } from "./validation";
+
 const initialState = {
   title: "Grade 8 Photosynthesis Quiz",
   questions: initialQuestions,
   selectedQuestionId: initialQuestions[0].id,
   status: "saved",
+  validation: {
+    valid: false,
+    questions: [],
+    errors: [],
+  },
 };
 
 const editorSlice = createSlice({
@@ -35,6 +42,11 @@ const editorSlice = createSlice({
       }
 
       state.status = "unsaved";
+      state.validation = {
+        valid: false,
+        questions: [],
+        errors: [],
+      };
     },
 
     updateOption(state, action) {
@@ -51,6 +63,12 @@ const editorSlice = createSlice({
       Object.assign(option, changes);
 
       state.status = "unsaved";
+
+      state.validation = {
+        valid: false,
+        questions: [],
+        errors: [],
+      };
     },
 
     setCorrectOption(state, action) {
@@ -67,6 +85,12 @@ const editorSlice = createSlice({
       question.answer = optionId;
 
       state.status = "unsaved";
+
+      state.validation = {
+        valid: false,
+        questions: [],
+        errors: [],
+      };
     },
 
     addOption(state, action) {
@@ -79,6 +103,12 @@ const editorSlice = createSlice({
       question.options.push(option);
 
       state.status = "unsaved";
+
+      state.validation = {
+        valid: false,
+        questions: [],
+        errors: [],
+      };
     },
 
     deleteOption(state, action) {
@@ -101,6 +131,12 @@ const editorSlice = createSlice({
       }
 
       state.status = "unsaved";
+
+      state.validation = {
+        valid: false,
+        questions: [],
+        errors: [],
+      };
     },
 
     addQuestion(state, action) {
@@ -109,6 +145,11 @@ const editorSlice = createSlice({
       state.selectedQuestionId = action.payload.id;
 
       state.status = "unsaved";
+      state.validation = {
+        valid: false,
+        questions: [],
+        errors: [],
+      };
     },
 
     deleteQuestion(state, action) {
@@ -125,6 +166,11 @@ const editorSlice = createSlice({
       state.selectedQuestionId = nextQuestion?.id || null;
 
       state.status = "unsaved";
+      state.validation = {
+        valid: false,
+        questions: [],
+        errors: [],
+      };
     },
 
     reorderQuestions(state, action) {
@@ -137,6 +183,16 @@ const editorSlice = createSlice({
       });
 
       state.status = "unsaved";
+      state.validation = {
+        valid: false,
+        questions: [],
+        errors: [],
+      };
+    },
+    validate(state) {
+      const result = validateAssessment(state.questions);
+
+      state.validation = result;
     },
   },
 });
@@ -151,6 +207,7 @@ export const {
   reorderQuestions,
   addQuestion,
   deleteQuestion,
+  validate,
 } = editorSlice.actions;
 
 export default editorSlice.reducer;
