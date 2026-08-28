@@ -23,50 +23,62 @@ export default function PaperPage({ columns = [[]], pageNumber = 1 }) {
       style={{
         width: `${dimensions.width}mm`,
         height: `${dimensions.height}mm`,
+
         padding: `${paper.margins.top}mm ${paper.margins.right}mm ${paper.margins.bottom}mm ${paper.margins.left}mm`,
+
         boxSizing: "border-box",
 
         display: "flex",
         flexDirection: "column",
       }}
     >
-      {/* FIRST PAGE HEADER */}
+      {/* ------------------------------------------- */}
+      {/* FIRST PAGE CHROME                            */}
+      {/* ------------------------------------------- */}
 
       {isFirstPage && (
         <>
-          <div data-paper-chrome="header">
+          <div className="shrink-0" data-paper-chrome="header">
             <PaperHeader title={title} header={paper.header} />
           </div>
 
-          <div data-paper-chrome="student-info">
+          <div className="shrink-0" data-paper-chrome="student-info">
             <PaperStudentInfo studentInfo={paper.studentInfo} />
           </div>
 
-          <div data-paper-chrome="instructions">
+          <div className="shrink-0" data-paper-chrome="instructions">
             <PaperInstructions instructions={paper.instructions} />
           </div>
         </>
       )}
 
-      {/* CONTENT */}
+      {/* ------------------------------------------- */}
+      {/* QUESTION CONTENT                             */}
+      {/* ------------------------------------------- */}
 
-      <main className="min-h-0 flex-1" data-paper-content>
-        <div
-          className={
-            columns.length === 2 ? "grid h-full grid-cols-2 gap-x-8" : "block"
-          }
-        >
-          {columns.map((column, columnIndex) => (
-            <div key={columnIndex} className="min-w-0">
-              {column.map((block) => (
-                <PaperBlock key={block.id} block={block} />
-              ))}
-            </div>
-          ))}
-        </div>
+      <main className="min-h-0 min-w-0 flex-1" data-paper-content>
+        {columns.length === 2 ? (
+          <div className="grid min-h-0 grid-cols-2 gap-x-8">
+            {columns.map((column, columnIndex) => (
+              <div key={columnIndex} className="min-w-0">
+                {column.map((block) => (
+                  <PaperBlock key={block.id} block={block} />
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="min-h-0">
+            {columns[0]?.map((block) => (
+              <PaperBlock key={block.id} block={block} />
+            ))}
+          </div>
+        )}
       </main>
 
-      {/* FOOTER */}
+      {/* ------------------------------------------- */}
+      {/* FOOTER                                       */}
+      {/* ------------------------------------------- */}
 
       <div className="shrink-0" data-paper-chrome="footer">
         <PaperFooter footer={paper.footer} pageNumber={pageNumber} />

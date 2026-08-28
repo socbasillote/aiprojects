@@ -1,24 +1,25 @@
 import PaperQuestion from "./PaperQuestion";
+import PaperSection from "./PaperSection";
 
 export default function PaperBlock({ block }) {
+  if (!block) {
+    return null;
+  }
+
   if (block.type === "section") {
     return (
-      <section className="mb-5 break-inside-avoid">
-        {block.title && (
-          <h2 className="text-sm font-bold uppercase">{block.title}</h2>
-        )}
-
-        {block.instructions && (
-          <p className="mt-1 whitespace-pre-wrap text-xs leading-5">
-            {block.instructions}
-          </p>
-        )}
-      </section>
+      <div data-paper-block={block.id} className="flow-root min-w-0">
+        <PaperSection block={block} />
+      </div>
     );
   }
 
   if (block.type === "question") {
-    return <PaperQuestion question={block.question} number={block.number} />;
+    return (
+      <div data-paper-block={block.id} className="flow-root min-w-0">
+        <PaperQuestion question={block.question} number={block.number} />
+      </div>
+    );
   }
 
   return null;

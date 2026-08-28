@@ -39,8 +39,6 @@ export default function PaperMeasurement({
       measurements[id] = rect.height;
     });
 
-    const footer = container.querySelector("[data-paper-measure-footer]");
-
     const header = container.querySelector("[data-paper-measure-header]");
 
     const studentInfo = container.querySelector(
@@ -50,6 +48,8 @@ export default function PaperMeasurement({
     const instructions = container.querySelector(
       "[data-paper-measure-instructions]",
     );
+
+    const footer = container.querySelector("[data-paper-measure-footer]");
 
     onMeasure({
       blocks: measurements,
@@ -76,6 +76,7 @@ export default function PaperMeasurement({
       style={{
         width: `${width}px`,
         height: `${height}px`,
+
         boxSizing: "border-box",
 
         padding: `${paper.margins.top}px ${paper.margins.right}px ${paper.margins.bottom}px ${paper.margins.left}px`,
@@ -86,19 +87,19 @@ export default function PaperMeasurement({
     >
       {/* HEADER */}
 
-      <div data-paper-measure-header>
+      <div className="shrink-0" data-paper-measure-header>
         <PaperHeader title={title} header={paper.header} />
       </div>
 
       {/* STUDENT INFO */}
 
-      <div data-paper-measure-student-info>
+      <div className="shrink-0" data-paper-measure-student-info>
         <PaperStudentInfo studentInfo={paper.studentInfo} />
       </div>
 
       {/* INSTRUCTIONS */}
 
-      <div data-paper-measure-instructions>
+      <div className="shrink-0" data-paper-measure-instructions>
         <PaperInstructions instructions={paper.instructions} />
       </div>
 
@@ -107,16 +108,14 @@ export default function PaperMeasurement({
       <div className="min-h-0 flex-1" data-paper-measure-content>
         <div className={isTwoColumns ? "grid grid-cols-2 gap-x-8" : "block"}>
           {blocks.map((block) => (
-            <div key={block.id} data-paper-block={block.id} className="min-w-0">
-              <PaperBlock block={block} />
-            </div>
+            <PaperBlock key={block.id} block={block} />
           ))}
         </div>
       </div>
 
       {/* FOOTER */}
 
-      <div data-paper-measure-footer>
+      <div className="shrink-0" data-paper-measure-footer>
         <PaperFooter footer={paper.footer} pageNumber={1} />
       </div>
     </div>

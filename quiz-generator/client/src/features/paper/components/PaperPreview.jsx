@@ -5,7 +5,8 @@ import { useSelector } from "react-redux";
 import PaperPage from "./PaperPage";
 import PaperMeasurement from "./PaperMeasurement";
 
-import { buildPaperBlocks, paginateBlocks } from "../../editor/pagination";
+import { paginateBlocks } from "../../editor/pagination";
+import { buildPaperPages } from "../../../editor/paperPageModel";
 import { buildPaperLayout } from "../../../editor/buildPaperLayout";
 
 import { getPaperDimensions } from "../paperUtils";
@@ -22,16 +23,12 @@ export default function PaperPreview() {
   const dimensions = getPaperDimensions(paper.pageSize, paper.orientation);
 
   /*
-   * Build the logical paper blocks.
+   * --------------------------------------------------
+   * PAPER LAYOUT
+   * --------------------------------------------------
    *
-   * Example:
-   *
-   * section-1
-   * question-1
-   * question-2
-   * question-3
-   * section-2
-   * question-4
+   * Converts Redux editor state into a normalized
+   * document structure.
    */
   const layout = useMemo(
     () =>
@@ -47,22 +44,12 @@ export default function PaperPreview() {
   const blocks = layout.blocks;
 
   /*
-   * Actual measurements returned
-   * by PaperMeasurement.
+   * --------------------------------------------------
+   * MEASUREMENT
+   * --------------------------------------------------
    *
-   * {
-   *   blocks: {
-   *     "question-1": 82,
-   *     "question-2": 54,
-   *   },
-   *
-   *   chrome: {
-   *     header: 72,
-   *     studentInfo: 58,
-   *     instructions: 24,
-   *     footer: 31,
-   *   }
-   * }
+   * PaperMeasurement renders an invisible copy of
+   * the paper and measures the actual block heights.
    */
   const [measurement, setMeasurement] = useState(null);
 
@@ -71,9 +58,13 @@ export default function PaperPreview() {
   }, []);
 
   /*
-   * CSS pixels per millimeter.
+   * --------------------------------------------------
+   * PAPER DIMENSIONS
+   * --------------------------------------------------
    *
-   * 96 CSS pixels = 1 inch
+   * CSS:
+   *
+   * 96px = 1 inch
    * 25.4mm = 1 inch
    */
   const mmToPx = useCallback((mm) => mm * (96 / 25.4), []);
@@ -87,13 +78,21 @@ export default function PaperPreview() {
   const marginBottomPx = mmToPx(paper.margins.bottom);
 
   /*
-   * Total height available inside
-   * the paper margins.
+   * --------------------------------------------------
+   * CONTENT HEIGHT
+   * --------------------------------------------------
+   *
+   * This is the physical area between the top and
+   * bottom paper margins.
    */
   const contentAreaHeight = paperHeightPx - marginTopPx - marginBottomPx;
 
   /*
-   * The first page contains:
+   * --------------------------------------------------
+   * AVAILABLE HEIGHT
+   * --------------------------------------------------
+   *
+   * Page 1 contains:
    *
    * Header
    * Student information
@@ -101,61 +100,99 @@ export default function PaperPreview() {
    * Questions
    * Footer
    *
-   * Therefore questions can only
-   * occupy the remaining height.
+   * Continuation pages currently contain:
+   *
+   * Questions
+   * Footer
    */
-  const firstPageAvailableHeight =
+  const firstPageAvailableHeight = Math.max(
+    0,
     contentAreaHeight -
-    (measurement?.chrome?.header ?? 0) -
-    (measurement?.chrome?.studentInfo ?? 0) -
-    (measurement?.chrome?.instructions ?? 0) -
-    (measurement?.chrome?.footer ?? 0);
+      (measurement?.chrome?.header ?? 0) -
+      (measurement?.chrome?.studentInfo ?? 0) -
+      (measurement?.chrome?.instructions ?? 0) -
+      (measurement?.chrome?.footer ?? 0),
+  );
+
+  const continuationPageAvailableHeight = Math.max(
+    0,
+    contentAreaHeight - (measurement?.chrome?.footer ?? 0),
+  );
 
   /*
-   * Continuation pages currently don't
-   * contain the first-page header/student
-   * information/instructions.
+   * --------------------------------------------------
+   * CHECK MEASUREMENTS
+   * --------------------------------------------------
    *
-   * They still need to reserve footer space.
+   * Every block must have a measured height before
+   * we trust the pagination result.
    */
-  const continuationPageAvailableHeight =
-    contentAreaHeight - (measurement?.chrome?.footer ?? 0);
+  const hasMeasurements = Boolean(
+    measurement?.blocks &&
+    blocks.length > 0 &&
+    blocks.every((block) => typeof measurement.blocks[block.id] === "number"),
+  );
 
   /*
-   * Measurement is not ready yet.
+   * --------------------------------------------------
+   * PAGINATION
+   * --------------------------------------------------
    *
-   * Render everything temporarily on page 1.
-   * Once measurement completes, pagination
-   * immediately recalculates.
+   * Do this only once.
+   *
+   * Before measurement is ready, show a temporary
+   * page so the user doesn't see an empty preview.
    */
-  const hasMeasurements =
-    measurement &&
-    measurement.blocks &&
-    blocks.every((block) => typeof measurement.blocks[block.id] === "number");
-
-  const pages = hasMeasurements
-    ? paginateBlocks({
-        blocks,
-        measurements: measurement.blocks,
-        firstPageHeight: firstPageAvailableHeight,
-        continuationPageHeight: continuationPageAvailableHeight,
-        columns: paper.columns,
-      })
-    : [
+  const pages = useMemo(() => {
+    if (!hasMeasurements) {
+      return [
         {
           number: 1,
           columns: [blocks],
         },
       ];
+    }
+
+    const paginatedPages = paginateBlocks({
+      blocks,
+      measurements: measurement.blocks,
+
+      firstPageHeight: firstPageAvailableHeight,
+
+      continuationPageHeight: continuationPageAvailableHeight,
+
+      columns: paper.columns,
+    });
+
+    /*
+     * Convert the raw pagination result into
+     * our formal PaperPage model.
+     */
+    return buildPaperPages({
+      pages: paginatedPages,
+      layout,
+      dimensions,
+    });
+  }, [
+    blocks,
+    measurement,
+    hasMeasurements,
+    firstPageAvailableHeight,
+    continuationPageAvailableHeight,
+    paper.columns,
+    layout,
+    dimensions,
+  ]);
 
   return (
     <div className="paper-workspace flex-1 overflow-auto bg-slate-100 p-10">
       {/*
-       * Hidden measurement copy.
+       * ------------------------------------------------
+       * HIDDEN MEASUREMENT PAPER
+       * ------------------------------------------------
        *
-       * It uses the same paper width,
-       * dimensions, typography and content
-       * as the real paper.
+       * Uses the same width, dimensions, paper settings,
+       * title and blocks as the visible paper.
        */}
       <PaperMeasurement
         blocks={blocks}
@@ -167,14 +204,20 @@ export default function PaperPreview() {
       />
 
       {/*
-       * Actual visible paper pages.
+       * ------------------------------------------------
+       * VISIBLE PAPER
+       * ------------------------------------------------
        */}
       <div className="space-y-10">
         {pages.map((page) => (
           <PaperPage
             key={page.number}
             pageNumber={page.number}
-            columns={page.columns}
+            columns={page.columnsContent}
+            header={page.header}
+            studentInfo={page.studentInfo}
+            instructions={page.instructions}
+            footer={page.footer}
           />
         ))}
       </div>
