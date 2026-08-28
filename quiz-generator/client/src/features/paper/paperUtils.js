@@ -1,24 +1,42 @@
-export const PAPER_SIZES = {
+const PAPER_DIMENSIONS = {
   A4: {
     width: 210,
     height: 297,
   },
 
-  LETTER: {
+  Letter: {
     width: 215.9,
     height: 279.4,
+  },
+
+  A3: {
+    width: 297,
+    height: 420,
   },
 };
 
 export function getPaperDimensions(pageSize, orientation) {
-  const size = PAPER_SIZES[pageSize] || PAPER_SIZES.A4;
+  const base = PAPER_DIMENSIONS[pageSize] ?? PAPER_DIMENSIONS.A4;
 
   if (orientation === "landscape") {
     return {
-      width: size.height,
-      height: size.width,
+      width: base.height,
+      height: base.width,
     };
   }
 
-  return size;
+  return {
+    width: base.width,
+    height: base.height,
+  };
+}
+
+export function getPaperContentDimensions(pageSize, orientation, margins) {
+  const page = getPaperDimensions(pageSize, orientation);
+
+  return {
+    width: page.width - margins.left - margins.right,
+
+    height: page.height - margins.top - margins.bottom,
+  };
 }

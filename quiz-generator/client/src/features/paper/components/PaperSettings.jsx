@@ -63,7 +63,8 @@ export default function PaperSettings() {
                 className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-slate-400"
               >
                 <option value="A4">A4</option>
-                <option value="LETTER">Letter</option>
+                <option value="A3">A3</option>
+                <option value="Letter">Letter</option>
               </select>
             </label>
 

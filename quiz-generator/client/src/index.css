@@ -67,8 +67,35 @@
   .print-content {
     display: block !important;
   }
+}
 
+@media print {
   @page {
-    margin: 1.5cm;
+    margin: 0;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .paper-page {
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
+@media print {
+  .paper-workspace {
+    overflow: visible !important;
+    padding: 0 !important;
+    background: white !important;
   }
 }

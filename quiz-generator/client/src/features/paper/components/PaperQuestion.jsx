@@ -3,21 +3,17 @@ import RichTextRenderer from "./RichTextRenderer";
 export default function PaperQuestion({ question, number }) {
   return (
     <article className="break-inside-avoid">
-      {" "}
       <div className="flex items-start gap-2">
-        {" "}
-        {/* Question number */}{" "}
         <span className="shrink-0 text-sm font-semibold leading-6">
-          {" "}
-          {number}.{" "}
-        </span>{" "}
-        {/* Question content */}{" "}
+          {number}.
+        </span>
+
         <div className="min-w-0 flex-1 text-sm leading-6">
-          {" "}
-          <RichTextRenderer content={question.content} />{" "}
-          <QuestionAnswerArea question={question} />{" "}
-        </div>{" "}
-      </div>{" "}
+          <RichTextRenderer content={question.content} />
+
+          <QuestionAnswerArea question={question} />
+        </div>
+      </div>
     </article>
   );
 }

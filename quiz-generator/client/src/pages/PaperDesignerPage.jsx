@@ -8,7 +8,7 @@ export default function PaperDesignerPage() {
     <div className="flex h-screen flex-col overflow-hidden bg-slate-100">
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5">
         <Link
-          to="/assessments/editor"
+          to="/assessments/new/editor"
           className="text-sm font-medium text-slate-500 hover:text-slate-900"
         >
           ← Back to Editor
