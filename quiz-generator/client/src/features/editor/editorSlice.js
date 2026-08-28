@@ -213,26 +213,17 @@ const editorSlice = createSlice({
         return;
       }
 
-      // Prevent duplicate question IDs.
-      const alreadyExists = state.questions.some(
-        (item) => item.id === question.id,
-      );
-
-      if (alreadyExists) {
-        return;
-      }
-
-      // Set the order based on the current question count.
+      /*
+       * Always calculate the new order
+       * from the current question count.
+       */
       question.order = state.questions.length + 1;
 
-      // Add the actual question.
       state.questions.push(question);
 
       /*
-       * For now, new questions go into the first section.
-       *
-       * Later, the Section Manager can dispatch a
-       * section-specific action when adding a question.
+       * New questions go into the first section
+       * by default.
        */
       const firstSection = state.sections[0];
 
@@ -243,7 +234,12 @@ const editorSlice = createSlice({
       state.selectedQuestionId = question.id;
 
       state.status = "unsaved";
-      state.validation = createEmptyValidation();
+
+      state.validation = {
+        valid: false,
+        questions: [],
+        errors: [],
+      };
     },
 
     // --------------------------------------------------
@@ -305,33 +301,60 @@ const editorSlice = createSlice({
         return;
       }
 
+      /*
+       * Reorder the question array.
+       */
       state.questions = arrayMove(state.questions, oldIndex, newIndex);
 
       /*
-       * Update question.order.
+       * Recalculate the global order.
        */
       state.questions.forEach((question, index) => {
         question.order = index + 1;
       });
 
       /*
-       * Keep section questionIds synchronized
-       * with the global question order.
-       *
-       * We preserve section membership while
-       * updating the order of IDs within each
-       * section.
+       * Remember which section owns each question.
+       */
+      const sectionByQuestionId = new Map();
+
+      state.sections.forEach((section) => {
+        section.questionIds.forEach((questionId) => {
+          sectionByQuestionId.set(questionId, section.id);
+        });
+      });
+
+      /*
+       * Rebuild each section's questionIds
+       * using the newly ordered questions.
        */
       state.sections.forEach((section) => {
-        const sectionQuestionIdSet = new Set(section.questionIds);
+        section.questionIds = [];
+      });
 
-        section.questionIds = state.questions
-          .filter((question) => sectionQuestionIdSet.has(question.id))
-          .map((question) => question.id);
+      state.questions.forEach((question) => {
+        const sectionId = sectionByQuestionId.get(question.id);
+
+        if (!sectionId) {
+          return;
+        }
+
+        const section = state.sections.find((item) => item.id === sectionId);
+
+        if (!section) {
+          return;
+        }
+
+        section.questionIds.push(question.id);
       });
 
       state.status = "unsaved";
-      state.validation = createEmptyValidation();
+
+      state.validation = {
+        valid: false,
+        questions: [],
+        errors: [],
+      };
     },
 
     // --------------------------------------------------
@@ -462,8 +485,7 @@ const editorSlice = createSlice({
     // --------------------------------------------------
 
     moveQuestionToSection(state, action) {
-      const { questionId, fromSectionId, toSectionId, targetIndex } =
-        action.payload;
+      const { questionId, fromSectionId, toSectionId } = action.payload;
 
       if (fromSectionId === toSectionId) {
         return;
@@ -481,43 +503,64 @@ const editorSlice = createSlice({
         return;
       }
 
-      const questionExists = state.questions.some(
-        (question) => question.id === questionId,
-      );
-
-      if (!questionExists) {
-        return;
-      }
-
       /*
-       * Remove from source section.
+       * Remove from the old section.
        */
       fromSection.questionIds = fromSection.questionIds.filter(
         (id) => id !== questionId,
       );
 
       /*
-       * Prevent duplicates.
+       * Add to the destination section.
        */
-      toSection.questionIds = toSection.questionIds.filter(
-        (id) => id !== questionId,
-      );
-
-      /*
-       * Insert into destination.
-       */
-      if (typeof targetIndex === "number" && targetIndex >= 0) {
-        toSection.questionIds.splice(
-          Math.min(targetIndex, toSection.questionIds.length),
-          0,
-          questionId,
-        );
-      } else {
+      if (!toSection.questionIds.includes(questionId)) {
         toSection.questionIds.push(questionId);
       }
 
+      /*
+       * Rebuild the global question order
+       * according to section order.
+       */
+      const orderedQuestionIds = state.sections.flatMap(
+        (section) => section.questionIds,
+      );
+
+      const questionById = new Map(
+        state.questions.map((question) => [question.id, question]),
+      );
+
+      const reorderedQuestions = orderedQuestionIds
+        .map((id) => questionById.get(id))
+        .filter(Boolean);
+
+      /*
+       * Preserve any questions that aren't
+       * currently assigned to a section.
+       */
+      const assignedIds = new Set(orderedQuestionIds);
+
+      state.questions.forEach((question) => {
+        if (!assignedIds.has(question.id)) {
+          reorderedQuestions.push(question);
+        }
+      });
+
+      state.questions = reorderedQuestions;
+
+      /*
+       * Recalculate printed numbering.
+       */
+      state.questions.forEach((question, index) => {
+        question.order = index + 1;
+      });
+
       state.status = "unsaved";
-      state.validation = createEmptyValidation();
+
+      state.validation = {
+        valid: false,
+        questions: [],
+        errors: [],
+      };
     },
 
     reorderQuestionsInSection(state, action) {

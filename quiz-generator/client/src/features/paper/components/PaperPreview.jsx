@@ -6,6 +6,7 @@ import PaperPage from "./PaperPage";
 import PaperMeasurement from "./PaperMeasurement";
 
 import { buildPaperBlocks, paginateBlocks } from "../../editor/pagination";
+import { buildPaperLayout } from "../../../editor/buildPaperLayout";
 
 import { getPaperDimensions } from "../paperUtils";
 
@@ -32,14 +33,18 @@ export default function PaperPreview() {
    * section-2
    * question-4
    */
-  const blocks = useMemo(
+  const layout = useMemo(
     () =>
-      buildPaperBlocks({
+      buildPaperLayout({
+        title,
         questions,
         sections,
+        paper,
       }),
-    [questions, sections],
+    [title, questions, sections, paper],
   );
+
+  const blocks = layout.blocks;
 
   /*
    * Actual measurements returned
