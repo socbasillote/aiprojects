@@ -1,18 +1,17 @@
-import { useSelector } from "react-redux";
-
-import { getPaperDimensions } from "../paperUtils";
-
 import PaperBlock from "./PaperBlock";
 import PaperHeader from "./PaperHeader";
 import PaperStudentInfo from "./PaperStudentInfo";
 import PaperInstructions from "./PaperInstructions";
 import PaperFooter from "./PaperFooter";
 
-export default function PaperPage({ columns = [[]], pageNumber = 1 }) {
-  const title = useSelector((state) => state.editor.title);
+import { getPaperDimensions } from "../paperUtils";
 
-  const paper = useSelector((state) => state.editor.paper);
-
+export default function PaperPage({
+  columns = [[]],
+  pageNumber = 1,
+  title,
+  paper,
+}) {
   const dimensions = getPaperDimensions(paper.pageSize, paper.orientation);
 
   const isFirstPage = pageNumber === 1;
@@ -32,10 +31,6 @@ export default function PaperPage({ columns = [[]], pageNumber = 1 }) {
         flexDirection: "column",
       }}
     >
-      {/* ------------------------------------------- */}
-      {/* FIRST PAGE CHROME                            */}
-      {/* ------------------------------------------- */}
-
       {isFirstPage && (
         <>
           <div className="shrink-0" data-paper-chrome="header">
@@ -51,10 +46,6 @@ export default function PaperPage({ columns = [[]], pageNumber = 1 }) {
           </div>
         </>
       )}
-
-      {/* ------------------------------------------- */}
-      {/* QUESTION CONTENT                             */}
-      {/* ------------------------------------------- */}
 
       <main className="min-h-0 min-w-0 flex-1" data-paper-content>
         {columns.length === 2 ? (
@@ -75,10 +66,6 @@ export default function PaperPage({ columns = [[]], pageNumber = 1 }) {
           </div>
         )}
       </main>
-
-      {/* ------------------------------------------- */}
-      {/* FOOTER                                       */}
-      {/* ------------------------------------------- */}
 
       <div className="shrink-0" data-paper-chrome="footer">
         <PaperFooter footer={paper.footer} pageNumber={pageNumber} />

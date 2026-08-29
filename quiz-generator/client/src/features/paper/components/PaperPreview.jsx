@@ -214,6 +214,8 @@ export default function PaperPreview() {
             key={page.number}
             pageNumber={page.number}
             columns={page.columnsContent}
+            title={title}
+            paper={paper}
             header={page.header}
             studentInfo={page.studentInfo}
             instructions={page.instructions}
