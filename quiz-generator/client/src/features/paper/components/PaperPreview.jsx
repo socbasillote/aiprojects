@@ -11,7 +11,7 @@ import { buildPaperLayout } from "../../../editor/buildPaperLayout";
 
 import { getPaperDimensions } from "../paperUtils";
 
-export default function PaperPreview() {
+export default function PaperPreview({ previewRef }) {
   const title = useSelector((state) => state.editor.title);
 
   const questions = useSelector((state) => state.editor.questions);
@@ -208,19 +208,20 @@ export default function PaperPreview() {
        * VISIBLE PAPER
        * ------------------------------------------------
        */}
-      <div className="space-y-10">
+      <div ref={previewRef} data-paper-preview className="space-y-10">
         {pages.map((page) => (
-          <PaperPage
-            key={page.number}
-            pageNumber={page.number}
-            columns={page.columnsContent}
-            title={title}
-            paper={paper}
-            header={page.header}
-            studentInfo={page.studentInfo}
-            instructions={page.instructions}
-            footer={page.footer}
-          />
+          <div key={page.number} className="flex justify-center">
+            <PaperPage
+              pageNumber={page.number}
+              columns={page.columnsContent}
+              title={title}
+              paper={paper}
+              header={page.header}
+              studentInfo={page.studentInfo}
+              instructions={page.instructions}
+              footer={page.footer}
+            />
+          </div>
         ))}
       </div>
     </div>

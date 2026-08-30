@@ -13,7 +13,9 @@ import AssessmentEditorPage from "../pages/AssessmentEditorPage";
 
 import AssessmentPreviewPage from "../pages/AssessmentPreviewPage";
 
-import PaperDesignerPage from "../pages/PaperDesignerPage";
+//import PaperDesignerPage from "../pages/PaperDesignerPage";
+
+import PaperDesigner from "../features/paper/components/PaperDesigner";
 
 export default function AppRouter() {
   return (
@@ -35,11 +37,11 @@ export default function AppRouter() {
       />
       <Route path="/assessments/preview" element={<AssessmentPreviewPage />} />
 
-      <Route path="/assessments/paper" element={<PaperDesignerPage />} />
-
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/assessments/paper" element={<PaperDesigner />} />
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }
+
+//  <Route path="/" element={<Navigate to="/dashboard" replace />} />

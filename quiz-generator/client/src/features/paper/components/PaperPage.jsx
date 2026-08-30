@@ -18,7 +18,7 @@ export default function PaperPage({
 
   return (
     <div
-      className="paper-page mx-auto bg-white shadow-xl"
+      className="paper-page overflow-hidden bg-white shadow-xl"
       style={{
         width: `${dimensions.width}mm`,
         height: `${dimensions.height}mm`,

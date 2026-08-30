@@ -374,25 +374,39 @@ const editorSlice = createSlice({
     updatePaperSettings(state, action) {
       const { changes } = action.payload;
 
-      if (!changes) {
-        return;
-      }
-
-      Object.assign(state.paper, changes);
+      state.paper = {
+        ...state.paper,
+        ...changes,
+      };
 
       state.status = "unsaved";
+
+      state.validation = {
+        valid: false,
+        questions: [],
+        errors: [],
+      };
     },
 
     updatePaperSection(state, action) {
       const { section, changes } = action.payload;
 
-      if (!state.paper[section] || !changes) {
+      if (!state.paper[section]) {
         return;
       }
 
-      Object.assign(state.paper[section], changes);
+      state.paper[section] = {
+        ...state.paper[section],
+        ...changes,
+      };
 
       state.status = "unsaved";
+
+      state.validation = {
+        valid: false,
+        questions: [],
+        errors: [],
+      };
     },
 
     // --------------------------------------------------
