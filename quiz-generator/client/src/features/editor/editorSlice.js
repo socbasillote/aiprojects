@@ -23,7 +23,7 @@ const createSection = ({
 });
 
 const initialState = {
-  title: "Grade 8 Photosynthesis Quiz",
+  title: "",
 
   questions: initialQuestions,
 
@@ -413,6 +413,16 @@ const editorSlice = createSlice({
     // ASSESSMENT SECTIONS
     // --------------------------------------------------
 
+    updateTitle(state, action) {
+      if (typeof action.payload !== "string") {
+        return;
+      }
+
+      state.title = action.payload;
+
+      state.status = "unsaved";
+    },
+
     addSection(state, action) {
       const payload = action.payload ?? {};
 
@@ -600,10 +610,45 @@ const editorSlice = createSlice({
       state.status = "unsaved";
       state.validation = createEmptyValidation();
     },
+
+    hydrateEditor(state, action) {
+      const data = action.payload;
+
+      if (!data || typeof data !== "object") {
+        return;
+      }
+
+      if (typeof data.title === "string") {
+        state.title = data.title;
+      }
+
+      if (Array.isArray(data.questions)) {
+        state.questions = data.questions;
+      }
+
+      if (Array.isArray(data.sections)) {
+        state.sections = data.sections;
+      }
+
+      if (data.paper && typeof data.paper === "object") {
+        state.paper = data.paper;
+      }
+
+      state.selectedQuestionId = state.questions[0]?.id ?? null;
+
+      state.status = "saved";
+
+      state.validation = {
+        valid: false,
+        questions: [],
+        errors: [],
+      };
+    },
   },
 });
 
 export const {
+  updateTitle,
   selectQuestion,
 
   updateQuestion,
@@ -625,8 +670,16 @@ export const {
   addSection,
   updateSection,
   deleteSection,
+  hydrateEditor,
   moveQuestionToSection,
   reorderQuestionsInSection,
 } = editorSlice.actions;
+
+export const selectEditorDocument = (state) => ({
+  title: state.editor.title,
+  questions: state.editor.questions,
+  sections: state.editor.sections,
+  paper: state.editor.paper,
+});
 
 export default editorSlice.reducer;

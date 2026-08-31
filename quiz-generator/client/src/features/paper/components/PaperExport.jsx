@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
 
-import { exportPaperAsPdf, exportPaperAsPng } from "../paperExport";
+import {
+  exportPaperAsPdf,
+  exportPaperAsPng,
+  exportPaperAsPngZip,
+} from "../paperExport";
 
 export default function PaperExport({ previewRef }) {
   const title = useSelector((state) => state.editor.title);
@@ -44,6 +48,17 @@ export default function PaperExport({ previewRef }) {
       if (type === "png") {
         await exportPaperAsPng({
           previewElement: previewRef.current,
+          pageSize: paper.pageSize,
+          orientation: paper.orientation,
+          filename,
+        });
+      }
+
+      if (type === "png-zip") {
+        await exportPaperAsPngZip({
+          previewElement: previewRef.current,
+          pageSize: paper.pageSize,
+          orientation: paper.orientation,
           filename,
         });
       }
@@ -84,6 +99,15 @@ export default function PaperExport({ previewRef }) {
             className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Export PNG
+          </button>
+
+          <button
+            type="button"
+            disabled={exporting}
+            onClick={() => handleExport("png-zip")}
+            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Export All PNG
           </button>
         </div>
       </div>

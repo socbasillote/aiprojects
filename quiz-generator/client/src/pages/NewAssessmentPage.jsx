@@ -16,6 +16,7 @@ export default function NewAssessmentPage() {
     });
   }
 
+  console.log("assessment page");
   return (
     <AppShell>
       <div className="mx-auto max-w-3xl">
