@@ -1,14 +1,33 @@
-const STORAGE_KEY = "assessment-editor";
+const STORAGE_KEY = "assessments";
+const LEGACY_STORAGE_KEY = "assessment-editor";
 const STORAGE_VERSION = 1;
+
+/*
+ * --------------------------------------------------
+ * Helpers
+ * --------------------------------------------------
+ */
+
+function createId() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  return `assessment-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
 
 function createStorageDocument(data) {
   return {
     version: STORAGE_VERSION,
+
     data: {
       title: data.title ?? "",
+
       questions: Array.isArray(data.questions) ? data.questions : [],
+
       sections: Array.isArray(data.sections) ? data.sections : [],
-      paper: data.paper ?? {},
+
+      paper: data.paper && typeof data.paper === "object" ? data.paper : {},
     },
   };
 }
@@ -41,11 +60,187 @@ function isValidStorageDocument(value) {
   return true;
 }
 
+function readAssessments() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+
+    if (!raw) {
+      return {};
+    }
+
+    const parsed = JSON.parse(raw);
+
+    if (!parsed || typeof parsed !== "object") {
+      return {};
+    }
+
+    return parsed;
+  } catch (error) {
+    console.error("Failed to read local assessments:", error);
+
+    return {};
+  }
+}
+
+function writeAssessments(assessments) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(assessments));
+
+    return true;
+  } catch (error) {
+    console.error("Failed to write local assessments:", error);
+
+    return false;
+  }
+}
+
+/*
+ * --------------------------------------------------
+ * Create
+ * --------------------------------------------------
+ */
+
+export function createAssessment(data = {}) {
+  const id = createId();
+
+  const now = new Date().toISOString();
+
+  const document = createStorageDocument(data);
+
+  const assessment = {
+    id,
+
+    createdAt: now,
+
+    updatedAt: now,
+
+    ...document,
+  };
+
+  const assessments = readAssessments();
+
+  assessments[id] = assessment;
+
+  writeAssessments(assessments);
+
+  return assessment;
+}
+
+/*
+ * --------------------------------------------------
+ * Save
+ * --------------------------------------------------
+ */
+
+export function saveAssessment(id, data) {
+  if (!id) {
+    throw new Error("Assessment ID is required.");
+  }
+
+  const assessments = readAssessments();
+
+  const existing = assessments[id];
+
+  const now = new Date().toISOString();
+
+  const document = createStorageDocument(data);
+
+  const assessment = {
+    id,
+
+    createdAt: existing?.createdAt ?? now,
+
+    updatedAt: now,
+
+    ...document,
+  };
+
+  assessments[id] = assessment;
+
+  writeAssessments(assessments);
+
+  return assessment;
+}
+
+/*
+ * --------------------------------------------------
+ * Load
+ * --------------------------------------------------
+ */
+
+export function loadAssessment(id) {
+  if (!id) {
+    return null;
+  }
+
+  const assessments = readAssessments();
+
+  const assessment = assessments[id];
+
+  if (!assessment) {
+    return null;
+  }
+
+  if (!isValidStorageDocument(assessment)) {
+    console.warn("Saved assessment data is invalid.");
+
+    return null;
+  }
+
+  return assessment;
+}
+
+/*
+ * --------------------------------------------------
+ * List
+ * --------------------------------------------------
+ */
+
+export function listAssessments() {
+  const assessments = readAssessments();
+
+  return Object.values(assessments)
+    .filter(isValidStorageDocument)
+    .sort((a, b) => {
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+}
+
+/*
+ * --------------------------------------------------
+ * Delete
+ * --------------------------------------------------
+ */
+
+export function deleteAssessment(id) {
+  if (!id) {
+    return;
+  }
+
+  const assessments = readAssessments();
+
+  delete assessments[id];
+
+  writeAssessments(assessments);
+}
+
+/*
+ * --------------------------------------------------
+ * Legacy support
+ * --------------------------------------------------
+ *
+ * These two functions keep the current editor
+ * persistence API working temporarily.
+ *
+ * We'll remove them after the Editor has been
+ * switched to assessment IDs.
+ */
+
 export function saveEditorState(data) {
   try {
     const document = createStorageDocument(data);
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(document));
+    localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(document));
   } catch (error) {
     console.error("Failed to save assessment locally:", error);
   }
@@ -53,7 +248,7 @@ export function saveEditorState(data) {
 
 export function loadEditorState() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
 
     if (!raw) {
       return null;
@@ -63,18 +258,20 @@ export function loadEditorState() {
 
     if (!isValidStorageDocument(parsed)) {
       console.warn("Saved assessment data is invalid.");
+
       return null;
     }
 
     return parsed.data;
   } catch (error) {
     console.error("Failed to load assessment locally:", error);
+
     return null;
   }
 }
 
 export function clearEditorState() {
-  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
 }
 
 export { STORAGE_KEY, STORAGE_VERSION };

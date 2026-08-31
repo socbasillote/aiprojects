@@ -56,7 +56,7 @@ export default function PaperSettings() {
               >
                 <option value="A4">A4</option>
                 <option value="Letter">Letter</option>
-                <option value="Legal">Legal</option>
+                <option value="A3">A3</option>
               </select>
             </label>
 

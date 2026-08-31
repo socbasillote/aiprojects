@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { hydrateEditor, selectEditorDocument } from "./editorSlice";
-
 import { loadEditorState, saveEditorState } from "./editorStorage";
 
 export default function useEditorPersistence() {
@@ -12,9 +11,6 @@ export default function useEditorPersistence() {
 
   const hydratedRef = useRef(false);
 
-  /*
-   * Load the saved assessment once.
-   */
   useEffect(() => {
     const savedState = loadEditorState();
 
@@ -25,12 +21,6 @@ export default function useEditorPersistence() {
     hydratedRef.current = true;
   }, [dispatch]);
 
-  /*
-   * Save document changes.
-   *
-   * The timeout prevents localStorage from
-   * being written on every keystroke.
-   */
   useEffect(() => {
     if (!hydratedRef.current) {
       return;

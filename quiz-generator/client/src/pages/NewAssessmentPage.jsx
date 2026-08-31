@@ -3,20 +3,32 @@ import { useNavigate } from "react-router-dom";
 import AppShell from "../components/layout/AppShell";
 import AssessmentForm from "../features/documents/components/AssessmentForm";
 
+import { createAssessment } from "../features/editor/editorStorage";
+import { createInitialEditorState } from "../features/editor/editorSlice";
+
 export default function NewAssessmentPage() {
   const navigate = useNavigate();
 
   function handleGenerate(formData) {
-    console.log("Assessment configuration:", formData);
+    const initialEditorState = createInitialEditorState();
+
+    const assessment = createAssessment({
+      title: formData.title,
+
+      questions: initialEditorState.questions,
+
+      sections: initialEditorState.sections,
+
+      paper: initialEditorState.paper,
+    });
 
     navigate("/assessments/new/editor", {
       state: {
-        assessment: formData,
+        assessmentId: assessment.id,
       },
     });
   }
 
-  console.log("assessment page");
   return (
     <AppShell>
       <div className="mx-auto max-w-3xl">

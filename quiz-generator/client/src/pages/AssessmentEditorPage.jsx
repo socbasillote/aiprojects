@@ -8,6 +8,8 @@ import EditorCanvas from "../features/editor/components/EditorCanvas";
 import PropertiesPanel from "../features/editor/components/PropertiesPanel";
 import ValidationPanel from "../features/editor/components/ValidationPanel";
 
+import useEditorPersistence from "../features/editor/useEditorPersistence";
+
 import { hydrateEditor } from "../features/editor/editorSlice";
 
 export default function AssessmentEditorPage() {
@@ -38,7 +40,7 @@ export default function AssessmentEditorPage() {
      */
     window.history.replaceState({}, document.title);
   }, [dispatch, location.state]);
-
+  useEditorPersistence();
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-white">
       <EditorHeader />

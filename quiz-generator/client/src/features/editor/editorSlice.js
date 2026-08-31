@@ -22,10 +22,10 @@ const createSection = ({
   questionIds,
 });
 
-const initialState = {
+export const createInitialEditorState = () => ({
   title: "",
 
-  questions: initialQuestions,
+  questions: structuredClone(initialQuestions),
 
   selectedQuestionId: initialQuestions[0]?.id ?? null,
 
@@ -78,7 +78,9 @@ const initialState = {
       showPageNumber: true,
     },
   },
-};
+});
+
+const initialState = createInitialEditorState();
 
 const editorSlice = createSlice({
   name: "editor",
@@ -374,9 +376,37 @@ const editorSlice = createSlice({
     updatePaperSettings(state, action) {
       const { changes } = action.payload;
 
+      if (!changes || typeof changes !== "object") {
+        return;
+      }
+
+      const nextChanges = {
+        ...changes,
+      };
+
+      /*
+       * Normalize page size.
+       *
+       * Page size is persisted as a string.
+       */
+      if (Object.prototype.hasOwnProperty.call(nextChanges, "pageSize")) {
+        const allowedPageSizes = ["A4", "Letter", "A3"];
+
+        if (!allowedPageSizes.includes(nextChanges.pageSize)) {
+          return;
+        }
+      }
+
+      /*
+       * Columns must remain numeric.
+       */
+      if (Object.prototype.hasOwnProperty.call(nextChanges, "columns")) {
+        nextChanges.columns = Number(nextChanges.columns);
+      }
+
       state.paper = {
         ...state.paper,
-        ...changes,
+        ...nextChanges,
       };
 
       state.status = "unsaved";
