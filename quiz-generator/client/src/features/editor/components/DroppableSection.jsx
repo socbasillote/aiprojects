@@ -1,11 +1,11 @@
 import { useDroppable } from "@dnd-kit/core";
 
-export default function DroppableSection({ sectionId, children }) {
+export default function DroppableSection({ sectionId, children, unsectioned }) {
   const { setNodeRef, isOver } = useDroppable({
-    id: `section-${sectionId}`,
+    id: unsectioned ? "unsectioned" : `section-${sectionId}`,
     data: {
-      type: "section",
-      sectionId,
+      type: unsectioned ? "unsectioned" : "section",
+      sectionId: unsectioned ? null : sectionId,
     },
   });
 

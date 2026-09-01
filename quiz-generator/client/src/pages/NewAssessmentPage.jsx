@@ -4,29 +4,35 @@ import AppShell from "../components/layout/AppShell";
 import AssessmentForm from "../features/documents/components/AssessmentForm";
 
 import { createAssessment } from "../features/editor/editorStorage";
-import { createInitialEditorState } from "../features/editor/editorSlice";
 
 export default function NewAssessmentPage() {
   const navigate = useNavigate();
 
   function handleGenerate(formData) {
-    const initialEditorState = createInitialEditorState();
-
     const assessment = createAssessment({
       title: formData.title,
+      questions: [],
+      sections: [],
+      paper: {
+        pageSize: "A4",
+        orientation: "portrait",
+        columns: 1,
 
-      questions: initialEditorState.questions,
+        margins: {
+          top: 20,
+          right: 20,
+          bottom: 20,
+          left: 20,
+        },
 
-      sections: initialEditorState.sections,
-
-      paper: initialEditorState.paper,
-    });
-
-    navigate("/assessments/new/editor", {
-      state: {
-        assessmentId: assessment.id,
+        header: {},
+        studentInfo: {},
+        instructions: "",
+        footer: {},
       },
     });
+
+    navigate(`/assessments/${assessment.id}/editor`);
   }
 
   return (

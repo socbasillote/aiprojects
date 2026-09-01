@@ -32,16 +32,17 @@ export default function AppRouter() {
       <Route path="/templates" element={<TemplatesPage />} />
 
       <Route
-        path="/assessments/new/editor"
+        path="/assessments/:assessmentId/editor"
         element={<AssessmentEditorPage />}
       />
       <Route path="/assessments/preview" element={<AssessmentPreviewPage />} />
 
-      <Route path="/assessments/paper" element={<PaperDesigner />} />
+      <Route
+        path="/assessments/:assessmentId/paper"
+        element={<PaperDesigner />}
+      />
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }
-
-//  <Route path="/" element={<Navigate to="/dashboard" replace />} />

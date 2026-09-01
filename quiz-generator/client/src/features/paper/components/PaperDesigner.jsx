@@ -3,8 +3,11 @@ import PaperPreview from "./PaperPreview";
 import PagperExport from "./PaperExport";
 
 import { useRef } from "react";
+import useEditorPersistence from "../../editor/useEditorPersistence";
 
 export default function PaperDesigner() {
+  useEditorPersistence();
+
   const previewRef = useRef(null);
   return (
     <div className="flex h-screen min-h-0 flex-col bg-slate-100">

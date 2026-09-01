@@ -1,6 +1,10 @@
 import { useDispatch, useSelector } from "react-redux";
 
-import { deleteQuestion, updateQuestion } from "../editorSlice";
+import {
+  assignQuestionToSection,
+  deleteQuestion,
+  updateQuestion,
+} from "../editorSlice";
 
 export default function PropertiesPanel() {
   const dispatch = useDispatch();
@@ -9,6 +13,12 @@ export default function PropertiesPanel() {
     state.editor.questions.find(
       (item) => item.id === state.editor.selectedQuestionId,
     ),
+  );
+
+  const sections = useSelector((state) => state.editor.sections);
+
+  const questionSection = sections.find((section) =>
+    section.questionIds.includes(question?.id),
   );
 
   if (!question) {
@@ -78,6 +88,36 @@ export default function PropertiesPanel() {
       </div>
 
       <div className="space-y-5">
+        <div>
+          <label
+            htmlFor="question-section"
+            className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+          >
+            Section (optional)
+          </label>
+
+          <select
+            id="question-section"
+            value={questionSection?.id ?? ""}
+            onChange={(event) =>
+              dispatch(
+                assignQuestionToSection({
+                  questionId: question.id,
+                  sectionId: event.target.value || null,
+                }),
+              )
+            }
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+          >
+            <option value="">No section</option>
+            {sections.map((section, index) => (
+              <option key={section.id} value={section.id}>
+                Section {index + 1}: {section.title || "Untitled Section"}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div>
           <label
             htmlFor="question-type"

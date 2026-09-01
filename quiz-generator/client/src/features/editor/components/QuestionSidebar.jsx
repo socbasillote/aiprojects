@@ -13,6 +13,7 @@ import DroppableSection from "./DroppableSection";
 
 import {
   addQuestion,
+  assignQuestionToSection,
   moveQuestionToSection,
   reorderQuestionsInSection,
 } from "../editorSlice";
@@ -36,6 +37,14 @@ export default function QuestionSidebar() {
     return section.questionIds.map(getQuestionById).filter(Boolean);
   }
 
+  const sectionQuestionIds = new Set(
+    sections.flatMap((section) => section.questionIds),
+  );
+
+  const unsectionedQuestions = questions.filter(
+    (question) => !sectionQuestionIds.has(question.id),
+  );
+
   function handleDragEnd(event) {
     const { active, over } = event;
 
@@ -47,10 +56,6 @@ export default function QuestionSidebar() {
 
     const sourceSection = getSectionForQuestion(questionId);
 
-    if (!sourceSection) {
-      return;
-    }
-
     /*
      * Determine whether we dropped onto
      * a section or another question.
@@ -60,10 +65,11 @@ export default function QuestionSidebar() {
 
     let destinationSectionId = null;
     let overQuestionId = null;
+    const isUnsectionedDrop = overData?.type === "unsectioned";
 
     if (overData?.type === "section") {
       destinationSectionId = overData.sectionId;
-    } else {
+    } else if (!isUnsectionedDrop) {
       overQuestionId = over.id;
 
       const destinationSection = getSectionForQuestion(overQuestionId);
@@ -71,7 +77,29 @@ export default function QuestionSidebar() {
       destinationSectionId = destinationSection?.id ?? null;
     }
 
-    if (!destinationSectionId) {
+    if (!destinationSectionId && !isUnsectionedDrop) {
+      return;
+    }
+
+    if (isUnsectionedDrop) {
+      dispatch(
+        assignQuestionToSection({
+          questionId,
+          sectionId: null,
+        }),
+      );
+
+      return;
+    }
+
+    if (!sourceSection) {
+      dispatch(
+        assignQuestionToSection({
+          questionId,
+          sectionId: destinationSectionId,
+        }),
+      );
+
       return;
     }
 
@@ -259,6 +287,33 @@ export default function QuestionSidebar() {
                 </DroppableSection>
               );
             })}
+
+            <DroppableSection unsectioned>
+              <div className="space-y-1 rounded-md">
+                <div className="px-1 pb-1">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    Unsectioned
+                  </div>
+                </div>
+
+                <SortableContext
+                  items={unsectionedQuestions.map((question) => question.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-1">
+                    {unsectionedQuestions.map((question) => (
+                      <QuestionListItem key={question.id} question={question} />
+                    ))}
+                  </div>
+                </SortableContext>
+
+                {unsectionedQuestions.length === 0 && (
+                  <div className="rounded-md border border-dashed border-slate-300 px-3 py-3 text-center text-xs text-slate-400">
+                    Drop question here
+                  </div>
+                )}
+              </div>
+            </DroppableSection>
           </div>
         </DndContext>
       </div>

@@ -11,6 +11,10 @@ export default function PaperPage({
   pageNumber = 1,
   title,
   paper,
+  header = paper.header,
+  studentInfo = paper.studentInfo,
+  instructions = paper.instructions,
+  footer = paper.footer,
 }) {
   const dimensions = getPaperDimensions(paper.pageSize, paper.orientation);
 
@@ -34,15 +38,15 @@ export default function PaperPage({
       {isFirstPage && (
         <>
           <div className="shrink-0" data-paper-chrome="header">
-            <PaperHeader title={title} header={paper.header} />
+            <PaperHeader title={title} header={header} />
           </div>
 
           <div className="shrink-0" data-paper-chrome="student-info">
-            <PaperStudentInfo studentInfo={paper.studentInfo} />
+            <PaperStudentInfo studentInfo={studentInfo} />
           </div>
 
           <div className="shrink-0" data-paper-chrome="instructions">
-            <PaperInstructions instructions={paper.instructions} />
+            <PaperInstructions instructions={instructions} />
           </div>
         </>
       )}
@@ -68,7 +72,7 @@ export default function PaperPage({
       </main>
 
       <div className="shrink-0" data-paper-chrome="footer">
-        <PaperFooter footer={paper.footer} pageNumber={pageNumber} />
+        <PaperFooter footer={footer} pageNumber={pageNumber} />
       </div>
     </div>
   );

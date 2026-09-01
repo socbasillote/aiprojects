@@ -1,7 +1,36 @@
+import { createInitialEditorState } from "./editorSlice";
+
 const STORAGE_KEY = "assessments";
 const LEGACY_STORAGE_KEY = "assessment-editor";
 const STORAGE_VERSION = 1;
+const DEFAULT_PAPER = {
+  pageSize: "A4",
+  orientation: "portrait",
+  columns: 1,
 
+  margins: {
+    top: 20,
+    right: 20,
+    bottom: 20,
+    left: 20,
+  },
+
+  header: {
+    enabled: true,
+    text: "",
+  },
+
+  studentInfo: {
+    enabled: true,
+  },
+
+  instructions: "",
+
+  footer: {
+    enabled: true,
+    text: "",
+  },
+};
 /*
  * --------------------------------------------------
  * Helpers
@@ -16,7 +45,7 @@ function createId() {
   return `assessment-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function createStorageDocument(data) {
+function createStorageDocument(data = {}) {
   return {
     version: STORAGE_VERSION,
 
@@ -27,7 +56,30 @@ function createStorageDocument(data) {
 
       sections: Array.isArray(data.sections) ? data.sections : [],
 
-      paper: data.paper && typeof data.paper === "object" ? data.paper : {},
+      paper: {
+        ...DEFAULT_PAPER,
+        ...(data.paper ?? {}),
+
+        margins: {
+          ...DEFAULT_PAPER.margins,
+          ...(data.paper?.margins ?? {}),
+        },
+
+        header: {
+          ...DEFAULT_PAPER.header,
+          ...(data.paper?.header ?? {}),
+        },
+
+        studentInfo: {
+          ...DEFAULT_PAPER.studentInfo,
+          ...(data.paper?.studentInfo ?? {}),
+        },
+
+        footer: {
+          ...DEFAULT_PAPER.footer,
+          ...(data.paper?.footer ?? {}),
+        },
+      },
     },
   };
 }
@@ -105,15 +157,43 @@ export function createAssessment(data = {}) {
 
   const now = new Date().toISOString();
 
-  const document = createStorageDocument(data);
+  const initialState = createInitialEditorState();
+
+  const document = createStorageDocument({
+    ...initialState,
+
+    ...data,
+
+    paper: {
+      ...initialState.paper,
+      ...(data.paper ?? {}),
+
+      margins: {
+        ...initialState.paper.margins,
+        ...(data.paper?.margins ?? {}),
+      },
+
+      header: {
+        ...initialState.paper.header,
+        ...(data.paper?.header ?? {}),
+      },
+
+      studentInfo: {
+        ...initialState.paper.studentInfo,
+        ...(data.paper?.studentInfo ?? {}),
+      },
+
+      footer: {
+        ...initialState.paper.footer,
+        ...(data.paper?.footer ?? {}),
+      },
+    },
+  });
 
   const assessment = {
     id,
-
     createdAt: now,
-
     updatedAt: now,
-
     ...document,
   };
 

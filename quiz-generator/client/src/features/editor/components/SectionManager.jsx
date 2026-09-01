@@ -69,28 +69,21 @@ export default function SectionManager() {
           const questionCount = getQuestionCount(section);
 
           return (
-            <div
+            <details
               key={section.id}
               className="rounded-lg border border-slate-200 bg-slate-50"
             >
-              {/* Section header */}
-              <div className="flex items-start gap-2 p-3">
-                <div className="mt-1 cursor-grab text-slate-400">⋮⋮</div>
+              <summary className="flex cursor-pointer list-none items-center gap-2 p-3">
+                <div className="text-slate-400">▸</div>
 
                 <div className="min-w-0 flex-1">
                   <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">
                     Section {index + 1}
                   </div>
 
-                  <input
-                    type="text"
-                    value={section.title}
-                    onChange={(event) =>
-                      handleTitleChange(section.id, event.target.value)
-                    }
-                    className="w-full border-0 bg-transparent p-0 text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400"
-                    placeholder="Section title"
-                  />
+                  <div className="truncate text-sm font-semibold text-slate-800">
+                    {section.title || "Untitled Section"}
+                  </div>
 
                   <div className="mt-1 text-xs text-slate-400">
                     {questionCount}{" "}
@@ -101,20 +94,25 @@ export default function SectionManager() {
                 <button
                   type="button"
                   onClick={() => handleDeleteSection(section.id)}
-                  disabled={sections.length <= 1}
                   className="rounded px-1.5 py-1 text-xs text-slate-400 hover:bg-slate-200 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30"
-                  title={
-                    sections.length <= 1
-                      ? "At least one section is required"
-                      : "Delete section"
-                  }
+                  title="Delete section"
                 >
                   ×
                 </button>
-              </div>
+              </summary>
 
               {/* Section instructions */}
-              <div className="border-t border-slate-200 px-3 py-2">
+              <div className="space-y-2 border-t border-slate-200 px-3 py-2">
+                <input
+                  type="text"
+                  value={section.title}
+                  onChange={(event) =>
+                    handleTitleChange(section.id, event.target.value)
+                  }
+                  className="w-full border-0 bg-transparent p-0 text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400"
+                  placeholder="Section title"
+                />
+
                 <textarea
                   value={section.instructions}
                   onChange={(event) =>
@@ -125,7 +123,7 @@ export default function SectionManager() {
                   className="w-full resize-none border-0 bg-transparent text-xs leading-5 text-slate-600 outline-none placeholder:text-slate-400"
                 />
               </div>
-            </div>
+            </details>
           );
         })}
 

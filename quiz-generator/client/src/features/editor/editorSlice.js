@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createSelector } from "@reduxjs/toolkit";
 import { arrayMove } from "@dnd-kit/sortable";
 
 import { initialQuestions } from "./mockQuestions";
@@ -223,16 +223,6 @@ const editorSlice = createSlice({
 
       state.questions.push(question);
 
-      /*
-       * New questions go into the first section
-       * by default.
-       */
-      const firstSection = state.sections[0];
-
-      if (firstSection) {
-        firstSection.questionIds.push(question.id);
-      }
-
       state.selectedQuestionId = question.id;
 
       state.status = "unsaved";
@@ -282,6 +272,35 @@ const editorSlice = createSlice({
         state.questions[index] ?? state.questions[index - 1] ?? null;
 
       state.selectedQuestionId = nextQuestion?.id ?? null;
+
+      state.status = "unsaved";
+      state.validation = createEmptyValidation();
+    },
+
+    assignQuestionToSection(state, action) {
+      const { questionId, sectionId } = action.payload;
+
+      const question = state.questions.find((item) => item.id === questionId);
+
+      if (!question) {
+        return;
+      }
+
+      state.sections.forEach((section) => {
+        section.questionIds = section.questionIds.filter(
+          (id) => id !== questionId,
+        );
+      });
+
+      if (sectionId) {
+        const section = state.sections.find((item) => item.id === sectionId);
+
+        if (!section) {
+          return;
+        }
+
+        section.questionIds.push(questionId);
+      }
 
       state.status = "unsaved";
       state.validation = createEmptyValidation();
@@ -490,13 +509,6 @@ const editorSlice = createSlice({
     deleteSection(state, action) {
       const { sectionId } = action.payload;
 
-      /*
-       * We always keep at least one section.
-       */
-      if (state.sections.length <= 1) {
-        return;
-      }
-
       const sectionIndex = state.sections.findIndex(
         (section) => section.id === sectionId,
       );
@@ -661,7 +673,30 @@ const editorSlice = createSlice({
       }
 
       if (data.paper && typeof data.paper === "object") {
-        state.paper = data.paper;
+        state.paper = {
+          ...state.paper,
+          ...data.paper,
+
+          margins: {
+            ...state.paper.margins,
+            ...(data.paper.margins ?? {}),
+          },
+
+          header: {
+            ...state.paper.header,
+            ...(data.paper.header ?? {}),
+          },
+
+          studentInfo: {
+            ...state.paper.studentInfo,
+            ...(data.paper.studentInfo ?? {}),
+          },
+
+          footer: {
+            ...state.paper.footer,
+            ...(data.paper.footer ?? {}),
+          },
+        };
       }
 
       state.selectedQuestionId = state.questions[0]?.id ?? null;
@@ -689,6 +724,7 @@ export const {
   deleteOption,
 
   addQuestion,
+  assignQuestionToSection,
   deleteQuestion,
   reorderQuestions,
 
@@ -705,11 +741,19 @@ export const {
   reorderQuestionsInSection,
 } = editorSlice.actions;
 
-export const selectEditorDocument = (state) => ({
-  title: state.editor.title,
-  questions: state.editor.questions,
-  sections: state.editor.sections,
-  paper: state.editor.paper,
-});
+export const selectEditorDocument = createSelector(
+  [
+    (state) => state.editor.title,
+    (state) => state.editor.questions,
+    (state) => state.editor.sections,
+    (state) => state.editor.paper,
+  ],
+  (title, questions, sections, paper) => ({
+    title,
+    questions,
+    sections,
+    paper,
+  }),
+);
 
 export default editorSlice.reducer;

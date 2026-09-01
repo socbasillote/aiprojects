@@ -1,9 +1,12 @@
 import { Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 import ExportMenu from "./ExportMenu";
 
 export default function EditorHeader() {
+  const { assessmentId } = useParams();
+
   const title = useSelector((state) => state.editor.title);
   const status = useSelector((state) => state.editor.status);
   const validation = useSelector((state) => state.editor.validation);
@@ -31,7 +34,7 @@ export default function EditorHeader() {
 
       <div className="flex items-center gap-2">
         <Link
-          to="/assessments/paper"
+          to={`/assessments/${assessmentId}/paper`}
           className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >
           Design Paper
