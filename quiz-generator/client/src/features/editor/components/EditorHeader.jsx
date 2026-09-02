@@ -6,7 +6,10 @@ import { updateTitle } from "../editorSlice";
 
 import ExportMenu from "./ExportMenu";
 
+import useEditorPersistence from "../useEditorPersistence";
+
 export default function EditorHeader() {
+  const { saveNow } = useEditorPersistence();
   const { assessmentId } = useParams();
   const dispatch = useDispatch();
   const title = useSelector((state) => state.editor.title);
@@ -54,9 +57,11 @@ export default function EditorHeader() {
 
         <button
           type="button"
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+          onClick={saveNow}
+          disabled={status === "saved"}
+          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Save
+          {status === "saved" ? "Saved" : "Save"}
         </button>
 
         <div className="flex items-center gap-2">
@@ -69,10 +74,6 @@ export default function EditorHeader() {
             ].join(" ")}
           >
             {validation.valid ? "Ready" : "Not checked"}
-          </span>
-
-          <span className="text-xs text-slate-400">
-            {status === "saved" ? "Saved" : "Unsaved changes"}
           </span>
         </div>
       </div>

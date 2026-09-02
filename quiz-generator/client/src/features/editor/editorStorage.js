@@ -279,7 +279,11 @@ export function saveAssessment(id, data) {
 
   assessments[id] = assessment;
 
-  writeAssessments(assessments);
+  const written = writeAssessments(assessments);
+
+  if (!written) {
+    return null;
+  }
 
   return assessment;
 }

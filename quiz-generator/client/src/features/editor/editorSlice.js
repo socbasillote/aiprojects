@@ -517,29 +517,39 @@ const editorSlice = createSlice({
         return;
       }
 
-      /*
-       * IMPORTANT:
-       *
-       * Do not silently delete the questions
-       * belonging to the section.
-       *
-       * Move them into another section.
-       */
       const section = state.sections[sectionIndex];
 
+      /*
+       * Do not delete the final section if it
+       * still contains questions.
+       */
+      if (state.sections.length === 1 && section.questionIds.length > 0) {
+        return;
+      }
+
+      /*
+       * Keep the questions instead of deleting them.
+       */
       const remainingSections = state.sections.filter(
         (item) => item.id !== sectionId,
       );
 
-      const destinationSection =
-        remainingSections[Math.max(0, sectionIndex - 1)];
+      /*
+       * If the deleted section contains questions,
+       * move them into an adjacent section.
+       */
+      if (section.questionIds.length > 0 && remainingSections.length > 0) {
+        const destinationIndex = sectionIndex > 0 ? sectionIndex - 1 : 0;
 
-      destinationSection.questionIds = [
-        ...destinationSection.questionIds,
-        ...section.questionIds.filter(
-          (id) => !destinationSection.questionIds.includes(id),
-        ),
-      ];
+        const destinationSection = remainingSections[destinationIndex];
+
+        destinationSection.questionIds = [
+          ...destinationSection.questionIds,
+          ...section.questionIds.filter(
+            (id) => !destinationSection.questionIds.includes(id),
+          ),
+        ];
+      }
 
       state.sections = remainingSections;
 
@@ -709,12 +719,17 @@ const editorSlice = createSlice({
         errors: [],
       };
     },
+
+    setStatus(state, action) {
+      state.status = action.payload;
+    },
   },
 });
 
 export const {
   updateTitle,
   selectQuestion,
+  setStatus,
 
   updateQuestion,
 
