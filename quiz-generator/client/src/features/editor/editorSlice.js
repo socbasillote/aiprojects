@@ -756,4 +756,15 @@ export const selectEditorDocument = createSelector(
   }),
 );
 
+export const createInitialAssessmentDocument = () => {
+  const state = createInitialEditorState();
+
+  return {
+    title: state.title,
+    questions: structuredClone(state.questions),
+    sections: structuredClone(state.sections),
+    paper: structuredClone(state.paper),
+  };
+};
+
 export default editorSlice.reducer;

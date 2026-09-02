@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { deleteAssessment, listAssessments } from "../../editor/editorStorage";
+import {
+  deleteAssessment,
+  listAssessments,
+  duplicateAssessment,
+} from "../../editor/editorStorage";
 
 export default function AssessmentList() {
   const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("updated");
 
   const [assessments, setAssessments] = useState([]);
 
@@ -44,6 +50,39 @@ export default function AssessmentList() {
     loadAssessments();
   }
 
+  function handleDuplicate(assessmentId) {
+    const duplicate = duplicateAssessment(assessmentId);
+
+    if (!duplicate) {
+      return;
+    }
+
+    loadAssessments();
+  }
+
+  const filteredAssessments = assessments
+    .filter((assessment) => {
+      const title = assessment.data.title?.trim().toLowerCase() || "";
+
+      return title.includes(search.trim().toLowerCase());
+    })
+    .sort((a, b) => {
+      if (sortBy === "title") {
+        const titleA = a.data.title?.trim().toLowerCase() || "";
+
+        const titleB = b.data.title?.trim().toLowerCase() || "";
+
+        return titleA.localeCompare(titleB);
+      }
+
+      if (sortBy === "created") {
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
   if (assessments.length === 0) {
     return (
       <>
@@ -71,7 +110,44 @@ export default function AssessmentList() {
   return (
     <>
       <div className="space-y-3">
-        {assessments.map((assessment) => {
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="relative flex-1">
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search assessments..."
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+              />
+            </div>
+
+            <select
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value)}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+            >
+              <option value="updated">Recently Updated</option>
+              <option value="created">Recently Created</option>
+              <option value="title">Title A–Z</option>
+            </select>
+          </div>
+
+          {filteredAssessments.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
+              <h2 className="text-lg font-semibold text-slate-900">
+                No assessments found
+              </h2>
+
+              <p className="mt-2 text-sm text-slate-500">
+                Try a different search term.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">{/* assessment cards */}</div>
+          )}
+        </div>
+        {filteredAssessments.map((assessment) => {
           const title = assessment.data.title?.trim() || "Untitled Assessment";
 
           const questionCount = Array.isArray(assessment.data.questions)
@@ -114,6 +190,14 @@ export default function AssessmentList() {
                     className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                   >
                     Open
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDuplicate(assessment.id)}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Duplicate
                   </button>
 
                   <button

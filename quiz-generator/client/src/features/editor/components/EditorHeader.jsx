@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
 import { useParams } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+
+import { updateTitle } from "../editorSlice";
 
 import ExportMenu from "./ExportMenu";
 
 export default function EditorHeader() {
   const { assessmentId } = useParams();
-
+  const dispatch = useDispatch();
   const title = useSelector((state) => state.editor.title);
   const status = useSelector((state) => state.editor.status);
   const validation = useSelector((state) => state.editor.validation);
@@ -24,7 +26,15 @@ export default function EditorHeader() {
         <div className="h-5 w-px bg-slate-200" />
 
         <div>
-          <h1 className="text-sm font-semibold text-slate-900">{title}</h1>
+          <input
+            type="text"
+            value={title}
+            onChange={(event) => {
+              dispatch(updateTitle(event.target.value));
+            }}
+            placeholder="Untitled Assessment"
+            className="min-w-0 flex-1 border-0 bg-transparent p-0 text-lg font-semibold text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
+          />
 
           <p className="text-xs text-slate-400">
             {status === "saved" ? "Saved" : "Unsaved changes"}
@@ -38,12 +48,6 @@ export default function EditorHeader() {
           className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >
           Design Paper
-        </Link>
-        <Link
-          to="/assessments/preview"
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-        >
-          Preview
         </Link>
 
         <ExportMenu />

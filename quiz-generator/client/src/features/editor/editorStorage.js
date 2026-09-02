@@ -206,6 +206,48 @@ export function createAssessment(data = {}) {
   return assessment;
 }
 
+export function duplicateAssessment(id) {
+  if (!id) {
+    throw new Error("Assessment ID is required.");
+  }
+
+  const assessments = readAssessments();
+
+  const existing = assessments[id];
+
+  if (!existing || !isValidStorageDocument(existing)) {
+    return null;
+  }
+
+  const newId = createId();
+  const now = new Date().toISOString();
+
+  const originalTitle = existing.data.title?.trim() || "Untitled Assessment";
+
+  const document = createStorageDocument(
+    structuredClone({
+      ...existing.data,
+      title: `${originalTitle} (Copy)`,
+    }),
+  );
+
+  const duplicate = {
+    id: newId,
+    createdAt: now,
+    updatedAt: now,
+    ...document,
+  };
+
+  assessments[newId] = duplicate;
+
+  const written = writeAssessments(assessments);
+
+  if (!written) {
+    return null;
+  }
+
+  return duplicate;
+}
 /*
  * --------------------------------------------------
  * Save

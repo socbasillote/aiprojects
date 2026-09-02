@@ -35,7 +35,6 @@ export default function AppRouter() {
         path="/assessments/:assessmentId/editor"
         element={<AssessmentEditorPage />}
       />
-      <Route path="/assessments/preview" element={<AssessmentPreviewPage />} />
 
       <Route
         path="/assessments/:assessmentId/paper"

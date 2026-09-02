@@ -1,5 +1,5 @@
 export const initialQuestions = [
-  {
+  /* {
     id: "question-1",
     type: "multiple_choice",
     order: 1,
@@ -113,5 +113,5 @@ export const initialQuestions = [
     answer: "",
     points: 5,
     difficulty: "hard",
-  },
+  }, */
 ];
