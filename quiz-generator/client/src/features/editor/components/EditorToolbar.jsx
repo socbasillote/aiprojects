@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function EditorToolbar({ editor }) {
+export default function EditorToolbar({ editor, onAddImage, className = "" }) {
   const [, setVersion] = useState(0);
 
   useEffect(() => {
@@ -27,8 +27,23 @@ export default function EditorToolbar({ editor }) {
       active ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100",
     ].join(" ");
 
+  function updateImageAttributes(changes) {
+    editor.chain().focus().updateAttributes("image", changes).run();
+  }
+
+  function editCaption() {
+    const currentCaption = editor.getAttributes("image").caption || "";
+    const caption = window.prompt("Caption", currentCaption);
+
+    if (caption !== null) {
+      updateImageAttributes({ caption });
+    }
+  }
+
   return (
-    <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 p-2">
+    <div
+      className={`flex flex-wrap items-center gap-1 border-b border-slate-200 p-2 ${className}`}
+    >
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -70,6 +85,76 @@ export default function EditorToolbar({ editor }) {
       >
         1. List
       </button>
+
+      <button type="button" onClick={onAddImage} className={buttonClass()}>
+        Image
+      </button>
+
+      {editor.isActive("image") && (
+        <>
+          <select
+            aria-label="Image width"
+            value={editor.getAttributes("image").width || "100%"}
+            onChange={(event) =>
+              updateImageAttributes({ width: event.target.value })
+            }
+            className="rounded-md border border-slate-200 px-2 py-1.5 text-sm text-slate-600"
+          >
+            <option value="25%">25%</option>
+            <option value="50%">50%</option>
+            <option value="75%">75%</option>
+            <option value="100%">100%</option>
+          </select>
+
+          <button
+            type="button"
+            onClick={() => updateImageAttributes({ alignment: "left" })}
+            className={buttonClass(
+              editor.getAttributes("image").alignment === "left",
+            )}
+          >
+            Left
+          </button>
+
+          <button
+            type="button"
+            onClick={() => updateImageAttributes({ alignment: "center" })}
+            className={buttonClass(
+              editor.getAttributes("image").alignment === "center",
+            )}
+          >
+            Center
+          </button>
+
+          <button
+            type="button"
+            onClick={() => updateImageAttributes({ alignment: "right" })}
+            className={buttonClass(
+              editor.getAttributes("image").alignment === "right",
+            )}
+          >
+            Right
+          </button>
+
+          <button
+            type="button"
+            onClick={editCaption}
+            className={buttonClass(
+              Boolean(editor.getAttributes("image").caption),
+            )}
+          >
+            Caption
+          </button>
+
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().deleteSelection().run()}
+            className={buttonClass()}
+          >
+            Delete
+          </button>
+        </>
+      )}
 
       <div className="mx-1 h-5 w-px bg-slate-200" />
 

@@ -15,6 +15,7 @@ export default function PaperPage({
   studentInfo = paper.studentInfo,
   instructions = paper.instructions,
   footer = paper.footer,
+  onEditorReady,
 }) {
   const dimensions = getPaperDimensions(paper.pageSize, paper.orientation);
 
@@ -57,7 +58,11 @@ export default function PaperPage({
             {columns.map((column, columnIndex) => (
               <div key={columnIndex} className="min-w-0">
                 {column.map((block) => (
-                  <PaperBlock key={block.id} block={block} />
+                  <PaperBlock
+                    key={block.id}
+                    block={block}
+                    onEditorReady={onEditorReady}
+                  />
                 ))}
               </div>
             ))}
@@ -65,7 +70,11 @@ export default function PaperPage({
         ) : (
           <div className="min-h-0">
             {columns[0]?.map((block) => (
-              <PaperBlock key={block.id} block={block} />
+              <PaperBlock
+                key={block.id}
+                block={block}
+                onEditorReady={onEditorReady}
+              />
             ))}
           </div>
         )}

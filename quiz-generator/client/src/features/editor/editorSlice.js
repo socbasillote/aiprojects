@@ -571,7 +571,8 @@ const editorSlice = createSlice({
     // --------------------------------------------------
 
     moveQuestionToSection(state, action) {
-      const { questionId, fromSectionId, toSectionId } = action.payload;
+      const { questionId, fromSectionId, toSectionId, targetIndex } =
+        action.payload;
 
       if (fromSectionId === toSectionId) {
         return;
@@ -600,7 +601,11 @@ const editorSlice = createSlice({
        * Add to the destination section.
        */
       if (!toSection.questionIds.includes(questionId)) {
-        toSection.questionIds.push(questionId);
+        const insertionIndex = Number.isInteger(targetIndex)
+          ? Math.max(0, Math.min(targetIndex, toSection.questionIds.length))
+          : toSection.questionIds.length;
+
+        toSection.questionIds.splice(insertionIndex, 0, questionId);
       }
 
       /*
@@ -649,6 +654,22 @@ const editorSlice = createSlice({
       };
     },
 
+    reorderSections(state, action) {
+      const { oldIndex, newIndex } = action.payload;
+
+      if (
+        oldIndex < 0 ||
+        newIndex < 0 ||
+        oldIndex >= state.sections.length ||
+        newIndex >= state.sections.length
+      ) {
+        return;
+      }
+
+      state.sections = arrayMove(state.sections, oldIndex, newIndex);
+      state.status = "unsaved";
+    },
+
     reorderQuestionsInSection(state, action) {
       const { sectionId, oldIndex, newIndex } = action.payload;
 
@@ -669,6 +690,44 @@ const editorSlice = createSlice({
 
       section.questionIds = arrayMove(section.questionIds, oldIndex, newIndex);
 
+      state.status = "unsaved";
+      state.validation = createEmptyValidation();
+    },
+
+    reorderUnsectionedQuestions(state, action) {
+      const { oldIndex, newIndex } = action.payload;
+      const sectionQuestionIds = new Set(
+        state.sections.flatMap((section) => section.questionIds),
+      );
+      const unsectionedQuestions = state.questions.filter(
+        (question) => !sectionQuestionIds.has(question.id),
+      );
+
+      if (
+        oldIndex < 0 ||
+        newIndex < 0 ||
+        oldIndex >= unsectionedQuestions.length ||
+        newIndex >= unsectionedQuestions.length
+      ) {
+        return;
+      }
+
+      const reorderedQuestions = arrayMove(
+        unsectionedQuestions,
+        oldIndex,
+        newIndex,
+      );
+      let unsectionedIndex = 0;
+
+      state.questions = state.questions.map((question) =>
+        sectionQuestionIds.has(question.id)
+          ? question
+          : reorderedQuestions[unsectionedIndex++],
+      );
+
+      state.questions.forEach((question, index) => {
+        question.order = index + 1;
+      });
       state.status = "unsaved";
       state.validation = createEmptyValidation();
     },
@@ -763,7 +822,9 @@ export const {
   deleteSection,
   hydrateEditor,
   moveQuestionToSection,
+  reorderSections,
   reorderQuestionsInSection,
+  reorderUnsectionedQuestions,
 } = editorSlice.actions;
 
 export const selectEditorDocument = createSelector(

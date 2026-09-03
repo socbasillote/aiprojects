@@ -6,7 +6,7 @@ import {
   updateQuestion,
 } from "../editorSlice";
 
-export default function PropertiesPanel() {
+export default function PropertiesPanel({ embedded = false }) {
   const dispatch = useDispatch();
 
   const question = useSelector((state) =>
@@ -23,11 +23,17 @@ export default function PropertiesPanel() {
 
   if (!question) {
     return (
-      <aside className="w-72 shrink-0 border-l border-slate-200 bg-white p-5">
+      <div
+        className={
+          embedded
+            ? "p-4"
+            : "w-72 shrink-0 border-l border-slate-200 bg-white p-5"
+        }
+      >
         <p className="text-sm text-slate-400">
           Select a question to edit its properties.
         </p>
-      </aside>
+      </div>
     );
   }
 
@@ -80,13 +86,13 @@ export default function PropertiesPanel() {
   }
 
   return (
-    <aside className="w-72 shrink-0 overflow-y-auto border-l border-slate-200 bg-white p-5">
-      <div className="mb-6">
-        <h2 className="text-sm font-semibold text-slate-900">Properties</h2>
-
-        <p className="mt-1 text-xs text-slate-400">Configure this question.</p>
-      </div>
-
+    <div
+      className={
+        embedded
+          ? "p-4"
+          : "w-72 shrink-0 overflow-y-auto border-l border-slate-200 bg-white p-5"
+      }
+    >
       <div className="space-y-5">
         <div>
           <label
@@ -206,6 +212,6 @@ export default function PropertiesPanel() {
           </button>
         </div>
       </div>
-    </aside>
+    </div>
   );
 }

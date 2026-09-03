@@ -76,6 +76,36 @@ function renderNode(node, key) {
     case "horizontalRule":
       return <hr key={key} className="my-4 border-slate-300" />;
 
+    case "image":
+      return (
+        <figure
+          key={key}
+          className="my-3"
+          style={{
+            textAlign: node.attrs?.alignment || "left",
+          }}
+        >
+          <img
+            src={node.attrs?.src}
+            alt={node.attrs?.alt || ""}
+            className="max-w-full"
+            style={{
+              width: node.attrs?.width || "100%",
+              height: "auto",
+              marginLeft:
+                node.attrs?.alignment === "right" ? "auto" : undefined,
+              marginRight:
+                node.attrs?.alignment === "left" ? "auto" : undefined,
+            }}
+          />
+          {node.attrs?.caption && (
+            <figcaption className="mt-1 text-sm text-slate-500">
+              {node.attrs.caption}
+            </figcaption>
+          )}
+        </figure>
+      );
+
     default:
       return null;
   }

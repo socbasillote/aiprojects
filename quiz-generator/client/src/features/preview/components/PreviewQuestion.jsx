@@ -1,11 +1,10 @@
-import { useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
+
+import { createQuestionEditorExtensions } from "../../editor/tiptapConfig";
 
 function QuestionContent({ content }) {
   const editor = useEditor({
-    extensions: [StarterKit, Underline],
+    extensions: createQuestionEditorExtensions(),
     content,
     editable: false,
     immediatelyRender: false,

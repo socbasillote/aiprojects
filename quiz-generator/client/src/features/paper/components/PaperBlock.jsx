@@ -1,7 +1,7 @@
 import PaperQuestion from "./PaperQuestion";
 import PaperSection from "./PaperSection";
 
-export default function PaperBlock({ block }) {
+export default function PaperBlock({ block, onEditorReady }) {
   if (!block) {
     return null;
   }
@@ -17,7 +17,11 @@ export default function PaperBlock({ block }) {
   if (block.type === "question") {
     return (
       <div data-paper-block={block.id} className="flow-root min-w-0">
-        <PaperQuestion question={block.question} number={block.number} />
+        <PaperQuestion
+          question={block.question}
+          number={block.number}
+          onEditorReady={onEditorReady}
+        />
       </div>
     );
   }
