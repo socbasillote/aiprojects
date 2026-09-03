@@ -4,7 +4,11 @@ import { useParams } from "react-router-dom";
 
 import { hydrateEditor, selectEditorDocument, setStatus } from "./editorSlice";
 
-import { loadAssessment, saveAssessment } from "./editorStorage";
+import {
+  getAssessment,
+  normalizeAssessment,
+  updateAssessment,
+} from "../../api/assessmentApi";
 
 export default function useEditorPersistence() {
   const dispatch = useDispatch();
@@ -34,21 +38,27 @@ export default function useEditorPersistence() {
 
     setHydrated(false);
 
-    const assessment = loadAssessment(assessmentId);
+    let cancelled = false;
 
-    if (!assessment) {
-      console.warn(
-        `Assessment "${assessmentId}" was not found in local storage.`,
-      );
+    getAssessment(assessmentId)
+      .then((assessment) => {
+        if (cancelled) {
+          return;
+        }
 
-      return;
-    }
+        dispatch(hydrateEditor(normalizeAssessment(assessment)));
 
-    dispatch(hydrateEditor(assessment.data));
+        hydratedAssessmentId.current = assessmentId;
 
-    hydratedAssessmentId.current = assessmentId;
+        setHydrated(true);
+      })
+      .catch((error) => {
+        console.error("Failed to load assessment:", error);
+      });
 
-    setHydrated(true);
+    return () => {
+      cancelled = true;
+    };
   }, [assessmentId, dispatch]);
 
   /*
@@ -63,11 +73,9 @@ export default function useEditorPersistence() {
     }
 
     const timeoutId = window.setTimeout(() => {
-      const saved = saveAssessment(assessmentId, document);
-
-      if (saved) {
-        dispatch(setStatus("saved"));
-      }
+      updateAssessment(assessmentId, document)
+        .then(() => dispatch(setStatus("saved")))
+        .catch((error) => console.error("Failed to save assessment:", error));
     }, 700);
 
     return () => {
@@ -86,13 +94,15 @@ export default function useEditorPersistence() {
       return false;
     }
 
-    const saved = saveAssessment(assessmentId, document);
-
-    if (saved) {
-      dispatch(setStatus("saved"));
-    }
-
-    return saved;
+    return updateAssessment(assessmentId, document)
+      .then(() => {
+        dispatch(setStatus("saved"));
+        return true;
+      })
+      .catch((error) => {
+        console.error("Failed to save assessment:", error);
+        return false;
+      });
   }, [assessmentId, document, hydrated, dispatch]);
 
   return {

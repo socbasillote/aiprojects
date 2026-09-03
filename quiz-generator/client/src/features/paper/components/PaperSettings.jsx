@@ -166,7 +166,7 @@ export default function PaperSettings() {
             Header
           </h3>
 
-          <div className="mt-3 space-y-3">
+          <div className="mt-3 space-y-2">
             <Toggle
               label="Show header"
               checked={paper.header.enabled}
@@ -178,7 +178,61 @@ export default function PaperSettings() {
             />
 
             {paper.header.enabled && (
-              <>
+              <div className="space-y-2 border-l border-slate-200 pl-3">
+                <Toggle
+                  label="School name"
+                  checked={paper.header.showSchoolName}
+                  onChange={(checked) =>
+                    updateSection("header", {
+                      showSchoolName: checked,
+                    })
+                  }
+                />
+
+                <Toggle
+                  label="Subject"
+                  checked={paper.header.showSubject}
+                  onChange={(checked) =>
+                    updateSection("header", {
+                      showSubject: checked,
+                    })
+                  }
+                />
+
+                <Toggle
+                  label="Teacher"
+                  checked={paper.header.showTeacher}
+                  onChange={(checked) =>
+                    updateSection("header", {
+                      showTeacher: checked,
+                    })
+                  }
+                />
+
+                <Toggle
+                  label="Date"
+                  checked={paper.header.showDate}
+                  onChange={(checked) =>
+                    updateSection("header", {
+                      showDate: checked,
+                    })
+                  }
+                />
+
+                <Toggle
+                  label="Duration"
+                  checked={paper.header.showDuration}
+                  onChange={(checked) =>
+                    updateSection("header", {
+                      showDuration: checked,
+                    })
+                  }
+                />
+              </div>
+            )}
+
+            {paper.header.enabled && (
+              <div className="mt-3 space-y-3">
                 <TextInput
                   label="School name"
                   value={paper.header.schoolName}
@@ -228,7 +282,7 @@ export default function PaperSettings() {
                     })
                   }
                 />
-              </>
+              </div>
             )}
           </div>
         </section>

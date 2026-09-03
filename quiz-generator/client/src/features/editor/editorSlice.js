@@ -55,11 +55,21 @@ export const createInitialEditorState = () => ({
 
     header: {
       enabled: true,
+
       schoolName: "",
+      showSchoolName: true,
+
       subject: "",
+      showSubject: true,
+
       teacher: "",
+      showTeacher: true,
+
       date: "",
+      showDate: true,
+
       duration: "",
+      showDuration: true,
     },
 
     studentInfo: {

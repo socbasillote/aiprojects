@@ -3,6 +3,8 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 
+import assessmentRoutes from "./routes/assessmentRoutes.js";
+
 const app = express();
 
 app.use(helmet());
@@ -30,6 +32,12 @@ app.get("/api/health", (req, res) => {
     message: "Assessment AI API is running.",
   });
 });
+
+/*
+ * API routes
+ */
+
+app.use("/api/assessments", assessmentRoutes);
 
 /*
  * 404 handler

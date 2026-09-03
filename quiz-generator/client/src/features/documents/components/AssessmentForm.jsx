@@ -1,4 +1,4 @@
-import { useState, useSelector } from "react";
+import { useState } from "react";
 import {
   questionTypes,
   difficultyOptions,
@@ -16,7 +16,7 @@ const initialForm = {
   instructions: "",
 };
 
-export default function AssessmentForm({ onGenerate }) {
+export default function AssessmentForm({ onGenerate, submitting = false }) {
   const [form, setForm] = useState(initialForm);
 
   function handleChange(event) {
@@ -272,10 +272,10 @@ export default function AssessmentForm({ onGenerate }) {
       <div className="flex justify-end">
         <button
           type="submit"
-          disabled={form.questionTypes.length === 0}
+          disabled={form.questionTypes.length === 0 || submitting}
           className="rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Generate Questions
+          {submitting ? "Generating..." : "Generate Questions"}
         </button>
       </div>
     </form>
