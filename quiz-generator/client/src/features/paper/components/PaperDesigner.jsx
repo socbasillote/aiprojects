@@ -17,10 +17,18 @@ export default function PaperDesigner() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(true);
 
   function handleWorkspaceClick(event) {
-    if (
-      !event.target.closest("[data-paper-preview]") &&
-      !event.target.closest("[data-paper-question]")
-    ) {
+    const target = event.target;
+
+    if (!(target instanceof Element)) {
+      return;
+    }
+
+    const clickedQuestion = target.closest("[data-paper-question]");
+    const clickedControl = target.closest(
+      "button, input, textarea, select, a, [role='button'], [contenteditable='true']",
+    );
+
+    if (!clickedQuestion && !clickedControl) {
       dispatch(selectQuestion(null));
     }
   }

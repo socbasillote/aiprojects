@@ -223,7 +223,7 @@ export default function PaperQuestion({ question, number, onEditorReady }) {
   return (
     <article
       data-paper-question
-      className={`break-inside-avoid ${
+      className={`relative break-inside-avoid ${
         selectedQuestionId === question.id
           ? "ring-2 ring-sky-400 ring-offset-2"
           : ""
@@ -235,6 +235,22 @@ export default function PaperQuestion({ question, number, onEditorReady }) {
         lineHeight: PAPER_STYLES.body.lineHeight,
       }}
     >
+      {isEditing && (
+        <div className="absolute right-0 top-0 z-30 flex items-center gap-2">
+          <span className="text-xs font-medium text-sky-600">Editing</span>
+          <button
+            type="button"
+            onClick={() => {
+              setIsEditing(false);
+              onEditorReady?.(null);
+            }}
+            className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-slate-700"
+          >
+            Done
+          </button>
+        </div>
+      )}
+
       <div className="flex items-start">
         <span
           className="shrink-0"
@@ -269,16 +285,6 @@ export default function PaperQuestion({ question, number, onEditorReady }) {
                 }
               />
 
-              <button
-                type="button"
-                onClick={() => {
-                  setIsEditing(false);
-                  onEditorReady?.(null);
-                }}
-                className="absolute right-0 top-0 z-20 rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
-              >
-                Done
-              </button>
             </div>
           ) : (
             <div
