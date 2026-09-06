@@ -20,6 +20,7 @@ export default function PaperBlock({ block, onEditorReady }) {
         <PaperQuestion
           question={block.question}
           number={block.number}
+          showAnswerKey={block.showAnswerKey}
           onEditorReady={onEditorReady}
         />
       </div>

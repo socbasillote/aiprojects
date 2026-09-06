@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import QuestionContentEditor from "../../editor/components/QuestionContentEditor";
@@ -68,7 +68,13 @@ function QuestionAnswerArea({ question }) {
   }
 } */
 
-function QuestionAnswerArea({ question, isEditing, onOptionChange }) {
+function QuestionAnswerArea({
+  question,
+  isEditing,
+  onStartEditing,
+  onOptionChange,
+  onAnswerChange,
+}) {
   if (!question) {
     return null;
   }
@@ -77,6 +83,7 @@ function QuestionAnswerArea({ question, isEditing, onOptionChange }) {
     return (
       <div
         className="space-y-1.5"
+        onClick={!isEditing ? onStartEditing : undefined}
         style={{
           marginTop: PAPER_STYLES.options.marginTop,
           paddingLeft: PAPER_STYLES.options.paddingLeft,
@@ -118,14 +125,36 @@ function QuestionAnswerArea({ question, isEditing, onOptionChange }) {
     return (
       <div
         className="flex gap-8"
+        onClick={!isEditing ? onStartEditing : undefined}
         style={{
           marginTop: PAPER_STYLES.options.marginTop,
           paddingLeft: PAPER_STYLES.options.paddingLeft,
         }}
       >
-        <span>☐ True</span>
+        {isEditing ? (
+          <>
+            <button
+              type="button"
+              onClick={() => onAnswerChange(true)}
+              className="text-left"
+            >
+              {question.answer === true ? "◉" : "○"} True
+            </button>
 
-        <span>☐ False</span>
+            <button
+              type="button"
+              onClick={() => onAnswerChange(false)}
+              className="text-left"
+            >
+              {question.answer === false ? "◉" : "○"} False
+            </button>
+          </>
+        ) : (
+          <>
+            <span>☐ True</span>
+            <span>☐ False</span>
+          </>
+        )}
       </div>
     );
   }
@@ -134,12 +163,25 @@ function QuestionAnswerArea({ question, isEditing, onOptionChange }) {
     return (
       <div
         className="space-y-2"
+        onClick={!isEditing ? onStartEditing : undefined}
         style={{
           marginTop: PAPER_STYLES.answerLines.marginTop,
         }}
       >
-        <div className="border-b border-slate-300" />
-        <div className="border-b border-slate-300" />
+        {isEditing ? (
+          <input
+            type="text"
+            value={question.answer ?? ""}
+            onChange={(event) => onAnswerChange(event.target.value)}
+            placeholder="Enter the answer"
+            className="w-full border-b border-slate-300 bg-transparent outline-none focus:border-sky-500"
+          />
+        ) : (
+          <>
+            <div className="border-b border-slate-300" />
+            <div className="border-b border-slate-300" />
+          </>
+        )}
       </div>
     );
   }
@@ -148,11 +190,22 @@ function QuestionAnswerArea({ question, isEditing, onOptionChange }) {
     return (
       <div
         className="border-b border-slate-300"
+        onClick={!isEditing ? onStartEditing : undefined}
         style={{
           marginTop: PAPER_STYLES.answerLines.marginTop,
         }}
       >
-        &nbsp;
+        {isEditing ? (
+          <input
+            type="text"
+            value={question.answer ?? ""}
+            onChange={(event) => onAnswerChange(event.target.value)}
+            placeholder="Enter the answer"
+            className="w-full bg-transparent outline-none"
+          />
+        ) : (
+          "\u00a0"
+        )}
       </div>
     );
   }
@@ -161,18 +214,63 @@ function QuestionAnswerArea({ question, isEditing, onOptionChange }) {
     return (
       <div
         className="space-y-2"
+        onClick={!isEditing ? onStartEditing : undefined}
         style={{
           marginTop: PAPER_STYLES.answerLines.marginTop,
         }}
       >
-        {Array.from({ length: 6 }, (_, index) => (
-          <div key={index} className="border-b border-slate-300" />
-        ))}
+        {isEditing ? (
+          <textarea
+            value={question.answer ?? ""}
+            onChange={(event) => onAnswerChange(event.target.value)}
+            placeholder="Enter the answer or grading guidance"
+            rows={5}
+            className="w-full resize-y border border-slate-300 bg-transparent p-2 outline-none focus:border-sky-500"
+          />
+        ) : (
+          Array.from({ length: 6 }, (_, index) => (
+            <div key={index} className="border-b border-slate-300" />
+          ))
+        )}
       </div>
     );
   }
 
   return null;
+}
+
+function getAnswerKeyLabel(question) {
+  if (question.type === "multiple_choice") {
+    const answerOption = question.options?.find(
+      (option) => option.id === question.answer || option.correct,
+    );
+
+    if (!answerOption) {
+      return "Not provided";
+    }
+
+    const optionIndex = question.options.indexOf(answerOption);
+
+    return `${String.fromCharCode(65 + optionIndex)}. ${answerOption.text}`;
+  }
+
+  if (question.type === "true_false") {
+    if (
+      question.answer === true ||
+      String(question.answer).toLowerCase() === "true"
+    ) {
+      return "True";
+    }
+
+    if (
+      question.answer === false ||
+      String(question.answer).toLowerCase() === "false"
+    ) {
+      return "False";
+    }
+  }
+
+  return question.answer || "Not provided";
 }
 
 function hasQuestionContent(content) {
@@ -183,18 +281,26 @@ function hasQuestionContent(content) {
   );
 }
 
-export default function PaperQuestion({ question, number, onEditorReady }) {
+export default function PaperQuestion({
+  question,
+  number,
+  showAnswerKey = false,
+  onEditorReady,
+}) {
   const dispatch = useDispatch();
   const selectedQuestionId = useSelector(
     (state) => state.editor.selectedQuestionId,
   );
-  const startsEmpty = !hasQuestionContent(question?.content);
-  const [isEditing, setIsEditing] = useState(
-    () => selectedQuestionId === question?.id && startsEmpty,
-  );
   const [editingLayoutContent, setEditingLayoutContent] = useState(
     () => question?.content,
   );
+  const isEditing = selectedQuestionId === question.id;
+
+  useEffect(() => {
+    if (!isEditing) {
+      onEditorReady?.(null);
+    }
+  }, [isEditing, onEditorReady]);
 
   if (!question) {
     return null;
@@ -214,10 +320,18 @@ export default function PaperQuestion({ question, number, onEditorReady }) {
     );
   }
 
+  function handleAnswerChange(answer) {
+    dispatch(
+      updateQuestion({
+        id: question.id,
+        changes: { answer },
+      }),
+    );
+  }
+
   function startEditing() {
     setEditingLayoutContent(question.content);
     handleSelect();
-    setIsEditing(true);
   }
 
   return (
@@ -235,22 +349,6 @@ export default function PaperQuestion({ question, number, onEditorReady }) {
         lineHeight: PAPER_STYLES.body.lineHeight,
       }}
     >
-      {isEditing && (
-        <div className="absolute right-0 top-0 z-30 flex items-center gap-2">
-          <span className="text-xs font-medium text-sky-600">Editing</span>
-          <button
-            type="button"
-            onClick={() => {
-              setIsEditing(false);
-              onEditorReady?.(null);
-            }}
-            className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-slate-700"
-          >
-            Done
-          </button>
-        </div>
-      )}
-
       <div className="flex items-start">
         <span
           className="shrink-0"
@@ -284,7 +382,6 @@ export default function PaperQuestion({ question, number, onEditorReady }) {
                   )
                 }
               />
-
             </div>
           ) : (
             <div
@@ -312,8 +409,16 @@ export default function PaperQuestion({ question, number, onEditorReady }) {
           <QuestionAnswerArea
             question={question}
             isEditing={isEditing}
+            onStartEditing={startEditing}
             onOptionChange={handleOptionChange}
+            onAnswerChange={handleAnswerChange}
           />
+
+          {showAnswerKey && (
+            <div className="mt-3 text-xs font-semibold text-slate-500">
+              Answer key: {getAnswerKeyLabel(question)}
+            </div>
+          )}
         </div>
       </div>
     </article>

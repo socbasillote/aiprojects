@@ -6,9 +6,36 @@ import { CSS } from "@dnd-kit/utilities";
 import { addOption, selectQuestion } from "../../editor/editorSlice";
 
 function getQuestionLabel(question) {
+  const text = getTextContent(question.content).trim();
+  const image = getImageNodes(question.content)[0];
+
   return (
-    question.content?.content?.[0]?.content?.[0]?.text || "Add question text"
+    text || image?.attrs?.alt || image?.attrs?.caption || "Add question text"
   );
+}
+
+function getTextContent(node) {
+  if (!node) {
+    return "";
+  }
+
+  if (node.type === "text") {
+    return node.text || "";
+  }
+
+  return (node.content || []).map(getTextContent).join(" ");
+}
+
+function getImageNodes(node) {
+  if (!node) {
+    return [];
+  }
+
+  if (node.type === "image") {
+    return [node];
+  }
+
+  return (node.content || []).flatMap(getImageNodes);
 }
 
 export default function PaperTreeQuestion({ question, sectionId = null }) {
@@ -20,6 +47,8 @@ export default function PaperTreeQuestion({ question, sectionId = null }) {
 
   const isSelected = selectedQuestionId === question.id;
   const isMultipleChoice = question.type === "multiple_choice";
+  const textContent = getTextContent(question.content).trim();
+  const images = getImageNodes(question.content);
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({
       id: question.id,
@@ -108,12 +137,19 @@ export default function PaperTreeQuestion({ question, sectionId = null }) {
 
       {isExpanded && (
         <div className="ml-4 border-l border-slate-200 pl-2">
-          {question.content?.content?.length > 0 && (
-            <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-slate-500">
-              <span className="text-slate-400">T</span>
-              <span>Content</span>
+          {images.map((image, index) => (
+            <div
+              key={`${question.id}-image-${index}`}
+              className="flex items-center gap-2 px-2 py-1.5 text-xs text-slate-500"
+            >
+              <span className="text-slate-400" aria-hidden="true">
+                🖼
+              </span>
+              <span className="min-w-0 truncate">
+                {image.attrs?.alt || image.attrs?.caption || "Image"}
+              </span>
             </div>
-          )}
+          ))}
 
           {question.media && (
             <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-slate-500">

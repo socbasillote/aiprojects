@@ -61,6 +61,8 @@ export function buildPaperLayout({ title, questions, sections, paper }) {
          */
         number: questionNumber,
 
+        showAnswerKey: Boolean(paper.showAnswerKey),
+
         question,
       });
 
@@ -81,6 +83,7 @@ export function buildPaperLayout({ title, questions, sections, paper }) {
       id: question.id,
       type: "question",
       number: questionNumber,
+      showAnswerKey: Boolean(paper.showAnswerKey),
       question,
     });
 

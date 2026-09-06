@@ -148,6 +148,18 @@ export default function PaperSettings({ isOpen, onToggle }) {
                 </select>
               </label>
             </div>
+
+            <div className="mt-4 border-t border-slate-200 pt-4">
+              <Toggle
+                label="Show answer keys"
+                checked={paper.showAnswerKey}
+                onChange={(checked) =>
+                  updateSetting({
+                    showAnswerKey: checked,
+                  })
+                }
+              />
+            </div>
           </section>
 
           {/* MARGINS */}

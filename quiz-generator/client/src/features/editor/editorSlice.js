@@ -45,6 +45,7 @@ export const createInitialEditorState = () => ({
     pageSize: "A4",
     orientation: "portrait",
     columns: 1,
+    showAnswerKey: false,
 
     margins: {
       top: 20,
