@@ -52,22 +52,26 @@ export default function PropertiesPanel({ embedded = false }) {
     };
 
     if (type === "multiple_choice") {
-      const firstOptionId = `${question.id}-option-1`;
+      const options = question.options?.length
+        ? question.options
+        : [
+            {
+              id: `${question.id}-option-1`,
+              text: "Option A",
+              correct: true,
+            },
+            {
+              id: `${question.id}-option-2`,
+              text: "Option B",
+              correct: false,
+            },
+          ];
+      const selectedOption = options.find(
+        (option) => option.id === question.answer || option.correct,
+      );
 
-      changes.options = [
-        {
-          id: firstOptionId,
-          text: "Option A",
-          correct: true,
-        },
-        {
-          id: `${question.id}-option-2`,
-          text: "Option B",
-          correct: false,
-        },
-      ];
-
-      changes.answer = firstOptionId;
+      changes.options = options;
+      changes.answer = selectedOption?.id ?? options[0].id;
     }
 
     if (type === "true_false") {

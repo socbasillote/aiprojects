@@ -121,11 +121,6 @@ const editorSlice = createSlice({
 
       Object.assign(question, changes);
 
-      // Multiple choice is the only type that uses options.
-      if (changes.type && changes.type !== "multiple_choice") {
-        delete question.options;
-      }
-
       state.status = "unsaved";
       state.validation = createEmptyValidation();
     },
