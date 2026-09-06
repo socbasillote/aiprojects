@@ -3,7 +3,10 @@ import Assessment from "../models/Assessment.js";
 
 import { assessmentGenerationSchema } from "../validators/assessmentGenerationValidator.js";
 
-import { generateAssessmentQuestions } from "../services/ai/generateAssessmentQuestions.js";
+import {
+  generateAssessmentQuestions,
+  regenerateAssessmentQuestion,
+} from "../services/ai/generateAssessmentQuestions.js";
 
 /*
  * ---------------------------------------------
@@ -204,6 +207,42 @@ export async function generateQuestions(req, res, next) {
     res.status(200).json({
       success: true,
       data: assessment,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function regenerateQuestion(req, res, next) {
+  try {
+    const { assessmentId, questionId } = req.params;
+    const assessment = await Assessment.findById(assessmentId);
+
+    if (!assessment) {
+      const error = new Error("Assessment not found.");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const questionIndex = assessment.questions.findIndex(
+      (question) => question.id === questionId,
+    );
+
+    if (questionIndex === -1) {
+      const error = new Error("Question not found.");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const sourceQuestion = req.body?.question || assessment.questions[questionIndex];
+    const replacement = await regenerateAssessmentQuestion(sourceQuestion);
+
+    assessment.questions[questionIndex] = replacement;
+    await assessment.save();
+
+    res.status(200).json({
+      success: true,
+      data: replacement,
     });
   } catch (error) {
     next(error);

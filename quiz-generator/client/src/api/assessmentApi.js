@@ -1,6 +1,24 @@
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ?? "http://localhost:5000/api";
 
+function normalizeQuestionContent(content) {
+  if (content && typeof content === "object") {
+    return content;
+  }
+
+  const paragraphs = String(content ?? "")
+    .split(/\r?\n/)
+    .map((text) => ({
+      type: "paragraph",
+      content: text ? [{ type: "text", text }] : [],
+    }));
+
+  return {
+    type: "doc",
+    content: paragraphs.length ? paragraphs : [{ type: "paragraph" }],
+  };
+}
+
 async function request(endpoint, options = {}) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     headers: {
@@ -37,6 +55,7 @@ export function normalizeAssessment(assessment) {
     ...assessment,
     questions: (assessment.questions ?? []).map((question) => ({
       ...question,
+      content: normalizeQuestionContent(question.content),
       options: (question.options ?? []).map((option) => ({
         ...option,
         correct: option.correct ?? option.isCorrect ?? false,
@@ -149,4 +168,18 @@ export async function generateQuestions(assessmentId, data = {}) {
     method: "POST",
     body: JSON.stringify(data),
   });
+}
+
+export async function regenerateQuestion(assessmentId, questionId, question) {
+  if (!assessmentId || !questionId) {
+    throw new Error("Assessment ID and question ID are required.");
+  }
+
+  return request(
+    `/assessments/${assessmentId}/questions/${questionId}/regenerate`,
+    {
+      method: "POST",
+      body: JSON.stringify({ question }),
+    },
+  );
 }

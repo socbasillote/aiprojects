@@ -26,7 +26,7 @@ export default function NewAssessmentPage() {
         questionCount: Number(formData.questionCount),
       });
 
-      navigate(`/assessments/${assessment._id}/editor`);
+      navigate(`/assessments/${assessment._id}/paper`);
     } catch (requestError) {
       console.error("Failed to create assessment:", requestError);
       setError(requestError.message || "Failed to create assessment.");

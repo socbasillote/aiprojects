@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
 
+import { normalizeAssessment, regenerateQuestion } from "../../../api/assessmentApi";
 import {
   assignQuestionToSection,
   deleteQuestion,
@@ -8,6 +11,9 @@ import {
 
 export default function PropertiesPanel({ embedded = false }) {
   const dispatch = useDispatch();
+  const { assessmentId } = useParams();
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenerationError, setRegenerationError] = useState("");
 
   const question = useSelector((state) =>
     state.editor.questions.find(
@@ -87,6 +93,37 @@ export default function PropertiesPanel({ embedded = false }) {
     }
 
     update(changes);
+  }
+
+  async function handleRegenerate() {
+    if (!assessmentId || regenerating) {
+      return;
+    }
+
+    try {
+      setRegenerating(true);
+      setRegenerationError("");
+
+      const replacement = await regenerateQuestion(
+        assessmentId,
+        question.id,
+        question,
+      );
+      const normalizedQuestion = normalizeAssessment({
+        questions: [replacement],
+      }).questions[0];
+
+      dispatch(
+        updateQuestion({
+          id: question.id,
+          changes: normalizedQuestion,
+        }),
+      );
+    } catch (error) {
+      setRegenerationError(error.message || "Unable to regenerate question.");
+    } finally {
+      setRegenerating(false);
+    }
   }
 
   return (
@@ -204,6 +241,21 @@ export default function PropertiesPanel({ embedded = false }) {
           <p className="text-xs font-medium text-slate-500">Question status</p>
 
           <p className="mt-1 text-sm font-medium text-slate-900">Ready</p>
+        </div>
+
+        <div className="border-t border-slate-200 pt-5">
+          <button
+            type="button"
+            onClick={handleRegenerate}
+            disabled={regenerating || !assessmentId}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {regenerating ? "Regenerating..." : "Regenerate Question"}
+          </button>
+
+          {regenerationError && (
+            <p className="mt-2 text-xs text-red-600">{regenerationError}</p>
+          )}
         </div>
 
         <div className="border-t border-slate-200 pt-5">

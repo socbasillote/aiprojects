@@ -7,6 +7,7 @@ import {
   updateAssessment,
   deleteAssessment,
   generateQuestions,
+  regenerateQuestion,
 } from "../controllers/assessmentController.js";
 
 const router = express.Router();
@@ -16,6 +17,11 @@ router.post("/", createAssessment);
 router.get("/", listAssessments);
 
 router.post("/:assessmentId/generate", generateQuestions);
+
+router.post(
+  "/:assessmentId/questions/:questionId/regenerate",
+  regenerateQuestion,
+);
 
 router.get("/:assessmentId", getAssessment);
 

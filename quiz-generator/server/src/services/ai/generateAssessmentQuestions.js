@@ -221,3 +221,23 @@ export async function generateAssessmentQuestions(input) {
 
   return result.data.questions;
 }
+
+export async function regenerateAssessmentQuestion(question) {
+  const questions = await generateAssessmentQuestions({
+    subject: "the same subject",
+    gradeLevel: "the same grade level",
+    topic: typeof question.content === "string" ? question.content : "the same topic",
+    questionCount: 1,
+    questionTypes: [question.type],
+    difficulty: question.difficulty || "medium",
+    language: "the same language",
+    instructions: `Create a fresh replacement for this question. Keep the same educational intent but do not repeat its wording. Existing question: ${JSON.stringify(question.content)}.`,
+  });
+
+  return {
+    ...questions[0],
+    id: question.id,
+    order: question.order,
+    points: question.points,
+  };
+}
