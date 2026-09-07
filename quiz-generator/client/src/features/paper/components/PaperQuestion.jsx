@@ -9,6 +9,8 @@ import {
 } from "../../editor/editorSlice";
 import RichTextRenderer from "./RichTextRenderer";
 import { PAPER_STYLES } from "../paperStyles";
+import QuestionAssets from "../../questions/QuestionAssets";
+import QuestionMath from "../../questions/QuestionMath";
 
 /* function MultipleChoiceAnswers({ options = [] }) {
   return (
@@ -405,6 +407,9 @@ export default function PaperQuestion({
               )}
             </div>
           )}
+
+          <QuestionAssets assets={question.assets} />
+          <QuestionMath question={question} paperMode />
 
           <QuestionAnswerArea
             question={question}

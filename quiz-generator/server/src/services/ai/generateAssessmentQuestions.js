@@ -1,4 +1,6 @@
 import { openai } from "../../config/openai.js";
+import { planQuestionContent } from "./questionContentPlanner.js";
+import { validateMathQuestion } from "./mathValidation.js";
 
 import { generatedQuestionsSchema } from "../../validators/generatedQuestionsValidator.js";
 
@@ -11,7 +13,17 @@ function createPrompt({
   difficulty,
   language,
   instructions,
+  contentMode = "text",
+  imageMode = "none",
+  mathSolutionLayout = "step_by_step",
 }) {
+  const contentPlan = planQuestionContent({
+    subject,
+    topic,
+    gradeLevel,
+    difficulty,
+    contentMode,
+  });
   return `
 Generate an educational assessment.
 
@@ -30,6 +42,15 @@ ${questionCount}
 Allowed question types:
 ${questionTypes.join(", ")}
 
+
+Allowed content types:
+${contentPlan.allowed.join(", ")}
+
+Image preference:
+${imageMode}
+
+Math solution layout:
+${mathSolutionLayout}
 Difficulty:
 ${difficulty}
 
@@ -55,6 +76,13 @@ Requirements:
 - Include a concise explanation.
 - Assign a reasonable point value.
 
+- Set contentType to one of the allowed content types. Use visual only when it improves the question for the subject and topic.
+- For math content, include math.expression, math.solution, math.unit, and math.tolerance. The solution must be independently calculable from the expression.
+- For math content, use a plain numeric expression with +, -, *, /, ^, parentheses, or a simple fraction. Put only the numeric answer in math.solution; put measurement units in math.unit. Do not put explanatory text in either field.
+- For math content, set math.solutionLayout to ${mathSolutionLayout}.
+- For math content, return only the problem in content. Do not add per-question instructions such as "solve", "show your work", or numbered steps; those belong to the section instructions.
+- For visual content, include an asset with a useful prompt, accurate altText, source, and URL only when available.
+- Respect the image preference. Generate no image assets when it is none; use grayscale prompts for black_and_white and full-color prompts for color.
 Return only data matching the requested structured schema.
 `;
 }
@@ -162,6 +190,90 @@ export async function generateAssessmentQuestions(input) {
                   points: {
                     type: "number",
                   },
+                  contentType: {
+                    type: "string",
+                    enum: ["text", "math", "visual"],
+                  },
+                  contentKind: {
+                    type: "string",
+                    enum: ["text", "math", "visual"],
+                  },
+                  math: {
+                    type: ["object", "null"],
+                    properties: {
+                      expression: { type: "string" },
+                      solution: { type: "string" },
+                      unit: { type: "string" },
+                      tolerance: { type: "number" },
+                      solutionLayout: {
+                        type: "string",
+                        enum: ["step_by_step", "top_to_bottom"],
+                      },
+                      verified: { type: "boolean" },
+                      verification: {
+                        type: ["object", "null"],
+                        properties: {
+                          independentlySolved: { type: "boolean" },
+                          expected: { type: ["number", "null"] },
+                          declared: { type: ["number", "null"] },
+                          unit: { type: "string" },
+                        },
+                        required: [
+                          "independentlySolved",
+                          "expected",
+                          "declared",
+                          "unit",
+                        ],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: [
+                      "expression",
+                      "solution",
+                      "unit",
+                      "tolerance",
+                        "solutionLayout",
+                      "verified",
+                      "verification",
+                    ],
+                    additionalProperties: false,
+                  },
+                  assets: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        id: { type: "string" },
+                        type: { type: "string" },
+                        source: {
+                          type: "string",
+                          enum: ["generated", "selected", "uploaded", "url"],
+                        },
+                        url: { type: "string" },
+                        prompt: { type: "string" },
+                        altText: { type: "string" },
+                        validation: {
+                          type: ["object", "null"],
+                          properties: {
+                            valid: { type: "boolean" },
+                            reason: { type: "string" },
+                          },
+                          required: ["valid", "reason"],
+                          additionalProperties: false,
+                        },
+                      },
+                      required: [
+                        "id",
+                        "type",
+                        "source",
+                        "url",
+                        "prompt",
+                        "altText",
+                        "validation",
+                      ],
+                      additionalProperties: false,
+                    },
+                  },
                 },
 
                 required: [
@@ -174,6 +286,10 @@ export async function generateAssessmentQuestions(input) {
                   "answer",
                   "explanation",
                   "points",
+                  "contentType",
+                  "contentKind",
+                  "math",
+                  "assets",
                 ],
 
                 additionalProperties: false,
@@ -219,14 +335,73 @@ export async function generateAssessmentQuestions(input) {
     throw validationError;
   }
 
-  return result.data.questions;
+  const questions = result.data.questions.map((question) => {
+    const options = question.options ?? [];
+    const answerText = String(question.answer ?? "").trim();
+    const letterIndex = /^[A-Za-z]$/.test(answerText)
+      ? answerText.toUpperCase().charCodeAt(0) - 65
+      : -1;
+    const matchingOption = options.find(
+      (option) => option.id === question.answer ||
+        option.text.trim().toLowerCase() === answerText.toLowerCase(),
+    );
+    const letterOption = options[letterIndex];
+    const resolvedOption = matchingOption ?? letterOption;
+    const normalizedOptions = question.type === "multiple_choice" && resolvedOption
+      ? options.map((option) => ({
+          ...option,
+          isCorrect: option.id === resolvedOption.id,
+        }))
+      : options;
+    const isMath = question.contentType === "math" && question.math?.expression;
+
+    return {
+      ...question,
+      options: normalizedOptions,
+      answer: resolvedOption?.id ?? question.answer,
+      contentType: question.contentType === "math" && !question.math?.expression
+        ? "text"
+        : question.contentType || "text",
+      contentKind: question.contentType === "math" && !question.math?.expression
+        ? "text"
+        : question.contentKind || question.contentType || "text",
+      math: question.math
+        ? {
+            ...question.math,
+            solutionLayout: isMath
+              ? input.mathSolutionLayout || "step_by_step"
+              : question.math.solutionLayout || "step_by_step",
+          }
+        : null,
+    };
+  });
+
+  for (const question of questions) {
+    if (question.contentType === "math" && question.math?.expression) {
+      const verification = validateMathQuestion(question);
+      if (!verification.valid) {
+        const error = new Error(
+          "Generated math question failed independent verification.",
+        );
+        error.statusCode = 422;
+        error.details = verification;
+        throw error;
+      }
+      question.math = { ...question.math, verified: true, verification };
+    }
+  }
+
+  return questions;
 }
 
 export async function regenerateAssessmentQuestion(question) {
   const questions = await generateAssessmentQuestions({
     subject: "the same subject",
     gradeLevel: "the same grade level",
-    topic: typeof question.content === "string" ? question.content : "the same topic",
+    topic:
+      typeof question.content === "string"
+        ? question.content
+        : "the same topic",
     questionCount: 1,
     questionTypes: [question.type],
     difficulty: question.difficulty || "medium",

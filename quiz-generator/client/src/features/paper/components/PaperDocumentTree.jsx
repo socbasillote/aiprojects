@@ -22,6 +22,7 @@ import {
   reorderUnsectionedQuestions,
   reorderQuestionsInSection,
   reorderSections,
+  updateSection,
 } from "../../editor/editorSlice";
 import PaperTreeQuestion from "./PaperTreeQuestion";
 import PaperTreeSection from "./PaperTreeSection";
@@ -31,6 +32,20 @@ import {
   questionTypeLabels,
 } from "../../question-banks/questionBankData";
 import { generateQuestionPreview } from "../../../api/assessmentApi";
+
+function createMathSectionInstructions({ topic = "", solutionLayout = "step_by_step", instructions = "" }) {
+  const topicText = topic.trim() || "each problem";
+  const layoutText = solutionLayout === "top_to_bottom"
+    ? "Solve each problem from top to bottom, showing every line of your solution."
+    : "Solve each problem step by step in a vertical layout, showing your work clearly.";
+
+  return [
+    `Solve the ${topicText} problems.`,
+    layoutText,
+    "Write the final answer with the correct unit when one is given.",
+    instructions.trim(),
+  ].filter(Boolean).join("\n");
+}
 
 export default function PaperDocumentTree() {
   const dispatch = useDispatch();
@@ -176,6 +191,8 @@ export default function PaperDocumentTree() {
       addQuestion({
         id,
         type: "multiple_choice",
+        contentType: "text",
+        contentKind: "text",
         content: {
           type: "doc",
           content: [{ type: "paragraph", content: [] }],
@@ -223,6 +240,8 @@ export default function PaperDocumentTree() {
       difficulty: settings.difficulty,
       language: settings.language,
       instructions: settings.instructions,
+      contentMode: settings.contentMode,
+      mathSolutionLayout: settings.mathSolutionLayout,
     });
 
     generatedQuestions.forEach((question) => {
@@ -232,6 +251,21 @@ export default function PaperDocumentTree() {
         assignQuestionToSection({ questionId: editorQuestion.id, sectionId }),
       );
     });
+
+    if (sectionId && settings.contentMode === "math") {
+      dispatch(
+        updateSection({
+          sectionId,
+          changes: {
+            instructions: createMathSectionInstructions({
+              topic: settings.topic,
+              solutionLayout: settings.mathSolutionLayout,
+              instructions: settings.instructions,
+            }),
+          },
+        }),
+      );
+    }
 
     return generatedQuestions.length;
   }
@@ -340,6 +374,8 @@ export default function PaperDocumentTree() {
 function normalizeGeneratedQuestion(question) {
   return {
     ...question,
+    contentType: question.contentType ?? "text",
+    contentKind: question.contentKind ?? question.contentType ?? "text",
     content:
       typeof question.content === "string"
         ? {
@@ -542,6 +578,8 @@ function GenerateQuestionDialog({ onClose, onGenerate }) {
     difficulty: "medium",
     points: 1,
     language: "English",
+    contentMode: "text",
+    mathSolutionLayout: "step_by_step",
     instructions: "",
   });
 
@@ -679,6 +717,39 @@ function GenerateQuestionDialog({ onClose, onGenerate }) {
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
             />
           </label>
+          <label className="col-span-2 text-sm text-slate-700">
+            Content mode
+            <select
+              value={settings.contentMode}
+              onChange={(event) =>
+                updateSetting("contentMode", event.target.value)
+              }
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+            >
+              <option value="text">Text focused</option>
+              <option value="math">Math focused</option>
+              <option value="visual">Visual when useful</option>
+              <option value="mixed">Mixed, planned by subject and topic</option>
+            </select>
+          </label>
+          {(settings.contentMode === "math" || settings.contentMode === "mixed") && (
+            <label className="col-span-2 text-sm text-slate-700">
+              Math solution layout
+              <select
+                value={settings.mathSolutionLayout}
+                  onChange={(event) =>
+                    updateSetting(
+                      "mathSolutionLayout",
+                      event.target.value || "step_by_step",
+                    )
+                  }
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+              >
+                <option value="step_by_step">Step-by-step vertical</option>
+                <option value="top_to_bottom">Top-to-bottom solution</option>
+              </select>
+            </label>
+          )}
         </div>
         <label className="block text-sm text-slate-700">
           Additional instructions

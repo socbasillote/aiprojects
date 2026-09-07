@@ -26,4 +26,11 @@ export const assessmentGenerationSchema = z.object({
   language: z.string().trim().min(1).max(50),
 
   instructions: z.string().trim().max(2000).default(""),
+  contentMode: z.enum(["text", "math", "visual", "mixed"]).default("text"),
+
+  imageMode: z.enum(["none", "black_and_white", "color"]).default("none"),
+
+  mathSolutionLayout: z
+    .enum(["step_by_step", "top_to_bottom"])
+    .default("step_by_step"),
 });

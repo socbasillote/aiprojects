@@ -1,6 +1,8 @@
 import { EditorContent, useEditor } from "@tiptap/react";
 
 import { createQuestionEditorExtensions } from "../../editor/tiptapConfig";
+import QuestionAssets from "../../questions/QuestionAssets";
+import QuestionMath from "../../questions/QuestionMath";
 
 function QuestionContent({ content }) {
   const editor = useEditor({
@@ -29,6 +31,8 @@ export default function PreviewQuestion({ question, answer, onAnswer }) {
   return (
     <div>
       <QuestionContent content={question.content} />
+      <QuestionAssets assets={question.assets} />
+      <QuestionMath question={question} />
 
       {question.type === "multiple_choice" && (
         <div className="mt-8 space-y-3">

@@ -6,6 +6,30 @@ const optionSchema = z.object({
   isCorrect: z.boolean(),
 });
 
+const assetSchema = z.object({
+  id: z.string(),
+  type: z.string().default("image"),
+  source: z
+    .enum(["generated", "selected", "uploaded", "url"])
+    .default("generated"),
+  url: z.string().default(""),
+  prompt: z.string().default(""),
+  altText: z.string().default(""),
+  validation: z.record(z.string(), z.unknown()).nullable().default(null),
+});
+
+const mathSchema = z.object({
+  expression: z.string().default(""),
+  solution: z.string().default(""),
+  unit: z.string().default(""),
+  tolerance: z.number().min(0).default(0),
+  solutionLayout: z
+    .enum(["step_by_step", "top_to_bottom"])
+    .default("step_by_step"),
+  verified: z.boolean().default(false),
+  verification: z.record(z.string(), z.unknown()).nullable().default(null),
+});
+
 const generatedQuestionSchema = z.object({
   id: z.string(),
 
@@ -19,6 +43,10 @@ const generatedQuestionSchema = z.object({
     "fill_in_the_blank",
   ]),
 
+  contentType: z.enum(["text", "math", "visual"]).default("text"),
+
+  contentKind: z.enum(["text", "math", "visual"]).default("text"),
+
   difficulty: z.enum(["easy", "medium", "hard"]),
 
   content: z.string(),
@@ -30,6 +58,10 @@ const generatedQuestionSchema = z.object({
   explanation: z.string().default(""),
 
   points: z.number().min(0).default(1),
+
+  math: mathSchema.nullable().default(null),
+
+  assets: z.array(assetSchema).default([]),
 });
 
 export const generatedQuestionsSchema = z.object({

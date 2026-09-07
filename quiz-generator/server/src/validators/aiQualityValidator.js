@@ -12,7 +12,9 @@ function normalizeText(value) {
 function checkQuestion(question, requestedDifficulty, allQuestions) {
   const questionText = getQuestionText(question);
   const options = question.options ?? [];
-  const correctOptions = options.filter((option) => option.isCorrect);
+  const correctOptions = options.filter(
+    (option) => option.isCorrect ?? option.correct,
+  );
   const answer = String(question.answer ?? "").trim();
   const normalizedQuestion = normalizeText(questionText);
 
@@ -26,7 +28,7 @@ function checkQuestion(question, requestedDifficulty, allQuestions) {
     question.type === "multiple_choice" ? correctOptions.length === 1 : true;
   const distractorsArePlausible =
     question.type !== "multiple_choice" ||
-    (options.length >= 3 &&
+    (options.length >= 2 &&
       options.every((option) => normalizeText(option.text).length >= 2) &&
       new Set(options.map((option) => normalizeText(option.text))).size ===
         options.length);

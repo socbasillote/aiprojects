@@ -35,3 +35,29 @@ export const difficultyOptions = [
     label: "Hard",
   },
 ];
+
+export const subjectOptions = [
+  {
+    value: "English",
+    label: "English",
+  },
+  {
+    value: "Math",
+    label: "Math",
+  },
+];
+
+export const imageOptions = [
+  {
+    value: "none",
+    label: "No images",
+  },
+  {
+    value: "black_and_white",
+    label: "Black & white",
+  },
+  {
+    value: "color",
+    label: "Color",
+  },
+];

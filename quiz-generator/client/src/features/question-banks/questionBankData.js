@@ -61,6 +61,8 @@ export function bankQuestionToEditorQuestion(question) {
   return {
     id,
     type: question.type,
+    contentType: "text",
+    contentKind: "text",
     content: {
       type: "doc",
       content: [

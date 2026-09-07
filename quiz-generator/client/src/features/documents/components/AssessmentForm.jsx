@@ -2,11 +2,13 @@ import { useState } from "react";
 import {
   questionTypes,
   difficultyOptions,
+  subjectOptions,
+  imageOptions,
 } from "../../../data/mock/assessmentOptions";
 
 const initialForm = {
   title: "",
-  subject: "",
+  subject: "English",
   gradeLevel: "",
   topic: "",
   questionCount: 10,
@@ -14,6 +16,9 @@ const initialForm = {
   difficulty: "medium",
   language: "English",
   instructions: "",
+  imageMode: "none",
+  mathSolutionLayout: "step_by_step",
+  contentMode: "text",
 };
 
 export default function AssessmentForm({ onGenerate, submitting = false }) {
@@ -25,8 +30,34 @@ export default function AssessmentForm({ onGenerate, submitting = false }) {
     setForm((current) => ({
       ...current,
       [name]: value,
+      ...(name === "subject"
+        ? {
+            questionTypes:
+              value === "Math" ? ["short_answer"] : ["multiple_choice"],
+            contentMode: value === "Math" ? "math" : "text",
+          }
+        : {}),
     }));
   }
+
+  const displayedQuestionTypes =
+    form.subject === "Math"
+      ? questionTypes.map((type) => ({
+          ...type,
+          label: {
+            multiple_choice: "Solve & Choose",
+            true_false: "Check the Statement",
+            short_answer: "Solve & Show Work",
+            essay: "Explain Your Solution",
+            fill_in_the_blank: "Calculate the Answer",
+          }[type.value],
+        }))
+      : questionTypes;
+
+  const mathSolutionOptions = [
+    ["step_by_step", "Step-by-step vertical"],
+    ["top_to_bottom", "Top-to-bottom solution"],
+  ];
 
   function handleQuestionTypeChange(type) {
     setForm((current) => {
@@ -39,6 +70,13 @@ export default function AssessmentForm({ onGenerate, submitting = false }) {
           : [...current.questionTypes, type],
       };
     });
+  }
+
+  function handleMathSolutionLayoutChange(event) {
+    setForm((current) => ({
+      ...current,
+      mathSolutionLayout: event.target.value,
+    }));
   }
 
   function handleSubmit(event) {
@@ -89,15 +127,20 @@ export default function AssessmentForm({ onGenerate, submitting = false }) {
                 Subject
               </label>
 
-              <input
+              <select
                 id="subject"
                 name="subject"
                 value={form.subject}
                 onChange={handleChange}
-                placeholder="Science"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
                 required
-              />
+              >
+                {subjectOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -118,6 +161,44 @@ export default function AssessmentForm({ onGenerate, submitting = false }) {
                 required
               />
             </div>
+          </div>
+
+          <div>
+            <fieldset>
+              <legend className="mb-3 text-sm font-medium text-slate-700">
+                Question Images
+              </legend>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {imageOptions.map((option) => {
+                  const selected = form.imageMode === option.value;
+
+                  return (
+                    <label
+                      key={option.value}
+                      className={[
+                        "flex cursor-pointer items-center justify-center rounded-lg border px-3 py-3 text-sm font-medium transition",
+                        selected
+                          ? "border-slate-900 bg-slate-900 text-white"
+                          : "border-slate-200 text-slate-700 hover:border-slate-300",
+                      ].join(" ")}
+                    >
+                      <input
+                        type="radio"
+                        name="imageMode"
+                        value={option.value}
+                        checked={selected}
+                        onChange={handleChange}
+                        className="sr-only"
+                      />
+                      {option.label}
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-xs text-slate-500">
+                Images are used only when they improve the selected topic.
+              </p>
+            </fieldset>
           </div>
 
           <div>
@@ -179,7 +260,7 @@ export default function AssessmentForm({ onGenerate, submitting = false }) {
             </legend>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              {questionTypes.map((type) => {
+              {displayedQuestionTypes.map((type) => {
                 const checked = form.questionTypes.includes(type.value);
 
                 return (
@@ -247,6 +328,37 @@ export default function AssessmentForm({ onGenerate, submitting = false }) {
               className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
             />
           </div>
+
+          {form.subject === "Math" && (
+            <fieldset>
+              <legend className="mb-3 text-sm font-medium text-slate-700">
+                Math Solution Layout
+              </legend>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {mathSolutionOptions.map(([value, label]) => (
+                  <label
+                    key={value}
+                    className={[
+                      "flex cursor-pointer items-center rounded-lg border p-4 text-sm font-medium transition",
+                      form.mathSolutionLayout === value
+                        ? "border-slate-900 bg-slate-900 text-white"
+                        : "border-slate-200 text-slate-700 hover:border-slate-300",
+                    ].join(" ")}
+                  >
+                    <input
+                      type="radio"
+                      name="mathSolutionLayout"
+                      value={value}
+                      checked={form.mathSolutionLayout === value}
+                      onChange={handleMathSolutionLayoutChange}
+                      className="sr-only"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
 
           <div>
             <label

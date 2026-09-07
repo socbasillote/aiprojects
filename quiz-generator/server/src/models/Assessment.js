@@ -47,6 +47,18 @@ const questionSchema = new mongoose.Schema(
       ],
     },
 
+    contentType: {
+      type: String,
+      enum: ["text", "math", "visual"],
+      default: "text",
+    },
+
+    contentKind: {
+      type: String,
+      enum: ["text", "math", "visual"],
+      default: "text",
+    },
+
     difficulty: {
       type: String,
       enum: ["easy", "medium", "hard"],
@@ -56,6 +68,39 @@ const questionSchema = new mongoose.Schema(
     content: {
       type: mongoose.Schema.Types.Mixed,
       default: "",
+    },
+
+    math: {
+      expression: { type: String, default: "" },
+      solution: { type: String, default: "" },
+      unit: { type: String, default: "" },
+      tolerance: { type: Number, default: 0 },
+      verified: { type: Boolean, default: false },
+      verification: { type: mongoose.Schema.Types.Mixed, default: null },
+      solutionLayout: {
+        type: String,
+        enum: ["step_by_step", "top_to_bottom"],
+        default: "step_by_step",
+      },
+    },
+
+    assets: {
+      type: [
+        {
+          id: { type: String, required: true },
+          type: { type: String, default: "image" },
+          source: {
+            type: String,
+            enum: ["generated", "selected", "uploaded", "url"],
+            default: "generated",
+          },
+          url: { type: String, default: "" },
+          prompt: { type: String, default: "" },
+          altText: { type: String, default: "" },
+          validation: { type: mongoose.Schema.Types.Mixed, default: null },
+        },
+      ],
+      default: [],
     },
 
     options: {

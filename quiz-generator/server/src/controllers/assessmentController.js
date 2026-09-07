@@ -8,6 +8,7 @@ import {
   generateAssessmentQuestions,
   regenerateAssessmentQuestion,
 } from "../services/ai/generateAssessmentQuestions.js";
+import { createMathSectionInstructions } from "../services/ai/questionContentPlanner.js";
 
 /*
  * ---------------------------------------------
@@ -215,6 +216,18 @@ export async function generateQuestions(req, res, next) {
           questions.some((question) => question.id === questionId),
         );
       });
+    }
+
+    if (questions.some((question) => question.contentType === "math")) {
+      const mathQuestion = questions.find((question) => question.contentType === "math");
+      const section = assessment.sections[0];
+      if (section && !section.instructions?.trim()) {
+        section.instructions = createMathSectionInstructions({
+          topic: validation.data.topic,
+          solutionLayout: mathQuestion.math?.solutionLayout,
+          instructions: validation.data.instructions,
+        });
+      }
     }
 
     await assessment.save();

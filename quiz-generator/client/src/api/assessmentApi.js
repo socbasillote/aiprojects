@@ -55,6 +55,15 @@ export function normalizeAssessment(assessment) {
     ...assessment,
     questions: (assessment.questions ?? []).map((question) => ({
       ...question,
+      contentType: question.contentType ?? "text",
+      contentKind: question.contentKind ?? question.contentType ?? "text",
+      math: question.math
+        ? {
+            ...question.math,
+            solutionLayout: question.math.solutionLayout ?? "step_by_step",
+          }
+        : null,
+      assets: question.assets ?? [],
       content: normalizeQuestionContent(question.content),
       options: (question.options ?? []).map((option) => ({
         ...option,
