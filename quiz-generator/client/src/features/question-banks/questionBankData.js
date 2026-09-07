@@ -30,6 +30,22 @@ export const questionBankQuestions = [
     source: "My questions",
     answer: true,
   },
+  {
+    id: "bank-calvin-cycle",
+    title: "Calvin Cycle",
+    text: "Which molecule is produced during the Calvin Cycle?",
+    type: "multiple_choice",
+    subject: "Biology",
+    topic: "Photosynthesis",
+    grade: "Grade 8",
+    difficulty: "Hard",
+    points: 2,
+    tags: ["plants", "carbon fixation"],
+    createdBy: "Ava Morgan",
+    source: "My questions",
+    options: ["Glucose", "Oxygen", "Water", "Chlorophyll"],
+    answer: "Glucose",
+  },
 ];
 
 export const questionTypeLabels = {
@@ -47,10 +63,12 @@ export function bankQuestionToEditorQuestion(question) {
     type: question.type,
     content: {
       type: "doc",
-      content: [{
-        type: "paragraph",
-        content: [{ type: "text", text: question.text }],
-      }],
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: question.text }],
+        },
+      ],
     },
     options: question.options?.map((text, index) => ({
       id: `${id}-option-${index + 1}`,

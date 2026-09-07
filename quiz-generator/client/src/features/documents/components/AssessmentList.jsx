@@ -113,7 +113,7 @@ export default function AssessmentList() {
           <button
             key={assessment._id}
             type="button"
-            onClick={() => navigate(`/assessments/${assessment._id}/editor`)}
+            onClick={() => navigate(`/assessments/${assessment._id}/paper`)}
             className="block w-full rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-slate-300 hover:shadow"
           >
             <div className="flex items-start justify-between gap-4">

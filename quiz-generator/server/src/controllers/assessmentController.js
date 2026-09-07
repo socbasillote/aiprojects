@@ -183,7 +183,9 @@ export async function generateQuestions(req, res, next) {
     );
 
     if (!qualityCheck.valid) {
-      const error = new Error("Generated questions failed the AI quality check.");
+      const error = new Error(
+        "Generated questions failed the AI quality check.",
+      );
       error.statusCode = 422;
       error.details = qualityCheck;
       throw error;
@@ -226,6 +228,41 @@ export async function generateQuestions(req, res, next) {
   }
 }
 
+export async function generateQuestionPreview(req, res, next) {
+  try {
+    const validation = assessmentGenerationSchema.safeParse(req.body);
+
+    if (!validation.success) {
+      const error = new Error("Invalid assessment generation request.");
+      error.statusCode = 400;
+      error.details = validation.error.flatten();
+      throw error;
+    }
+
+    const questions = await generateAssessmentQuestions(validation.data);
+    const qualityCheck = validateGeneratedQuestions(
+      questions,
+      validation.data.difficulty,
+    );
+
+    if (!qualityCheck.valid) {
+      const error = new Error(
+        "Generated questions failed the AI quality check.",
+      );
+      error.statusCode = 422;
+      error.details = qualityCheck;
+      throw error;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: questions,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function regenerateQuestion(req, res, next) {
   try {
     const { assessmentId, questionId } = req.params;
@@ -247,7 +284,8 @@ export async function regenerateQuestion(req, res, next) {
       throw error;
     }
 
-    const sourceQuestion = req.body?.question || assessment.questions[questionIndex];
+    const sourceQuestion =
+      req.body?.question || assessment.questions[questionIndex];
     const replacement = await regenerateAssessmentQuestion(sourceQuestion);
     const qualityCheck = validateGeneratedQuestions(
       [replacement],
@@ -255,7 +293,9 @@ export async function regenerateQuestion(req, res, next) {
     );
 
     if (!qualityCheck.valid) {
-      const error = new Error("Regenerated question failed the AI quality check.");
+      const error = new Error(
+        "Regenerated question failed the AI quality check.",
+      );
       error.statusCode = 422;
       error.details = qualityCheck;
       throw error;

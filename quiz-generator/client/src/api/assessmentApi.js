@@ -170,6 +170,17 @@ export async function generateQuestions(assessmentId, data = {}) {
   });
 }
 
+export async function generateQuestionPreview(assessmentId, data = {}) {
+  if (!assessmentId) {
+    throw new Error("Assessment ID is required.");
+  }
+
+  return request(`/assessments/${assessmentId}/generate-preview`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 export async function regenerateQuestion(assessmentId, questionId, question) {
   if (!assessmentId || !questionId) {
     throw new Error("Assessment ID and question ID are required.");

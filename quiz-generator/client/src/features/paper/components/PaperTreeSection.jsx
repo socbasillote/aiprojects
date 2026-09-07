@@ -5,14 +5,12 @@ import { CSS } from "@dnd-kit/utilities";
 
 import PaperTreeQuestion from "./PaperTreeQuestion";
 import { updateSection } from "../../editor/editorSlice";
-import { questionBankQuestions } from "../../question-banks/questionBankData";
 
 export default function PaperTreeSection({
   section,
   fallbackTitle,
   questions,
-  onAddQuestion,
-  onAddBankQuestion,
+  onOpenAddQuestion,
 }) {
   const dispatch = useDispatch();
   const [isExpanded, setIsExpanded] = useState(true);
@@ -90,23 +88,14 @@ export default function PaperTreeSection({
           {sectionQuestions.length}
         </span>
 
-        <select
+        <button
+          type="button"
+          onClick={() => onOpenAddQuestion(section.id)}
           aria-label={`Add question to ${section.title || fallbackTitle || "section"}`}
-          defaultValue=""
-          onChange={(event) => {
-            if (event.target.value === "normal") onAddQuestion(section.id);
-            if (event.target.value.startsWith("bank:")) {
-              const question = questionBankQuestions.find((item) => item.id === event.target.value.slice(5));
-              onAddBankQuestion(question, section.id);
-            }
-            event.target.value = "";
-          }}
-          className="rounded border border-slate-200 text-xs text-slate-500 opacity-0 group-hover:opacity-100"
+          className="rounded px-1.5 text-sm font-medium text-slate-400 opacity-0 transition-opacity hover:bg-slate-200 hover:text-slate-700 group-hover:opacity-100"
         >
-          <option value="">Add...</option>
-          <option value="normal">New question</option>
-          {questionBankQuestions.map((question) => <option key={question.id} value={`bank:${question.id}`}>Bank: {question.title}</option>)}
-        </select>
+          +
+        </button>
 
         <button
           type="button"
