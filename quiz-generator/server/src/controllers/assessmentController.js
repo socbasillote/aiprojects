@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import Assessment from "../models/Assessment.js";
 
 import { assessmentGenerationSchema } from "../validators/assessmentGenerationValidator.js";
+import { validateGeneratedQuestions } from "../validators/aiQualityValidator.js";
 
 import {
   generateAssessmentQuestions,
@@ -176,6 +177,18 @@ export async function generateQuestions(req, res, next) {
 
     const questions = await generateAssessmentQuestions(validation.data);
 
+    const qualityCheck = validateGeneratedQuestions(
+      questions,
+      validation.data.difficulty,
+    );
+
+    if (!qualityCheck.valid) {
+      const error = new Error("Generated questions failed the AI quality check.");
+      error.statusCode = 422;
+      error.details = qualityCheck;
+      throw error;
+    }
+
     assessment.questions = questions;
 
     /*
@@ -236,6 +249,17 @@ export async function regenerateQuestion(req, res, next) {
 
     const sourceQuestion = req.body?.question || assessment.questions[questionIndex];
     const replacement = await regenerateAssessmentQuestion(sourceQuestion);
+    const qualityCheck = validateGeneratedQuestions(
+      [replacement],
+      sourceQuestion.difficulty,
+    );
+
+    if (!qualityCheck.valid) {
+      const error = new Error("Regenerated question failed the AI quality check.");
+      error.statusCode = 422;
+      error.details = qualityCheck;
+      throw error;
+    }
 
     assessment.questions[questionIndex] = replacement;
     await assessment.save();

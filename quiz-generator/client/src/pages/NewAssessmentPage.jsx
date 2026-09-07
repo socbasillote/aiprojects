@@ -9,12 +9,14 @@ import { createInitialAssessmentDocument } from "../features/editor/editorSlice"
 export default function NewAssessmentPage() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const [qualityChecks, setQualityChecks] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleGenerate(formData) {
     try {
       setSubmitting(true);
       setError("");
+      setQualityChecks([]);
 
       const assessment = await createAssessment({
         ...createInitialAssessmentDocument(),
@@ -30,6 +32,7 @@ export default function NewAssessmentPage() {
     } catch (requestError) {
       console.error("Failed to create assessment:", requestError);
       setError(requestError.message || "Failed to create assessment.");
+      setQualityChecks(requestError.data?.details?.checks ?? []);
     } finally {
       setSubmitting(false);
     }
@@ -52,6 +55,34 @@ export default function NewAssessmentPage() {
           <p className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
           </p>
+        )}
+
+        {qualityChecks.length > 0 && (
+          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <h2 className="text-sm font-semibold text-amber-900">
+              AI Quality Check
+            </h2>
+
+            <div className="mt-3 space-y-2 text-sm text-amber-900">
+              {[
+                ["understandable", "Question is understandable"],
+                ["correctAnswerExists", "Correct answer exists"],
+                ["exactlyOneCorrectAnswer", "Exactly one correct answer"],
+                ["distractorsArePlausible", "Distractors are plausible"],
+                ["difficultyMatches", "Difficulty matches requested level"],
+                ["noDuplicateQuestions", "No duplicate questions"],
+                ["explanationProvided", "Explanation provided"],
+              ].map(([key, label]) => {
+                const passed = qualityChecks.every((check) => check[key]);
+
+                return (
+                  <p key={key}>
+                    {passed ? "✓" : "✗"} {label}
+                  </p>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         <AssessmentForm onGenerate={handleGenerate} submitting={submitting} />

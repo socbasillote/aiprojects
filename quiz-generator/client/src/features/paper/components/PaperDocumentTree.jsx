@@ -23,6 +23,10 @@ import {
 } from "../../editor/editorSlice";
 import PaperTreeQuestion from "./PaperTreeQuestion";
 import PaperTreeSection from "./PaperTreeSection";
+import {
+  bankQuestionToEditorQuestion,
+  questionBankQuestions,
+} from "../../question-banks/questionBankData";
 
 export default function PaperDocumentTree() {
   const dispatch = useDispatch();
@@ -193,6 +197,12 @@ export default function PaperDocumentTree() {
     }
   }
 
+  function handleAddBankQuestion(question, sectionId = null) {
+    const editorQuestion = bankQuestionToEditorQuestion(question ?? questionBankQuestions[0]);
+    dispatch(addQuestion(editorQuestion));
+    dispatch(assignQuestionToSection({ questionId: editorQuestion.id, sectionId }));
+  }
+
   return (
     <aside className="flex w-72 shrink-0 flex-col border-r border-slate-200 bg-white">
       <div className="border-b border-slate-200 px-4 py-3">
@@ -218,6 +228,7 @@ export default function PaperDocumentTree() {
                   fallbackTitle={`Section ${index + 1}`}
                   questions={questions}
                   onAddQuestion={handleAddQuestion}
+                  onAddBankQuestion={handleAddBankQuestion}
                 />
               ))}
             </SortableContext>
@@ -225,6 +236,7 @@ export default function PaperDocumentTree() {
             <UnsectionedTree
               questions={unsectionedQuestions}
               onAddQuestion={handleAddQuestion}
+              onAddBankQuestion={handleAddBankQuestion}
             />
           </div>
         </DndContext>
@@ -243,7 +255,7 @@ export default function PaperDocumentTree() {
   );
 }
 
-function UnsectionedTree({ questions, onAddQuestion }) {
+function UnsectionedTree({ questions, onAddQuestion, onAddBankQuestion }) {
   const { setNodeRef, isOver } = useDroppable({
     id: "unsectioned",
     data: {
@@ -261,14 +273,23 @@ function UnsectionedTree({ questions, onAddQuestion }) {
         <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
           Unsectioned
         </span>
-        <button
-          type="button"
-          onClick={() => onAddQuestion()}
+        <select
           aria-label="Add question to unsectioned questions"
-          className="rounded px-1.5 text-sm font-medium text-slate-400 opacity-0 transition-opacity hover:bg-slate-200 hover:text-slate-700 group-hover:opacity-100"
+          defaultValue=""
+          onChange={(event) => {
+            if (event.target.value === "normal") onAddQuestion();
+            if (event.target.value.startsWith("bank:")) {
+              const question = questionBankQuestions.find((item) => item.id === event.target.value.slice(5));
+              onAddBankQuestion(question);
+            }
+            event.target.value = "";
+          }}
+          className="rounded border border-slate-200 text-xs text-slate-500"
         >
-          +
-        </button>
+          <option value="">Add...</option>
+          <option value="normal">New question</option>
+          {questionBankQuestions.map((question) => <option key={question.id} value={`bank:${question.id}`}>Bank: {question.title}</option>)}
+        </select>
       </div>
       <div className="ml-3 border-l border-slate-200 pl-2">
         <SortableContext
