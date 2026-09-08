@@ -7,6 +7,8 @@ const DEFAULT_PAPER = {
   pageSize: "A4",
   orientation: "portrait",
   columns: 1,
+  mathSolutionLayout: "top_to_bottom",
+  englishResponseLayout: "standard",
   showAnswerKey: false,
 
   margins: {

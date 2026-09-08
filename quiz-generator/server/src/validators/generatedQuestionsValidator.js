@@ -24,14 +24,16 @@ const mathSchema = z.object({
   unit: z.string().default(""),
   tolerance: z.number().min(0).default(0),
   solutionLayout: z
-    .enum(["step_by_step", "top_to_bottom"])
-    .default("step_by_step"),
+    .enum(["top_to_bottom", "horizontal", "multiplication_grid"])
+    .default("top_to_bottom"),
   verified: z.boolean().default(false),
   verification: z.record(z.string(), z.unknown()).nullable().default(null),
 });
 
 const generatedQuestionSchema = z.object({
   id: z.string(),
+
+  subject: z.string().default(""),
 
   order: z.number().int().positive(),
 

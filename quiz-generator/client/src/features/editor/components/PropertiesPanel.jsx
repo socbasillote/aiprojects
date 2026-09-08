@@ -137,6 +137,23 @@ export default function PropertiesPanel({ embedded = false }) {
       <div className="space-y-5">
         <div>
           <label
+            htmlFor="question-subject"
+            className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+          >
+            Subject identifier
+          </label>
+
+          <input
+            id="question-subject"
+            value={question.subject ?? ""}
+            onChange={(event) => update({ subject: event.target.value })}
+            placeholder="e.g. Mathematics"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div>
+          <label
             htmlFor="question-section"
             className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500"
           >

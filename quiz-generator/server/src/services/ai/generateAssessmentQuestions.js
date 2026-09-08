@@ -15,7 +15,7 @@ function createPrompt({
   instructions,
   contentMode = "text",
   imageMode = "none",
-  mathSolutionLayout = "step_by_step",
+  mathSolutionLayout = "top_to_bottom",
 }) {
   const contentPlan = planQuestionContent({
     subject,
@@ -80,6 +80,7 @@ Requirements:
 - For math content, include math.expression, math.solution, math.unit, and math.tolerance. The solution must be independently calculable from the expression.
 - For math content, use a plain numeric expression with +, -, *, /, ^, parentheses, or a simple fraction. Put only the numeric answer in math.solution; put measurement units in math.unit. Do not put explanatory text in either field.
 - For math content, set math.solutionLayout to ${mathSolutionLayout}.
+- When the math solution layout is multiplication_grid, generate multiplication problems using mostly single-digit factors, some 0 and 1 factors, and occasional 10s.
 - For math content, return only the problem in content. Do not add per-question instructions such as "solve", "show your work", or numbered steps; those belong to the section instructions.
 - For visual content, include an asset with a useful prompt, accurate altText, source, and URL only when available.
 - Respect the image preference. Generate no image assets when it is none; use grayscale prompts for black_and_white and full-color prompts for color.
@@ -124,6 +125,10 @@ export async function generateAssessmentQuestions(input) {
 
                 properties: {
                   id: {
+                    type: "string",
+                  },
+
+                  subject: {
                     type: "string",
                   },
 
@@ -207,7 +212,11 @@ export async function generateAssessmentQuestions(input) {
                       tolerance: { type: "number" },
                       solutionLayout: {
                         type: "string",
-                        enum: ["step_by_step", "top_to_bottom"],
+                        enum: [
+                          "top_to_bottom",
+                          "horizontal",
+                          "multiplication_grid",
+                        ],
                       },
                       verified: { type: "boolean" },
                       verification: {
@@ -278,6 +287,7 @@ export async function generateAssessmentQuestions(input) {
 
                 required: [
                   "id",
+                  "subject",
                   "order",
                   "type",
                   "difficulty",
@@ -337,13 +347,20 @@ export async function generateAssessmentQuestions(input) {
 
   const questions = result.data.questions.map((question) => {
     const options = question.options ?? [];
-    const answerText = String(question.answer ?? "").trim();
+    const answerText = String(
+      question.answer || (question.contentType === "math" ? question.math?.solution : "") || "",
+    ).trim();
     const letterIndex = /^[A-Za-z]$/.test(answerText)
       ? answerText.toUpperCase().charCodeAt(0) - 65
       : -1;
+    const normalizeOptionText = (value) => String(value ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/^\(?[a-z]\)?[.)\-:]\s*/i, "");
     const matchingOption = options.find(
       (option) => option.id === question.answer ||
-        option.text.trim().toLowerCase() === answerText.toLowerCase(),
+        option.text.trim().toLowerCase() === answerText.toLowerCase() ||
+        normalizeOptionText(option.text) === normalizeOptionText(answerText),
     );
     const letterOption = options[letterIndex];
     const resolvedOption = matchingOption ?? letterOption;
@@ -357,6 +374,7 @@ export async function generateAssessmentQuestions(input) {
 
     return {
       ...question,
+      subject: question.subject || input.subject,
       options: normalizedOptions,
       answer: resolvedOption?.id ?? question.answer,
       contentType: question.contentType === "math" && !question.math?.expression
@@ -365,12 +383,13 @@ export async function generateAssessmentQuestions(input) {
       contentKind: question.contentType === "math" && !question.math?.expression
         ? "text"
         : question.contentKind || question.contentType || "text",
+      answer: resolvedOption?.id ?? (question.answer || (question.contentType === "math" ? question.math?.solution ?? "" : "")),
       math: question.math
         ? {
             ...question.math,
             solutionLayout: isMath
-              ? input.mathSolutionLayout || "step_by_step"
-              : question.math.solutionLayout || "step_by_step",
+              ? input.mathSolutionLayout || "top_to_bottom"
+              : question.math.solutionLayout || "top_to_bottom",
           }
         : null,
     };
@@ -395,8 +414,9 @@ export async function generateAssessmentQuestions(input) {
 }
 
 export async function regenerateAssessmentQuestion(question) {
+  const isMath = question.contentType === "math" || Boolean(question.math?.expression);
   const questions = await generateAssessmentQuestions({
-    subject: "the same subject",
+    subject: isMath ? "Math" : "the same subject",
     gradeLevel: "the same grade level",
     topic:
       typeof question.content === "string"
@@ -406,6 +426,8 @@ export async function regenerateAssessmentQuestion(question) {
     questionTypes: [question.type],
     difficulty: question.difficulty || "medium",
     language: "the same language",
+    contentMode: isMath ? "math" : "text",
+    mathSolutionLayout: question.math?.solutionLayout || "top_to_bottom",
     instructions: `Create a fresh replacement for this question. Keep the same educational intent but do not repeat its wording. Existing question: ${JSON.stringify(question.content)}.`,
   });
 

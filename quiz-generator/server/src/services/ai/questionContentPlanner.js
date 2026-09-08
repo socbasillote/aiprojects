@@ -71,11 +71,14 @@ export function planQuestionContent({
   };
 }
 
-export function createMathSectionInstructions({ topic = "", solutionLayout = "step_by_step", instructions = "" }) {
+export function createMathSectionInstructions({ topic = "", solutionLayout = "top_to_bottom", instructions = "" }) {
   const topicText = topic.trim() || "each problem";
-  const layoutText = solutionLayout === "top_to_bottom"
-    ? "Solve each problem from top to bottom, showing every line of your solution."
-    : "Solve each problem step by step in a vertical layout, showing your work clearly.";
+  const layoutText =
+    solutionLayout === "top_to_bottom"
+      ? "Solve each problem from top to bottom, showing every line of your solution."
+      : solutionLayout === "multiplication_grid"
+        ? "Format the paper as a 7-column by 10-row multiplication grid with vertical factors and an answer line under each problem."
+        : "Solve each problem horizontally, showing your work clearly.";
   const customText = instructions.trim();
 
   return [

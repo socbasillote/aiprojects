@@ -17,7 +17,7 @@ const initialForm = {
   language: "English",
   instructions: "",
   imageMode: "none",
-  mathSolutionLayout: "step_by_step",
+  mathSolutionLayout: "top_to_bottom",
   contentMode: "text",
 };
 
@@ -55,8 +55,9 @@ export default function AssessmentForm({ onGenerate, submitting = false }) {
       : questionTypes;
 
   const mathSolutionOptions = [
-    ["step_by_step", "Step-by-step vertical"],
-    ["top_to_bottom", "Top-to-bottom solution"],
+    ["top_to_bottom", "Top to bottom"],
+    ["horizontal", "Horizontal"],
+    ["multiplication_grid", "Multiplication grid (7 x 10)"],
   ];
 
   function handleQuestionTypeChange(type) {

@@ -15,10 +15,14 @@ function checkQuestion(question, requestedDifficulty, allQuestions) {
   const correctOptions = options.filter(
     (option) => option.isCorrect ?? option.correct,
   );
-  const answer = String(question.answer ?? "").trim();
+  const answer = String(
+    question.answer || (question.contentType === "math" ? question.math?.solution : "") || "",
+  ).trim();
   const normalizedQuestion = normalizeText(questionText);
 
-  const understandable = questionText.length >= 10;
+  const understandable = question.contentType === "math"
+    ? String(question.math?.expression ?? questionText).trim().length >= 1
+    : questionText.length >= 10;
   const correctAnswerExists =
     question.type === "multiple_choice"
       ? correctOptions.length === 1 &&
@@ -26,10 +30,11 @@ function checkQuestion(question, requestedDifficulty, allQuestions) {
       : Boolean(answer);
   const exactlyOneCorrectAnswer =
     question.type === "multiple_choice" ? correctOptions.length === 1 : true;
+  const minimumOptionLength = question.contentType === "math" ? 1 : 2;
   const distractorsArePlausible =
     question.type !== "multiple_choice" ||
     (options.length >= 2 &&
-      options.every((option) => normalizeText(option.text).length >= 2) &&
+      options.every((option) => normalizeText(option.text).length >= minimumOptionLength) &&
       new Set(options.map((option) => normalizeText(option.text))).size ===
         options.length);
   const difficultyMatches = question.difficulty === requestedDifficulty;

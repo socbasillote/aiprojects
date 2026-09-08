@@ -1,7 +1,12 @@
 import PaperQuestion from "./PaperQuestion";
 import PaperSection from "./PaperSection";
 
-export default function PaperBlock({ block, onEditorReady }) {
+export default function PaperBlock({
+  block,
+  mathSolutionLayout,
+  englishResponseLayout,
+  onEditorReady,
+}) {
   if (!block) {
     return null;
   }
@@ -21,6 +26,8 @@ export default function PaperBlock({ block, onEditorReady }) {
           question={block.question}
           number={block.number}
           showAnswerKey={block.showAnswerKey}
+          mathSolutionLayout={mathSolutionLayout}
+          englishResponseLayout={englishResponseLayout}
           onEditorReady={onEditorReady}
         />
       </div>

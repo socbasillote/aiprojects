@@ -15,6 +15,8 @@ export default function PaperPage({
   studentInfo = paper.studentInfo,
   instructions = paper.instructions,
   footer = paper.footer,
+  mathSolutionLayout = paper.mathSolutionLayout ?? "top_to_bottom",
+  englishResponseLayout = paper.englishResponseLayout ?? "standard",
   onEditorReady,
 }) {
   const dimensions = getPaperDimensions(paper.pageSize, paper.orientation);
@@ -61,6 +63,8 @@ export default function PaperPage({
                   <PaperBlock
                     key={block.id}
                     block={block}
+                    mathSolutionLayout={mathSolutionLayout}
+                    englishResponseLayout={englishResponseLayout}
                     onEditorReady={onEditorReady}
                   />
                 ))}
@@ -73,6 +77,8 @@ export default function PaperPage({
               <PaperBlock
                 key={block.id}
                 block={block}
+                mathSolutionLayout={mathSolutionLayout}
+                englishResponseLayout={englishResponseLayout}
                 onEditorReady={onEditorReady}
               />
             ))}

@@ -30,6 +30,11 @@ const questionSchema = new mongoose.Schema(
       required: true,
     },
 
+    subject: {
+      type: String,
+      default: "",
+    },
+
     order: {
       type: Number,
       required: true,
@@ -79,8 +84,8 @@ const questionSchema = new mongoose.Schema(
       verification: { type: mongoose.Schema.Types.Mixed, default: null },
       solutionLayout: {
         type: String,
-        enum: ["step_by_step", "top_to_bottom"],
-        default: "step_by_step",
+        enum: ["top_to_bottom", "horizontal", "multiplication_grid"],
+        default: "top_to_bottom",
       },
     },
 
@@ -166,6 +171,13 @@ const assessmentSchema = new mongoose.Schema(
       maxlength: 200,
     },
 
+    subject: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 100,
+    },
+
     questions: {
       type: [questionSchema],
       default: [],
@@ -193,6 +205,18 @@ const assessmentSchema = new mongoose.Schema(
         min: 1,
         max: 4,
         default: 1,
+      },
+
+      mathSolutionLayout: {
+        type: String,
+        enum: ["top_to_bottom", "horizontal", "multiplication_grid"],
+        default: "top_to_bottom",
+      },
+
+      englishResponseLayout: {
+        type: String,
+        enum: ["standard", "writing_lines", "compact"],
+        default: "standard",
       },
 
       margins: {

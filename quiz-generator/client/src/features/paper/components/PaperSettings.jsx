@@ -11,6 +11,7 @@ export default function PaperSettings({ isOpen, onToggle }) {
   const dispatch = useDispatch();
 
   const paper = useSelector((state) => state.editor.paper);
+  const subject = useSelector((state) => state.editor.subject);
   const selectedQuestionId = useSelector(
     (state) => state.editor.selectedQuestionId,
   );
@@ -27,6 +28,10 @@ export default function PaperSettings({ isOpen, onToggle }) {
       }),
     );
   }
+
+  const normalizedSubject = subject.trim().toLowerCase();
+  const isMath = normalizedSubject === "math" || normalizedSubject === "mathematics";
+  const isEnglish = normalizedSubject === "english";
 
   if (!isOpen && !selectedQuestionId) {
     return (
@@ -95,6 +100,13 @@ export default function PaperSettings({ isOpen, onToggle }) {
             </h3>
 
             <div className="mt-3 space-y-3">
+              <div className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                <span className="text-xs text-slate-500">Subject</span>
+                <div className="mt-0.5 font-medium">
+                  {subject || "Not selected"}
+                </div>
+              </div>
+
               <label className="block">
                 <span className="text-xs text-slate-500">Page size</span>
 
@@ -112,6 +124,26 @@ export default function PaperSettings({ isOpen, onToggle }) {
                   <option value="A3">A3</option>
                 </select>
               </label>
+
+              {isEnglish && <label className="block">
+                <span className="text-xs text-slate-500">
+                  English response layout
+                </span>
+
+                <select
+                  value={paper.englishResponseLayout ?? "standard"}
+                  onChange={(event) =>
+                    updateSetting({
+                      englishResponseLayout: event.target.value,
+                    })
+                  }
+                  className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2.5 py-2 text-sm"
+                >
+                  <option value="standard">Standard responses</option>
+                  <option value="writing_lines">Writing lines</option>
+                  <option value="compact">Compact responses</option>
+                </select>
+              </label>}
 
               <label className="block">
                 <span className="text-xs text-slate-500">Orientation</span>
@@ -147,6 +179,34 @@ export default function PaperSettings({ isOpen, onToggle }) {
                   <option value={2}>2 columns</option>
                 </select>
               </label>
+
+              {isMath && <label className="block">
+                <span className="text-xs text-slate-500">
+                  Math paper layout
+                </span>
+
+                <select
+                  value={
+                    ["horizontal", "multiplication_grid"].includes(
+                      paper.mathSolutionLayout,
+                    )
+                      ? paper.mathSolutionLayout
+                      : "top_to_bottom"
+                  }
+                  onChange={(event) =>
+                    updateSetting({
+                      mathSolutionLayout: event.target.value,
+                    })
+                  }
+                  className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2.5 py-2 text-sm"
+                >
+                  <option value="top_to_bottom">Top to bottom</option>
+                  <option value="horizontal">Horizontal</option>
+                  <option value="multiplication_grid">
+                    Multiplication grid (7 x 10)
+                  </option>
+                </select>
+              </label>}
             </div>
 
             <div className="mt-4 border-t border-slate-200 pt-4">

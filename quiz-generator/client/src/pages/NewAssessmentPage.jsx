@@ -21,6 +21,7 @@ export default function NewAssessmentPage() {
       const assessment = await createAssessment({
         ...createInitialAssessmentDocument(),
         title: formData.title,
+        subject: formData.subject,
       });
 
       await generateQuestions(assessment._id, {

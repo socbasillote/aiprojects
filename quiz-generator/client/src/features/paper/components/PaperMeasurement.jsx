@@ -108,7 +108,16 @@ export default function PaperMeasurement({
       <div className="min-h-0 flex-1" data-paper-measure-content>
         <div className={isTwoColumns ? "grid grid-cols-2 gap-x-8" : "block"}>
           {blocks.map((block) => (
-            <PaperBlock key={block.id} block={block} />
+            <PaperBlock
+              key={block.id}
+              block={block}
+              mathSolutionLayout={
+                paper.mathSolutionLayout ?? "top_to_bottom"
+              }
+              englishResponseLayout={
+                paper.englishResponseLayout ?? "standard"
+              }
+            />
           ))}
         </div>
       </div>

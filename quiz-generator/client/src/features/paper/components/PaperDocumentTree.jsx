@@ -33,11 +33,11 @@ import {
 } from "../../question-banks/questionBankData";
 import { generateQuestionPreview } from "../../../api/assessmentApi";
 
-function createMathSectionInstructions({ topic = "", solutionLayout = "step_by_step", instructions = "" }) {
+function createMathSectionInstructions({ topic = "", solutionLayout = "top_to_bottom", instructions = "" }) {
   const topicText = topic.trim() || "each problem";
   const layoutText = solutionLayout === "top_to_bottom"
     ? "Solve each problem from top to bottom, showing every line of your solution."
-    : "Solve each problem step by step in a vertical layout, showing your work clearly.";
+    : "Solve each problem horizontally, showing your work clearly.";
 
   return [
     `Solve the ${topicText} problems.`,
@@ -579,7 +579,7 @@ function GenerateQuestionDialog({ onClose, onGenerate }) {
     points: 1,
     language: "English",
     contentMode: "text",
-    mathSolutionLayout: "step_by_step",
+    mathSolutionLayout: "top_to_bottom",
     instructions: "",
   });
 
@@ -740,13 +740,16 @@ function GenerateQuestionDialog({ onClose, onGenerate }) {
                   onChange={(event) =>
                     updateSetting(
                       "mathSolutionLayout",
-                      event.target.value || "step_by_step",
+                      event.target.value || "top_to_bottom",
                     )
                   }
                 className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
               >
-                <option value="step_by_step">Step-by-step vertical</option>
-                <option value="top_to_bottom">Top-to-bottom solution</option>
+                <option value="top_to_bottom">Top to bottom</option>
+                <option value="horizontal">Horizontal</option>
+                <option value="multiplication_grid">
+                  Multiplication grid (7 x 10)
+                </option>
               </select>
             </label>
           )}

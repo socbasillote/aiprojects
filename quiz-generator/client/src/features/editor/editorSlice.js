@@ -24,6 +24,7 @@ const createSection = ({
 
 export const createInitialEditorState = () => ({
   title: "",
+  subject: "",
 
   questions: structuredClone(initialQuestions),
 
@@ -45,6 +46,8 @@ export const createInitialEditorState = () => ({
     pageSize: "A4",
     orientation: "portrait",
     columns: 1,
+    mathSolutionLayout: "top_to_bottom",
+    englishResponseLayout: "standard",
     showAnswerKey: false,
 
     margins: {
@@ -739,6 +742,10 @@ const editorSlice = createSlice({
         state.title = data.title;
       }
 
+      if (typeof data.subject === "string") {
+        state.subject = data.subject;
+      }
+
       if (Array.isArray(data.questions)) {
         state.questions = data.questions;
       }
@@ -826,12 +833,14 @@ export const {
 export const selectEditorDocument = createSelector(
   [
     (state) => state.editor.title,
+    (state) => state.editor.subject,
     (state) => state.editor.questions,
     (state) => state.editor.sections,
     (state) => state.editor.paper,
   ],
-  (title, questions, sections, paper) => ({
+  (title, subject, questions, sections, paper) => ({
     title,
+    subject,
     questions,
     sections,
     paper,
@@ -843,6 +852,7 @@ export const createInitialAssessmentDocument = () => {
 
   return {
     title: state.title,
+    subject: state.subject,
     questions: structuredClone(state.questions),
     sections: structuredClone(state.sections),
     paper: structuredClone(state.paper),

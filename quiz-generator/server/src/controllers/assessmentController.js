@@ -18,10 +18,11 @@ import { createMathSectionInstructions } from "../services/ai/questionContentPla
 
 export async function createAssessment(req, res, next) {
   try {
-    const { title, questions, sections, paper } = req.body;
+    const { title, subject, questions, sections, paper } = req.body;
 
     const assessment = await Assessment.create({
       title,
+      subject,
       questions,
       sections,
       paper,
@@ -92,12 +93,13 @@ export async function updateAssessment(req, res, next) {
   try {
     const { assessmentId } = req.params;
 
-    const { title, questions, sections, paper } = req.body;
+    const { title, subject, questions, sections, paper } = req.body;
 
     const assessment = await Assessment.findByIdAndUpdate(
       assessmentId,
       {
         title,
+        subject,
         questions,
         sections,
         paper,

@@ -72,6 +72,7 @@ function QuestionAnswerArea({ question }) {
 
 function QuestionAnswerArea({
   question,
+  englishResponseLayout = "standard",
   isEditing,
   onStartEditing,
   onOptionChange,
@@ -213,6 +214,13 @@ function QuestionAnswerArea({
   }
 
   if (question.type === "essay") {
+    const lineCount =
+      englishResponseLayout === "writing_lines"
+        ? 8
+        : englishResponseLayout === "compact"
+          ? 3
+          : 6;
+
     return (
       <div
         className="space-y-2"
@@ -230,7 +238,7 @@ function QuestionAnswerArea({
             className="w-full resize-y border border-slate-300 bg-transparent p-2 outline-none focus:border-sky-500"
           />
         ) : (
-          Array.from({ length: 6 }, (_, index) => (
+          Array.from({ length: lineCount }, (_, index) => (
             <div key={index} className="border-b border-slate-300" />
           ))
         )}
@@ -287,6 +295,8 @@ export default function PaperQuestion({
   question,
   number,
   showAnswerKey = false,
+  mathSolutionLayout,
+  englishResponseLayout,
   onEditorReady,
 }) {
   const dispatch = useDispatch();
@@ -363,6 +373,12 @@ export default function PaperQuestion({
         </span>
 
         <div className="min-w-0 flex-1">
+          {question.subject && (
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              {question.subject}
+            </div>
+          )}
+
           {isEditing ? (
             <div className="relative">
               <div aria-hidden="true" className="invisible min-h-6">
@@ -409,11 +425,16 @@ export default function PaperQuestion({
           )}
 
           <QuestionAssets assets={question.assets} />
-          <QuestionMath question={question} paperMode />
+          <QuestionMath
+            question={question}
+            paperMode
+            layoutOverride={mathSolutionLayout}
+          />
 
           <QuestionAnswerArea
             question={question}
             isEditing={isEditing}
+            englishResponseLayout={englishResponseLayout}
             onStartEditing={startEditing}
             onOptionChange={handleOptionChange}
             onAnswerChange={handleAnswerChange}

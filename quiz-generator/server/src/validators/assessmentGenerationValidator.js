@@ -31,6 +31,6 @@ export const assessmentGenerationSchema = z.object({
   imageMode: z.enum(["none", "black_and_white", "color"]).default("none"),
 
   mathSolutionLayout: z
-    .enum(["step_by_step", "top_to_bottom"])
-    .default("step_by_step"),
+    .enum(["top_to_bottom", "horizontal", "multiplication_grid"])
+    .default("top_to_bottom"),
 });
