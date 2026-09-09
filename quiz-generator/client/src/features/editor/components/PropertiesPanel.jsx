@@ -2,7 +2,10 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 
-import { normalizeAssessment, regenerateQuestion } from "../../../api/assessmentApi";
+import {
+  normalizeAssessment,
+  regenerateQuestion,
+} from "../../../api/assessmentApi";
 import {
   assignQuestionToSection,
   deleteQuestion,

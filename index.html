@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Math Worksheet Generator</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background: #e9e9e9;
+        margin: 0;
+        padding: 20px;
+      }
+
+      /* Controls */
+      .controls {
+        max-width: 800px;
+        margin: 0 auto 20px;
+        background: white;
+        padding: 15px;
+        text-align: center;
+        border-radius: 8px;
+      }
+
+      .controls input,
+      .controls select,
+      .controls button {
+        padding: 8px 12px;
+        margin: 5px;
+        font-size: 16px;
+      }
+
+      .controls button {
+        cursor: pointer;
+        background: #1976d2;
+        color: white;
+        border: none;
+        border-radius: 5px;
+      }
+
+      .controls button:hover {
+        background: #125ca3;
+      }
+
+      /* Printable paper */
+      .worksheet {
+        width: 8.5in;
+        min-height: 11in;
+        background: white;
+        margin: auto;
+        padding: 0.55in;
+      }
+
+      h1 {
+        text-align: center;
+        margin: 0 0 25px;
+        font-size: 26px;
+      }
+
+      .student-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 25px;
+        font-size: 16px;
+      }
+
+      .info-line {
+        display: inline-block;
+        border-bottom: 1px solid black;
+        width: 220px;
+      }
+
+      .date-line {
+        width: 120px;
+      }
+
+      .directions {
+        margin-bottom: 30px;
+        font-size: 15px;
+      }
+
+      /* Question grid */
+      .questions {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        column-gap: 45px;
+        row-gap: 45px;
+      }
+
+      /* Regular vertical problems */
+      .problem {
+        width: 120px;
+        min-height: 120px;
+        font-family: "Courier New", monospace;
+        font-size: 23px;
+        font-weight: bold;
+        text-align: right;
+        position: relative;
+      }
+
+      .problem-number {
+        position: absolute;
+        left: -25px;
+        top: 0;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        font-weight: normal;
+      }
+
+      .number {
+        display: block;
+        padding-right: 5px;
+        height: 30px;
+      }
+
+      .operator {
+        position: absolute;
+        left: 0;
+        top: 30px;
+        font-size: 23px;
+      }
+
+      .bottom-number {
+        border-bottom: 2px solid black;
+        padding-right: 5px;
+        padding-bottom: 4px;
+      }
+
+      .answer-space {
+        height: 35px;
+        border-bottom: 1px solid #777;
+        margin-top: 5px;
+      }
+
+      /* Long Division */
+      .division-problem {
+        width: 145px;
+        min-height: 130px;
+        position: relative;
+        font-family: "Courier New", monospace;
+        font-size: 22px;
+        font-weight: bold;
+      }
+
+      .division-number {
+        position: absolute;
+        left: -25px;
+        top: 0;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        font-weight: normal;
+      }
+
+      .divisor {
+        position: absolute;
+        left: 10px;
+        top: 35px;
+      }
+
+      .dividend {
+        position: absolute;
+        left: 48px;
+        top: 35px;
+        padding: 0 8px 5px 8px;
+        border-top: 2px solid black;
+        border-left: 2px solid black;
+        border-top-left-radius: 8px;
+        min-width: 65px;
+        text-align: center;
+      }
+
+      .quotient {
+        position: absolute;
+        left: 55px;
+        top: 0;
+        width: 60px;
+        height: 30px;
+        border-bottom: 1px solid #777;
+        text-align: center;
+      }
+
+      /* Answer key */
+      .answer-key {
+        page-break-before: always;
+        margin-top: 30px;
+      }
+
+      .answer-key h2 {
+        text-align: center;
+      }
+
+      .answer-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+      }
+
+      .answer {
+        font-size: 16px;
+      }
+
+      /* Printing */
+      @media print {
+        @page {
+          size: letter;
+          margin: 0;
+        }
+
+        body {
+          background: white;
+          padding: 0;
+        }
+
+        .controls {
+          display: none;
+        }
+
+        .worksheet {
+          margin: 0;
+          width: 8.5in;
+          min-height: 11in;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Generator Controls -->
+    <div class="controls">
+      <label>
+        Questions:
+        <input type="number" id="questionCount" value="20" min="1" max="100" />
+      </label>
+
+      <label>
+        Operation:
+        <select id="operation">
+          <option value="mixed">Mixed</option>
+          <option value="+">Addition</option>
+          <option value="-">Subtraction</option>
+          <option value="×">Multiplication</option>
+          <option value="÷">Division</option>
+        </select>
+      </label>
+
+      <button onclick="generateWorksheet()">Generate</button>
+
+      <button onclick="window.print()">Print</button>
+    </div>
+
+    <!-- Printable Worksheet -->
+    <div class="worksheet">
+      <h1>Math Worksheet</h1>
+
+      <div class="student-info">
+        <div>
+          Name:
+          <span class="info-line"></span>
+        </div>
+
+        <div>
+          Date:
+          <span class="info-line date-line"></span>
+        </div>
+      </div>
+
+      <div class="directions">
+        <strong>Directions:</strong>
+        Solve each problem. Show your work.
+      </div>
+
+      <div id="questions" class="questions"></div>
+
+      <!-- Answer Key -->
+      <div class="answer-key">
+        <h2>Answer Key</h2>
+
+        <div id="answers" class="answer-grid"></div>
+      </div>
+    </div>
+
+    <script>
+      let answerKey = [];
+
+      function randomNumber(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function createProblem(operation) {
+        let num1;
+        let num2;
+        let answer;
+
+        /* ADDITION */
+        if (operation === "+") {
+          num1 = randomNumber(10, 99);
+          num2 = randomNumber(10, 99);
+
+          answer = num1 + num2;
+        } else if (operation === "-") {
+
+        /* SUBTRACTION */
+          num1 = randomNumber(10, 99);
+          num2 = randomNumber(10, 99);
+
+          // Prevent negative answers
+          if (num2 > num1) {
+            [num1, num2] = [num2, num1];
+          }
+
+          answer = num1 - num2;
+        } else if (operation === "×") {
+
+        /* MULTIPLICATION */
+          num1 = randomNumber(2, 12);
+          num2 = randomNumber(2, 12);
+
+          answer = num1 * num2;
+        } else if (operation === "÷") {
+
+        /* DIVISION */
+          // Generate a whole-number division problem
+          answer = randomNumber(2, 12);
+          num2 = randomNumber(2, 12);
+
+          num1 = answer * num2;
+        }
+
+        return {
+          num1,
+          num2,
+          answer,
+          operation,
+        };
+      }
+
+      function generateWorksheet() {
+        const count = Number(document.getElementById("questionCount").value);
+
+        const selectedOperation = document.getElementById("operation").value;
+
+        const questions = document.getElementById("questions");
+
+        const answers = document.getElementById("answers");
+
+        questions.innerHTML = "";
+        answers.innerHTML = "";
+
+        answerKey = [];
+
+        for (let i = 1; i <= count; i++) {
+          let operation = selectedOperation;
+
+          // Mixed operations
+          if (operation === "mixed") {
+            const operations = ["+", "-", "×", "÷"];
+
+            operation = operations[randomNumber(0, operations.length - 1)];
+          }
+
+          const problem = createProblem(operation);
+
+          answerKey.push(problem.answer);
+
+          /*
+          DIVISION
+          
+              8
+            ______
+          9 ) 72
+        */
+
+          if (operation === "÷") {
+            questions.innerHTML += `
+
+            <div class="division-problem">
+
+              <span class="division-number">
+                ${i}.
+              </span>
+
+              <span class="quotient">
+                &nbsp;
+              </span>
+
+              <span class="divisor">
+                ${problem.num2}
+              </span>
+
+              <span class="dividend">
+                ${problem.num1}
+              </span>
+
+            </div>
+
+          `;
+          } else {
+
+          /*
+          ADDITION / SUBTRACTION / MULTIPLICATION
+        */
+            questions.innerHTML += `
+
+            <div class="problem">
+
+              <span class="problem-number">
+                ${i}.
+              </span>
+
+              <span class="number">
+                ${problem.num1}
+              </span>
+
+              <span class="operator">
+                ${problem.operation}
+              </span>
+
+              <span class="number bottom-number">
+                ${problem.num2}
+              </span>
+
+              <div class="answer-space"></div>
+
+            </div>
+
+          `;
+          }
+        }
+
+        // Generate answer key
+        answerKey.forEach((answer, index) => {
+          answers.innerHTML += `
+
+          <div class="answer">
+            ${index + 1}. ${answer}
+          </div>
+
+        `;
+        });
+      }
+
+      // Generate worksheet on page load
+      generateWorksheet();
+    </script>
+  </body>
+</html>

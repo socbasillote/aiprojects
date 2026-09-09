@@ -3,6 +3,7 @@ import {
   questionTypes,
   difficultyOptions,
   subjectOptions,
+  gradeLevels,
   imageOptions,
 } from "../../../data/mock/assessmentOptions";
 
@@ -57,7 +58,6 @@ export default function AssessmentForm({ onGenerate, submitting = false }) {
   const mathSolutionOptions = [
     ["top_to_bottom", "Top to bottom"],
     ["horizontal", "Horizontal"],
-    ["multiplication_grid", "Multiplication grid (7 x 10)"],
   ];
 
   function handleQuestionTypeChange(type) {
@@ -152,15 +152,27 @@ export default function AssessmentForm({ onGenerate, submitting = false }) {
                 Grade Level
               </label>
 
-              <input
+              <select
                 id="gradeLevel"
                 name="gradeLevel"
                 value={form.gradeLevel}
                 onChange={handleChange}
-                placeholder="8"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
                 required
-              />
+              >
+                <option value="" disabled>
+                  Select a grade level
+                </option>
+                {gradeLevels.map((group) => (
+                  <optgroup key={group.label} label={group.label}>
+                    {group.options.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
             </div>
           </div>
 

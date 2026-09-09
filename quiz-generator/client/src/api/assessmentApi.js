@@ -53,8 +53,7 @@ export function normalizeAssessment(assessment) {
 
   return {
     ...assessment,
-    subject:
-      assessment.subject ?? assessment.questions?.[0]?.subject ?? "",
+    subject: assessment.subject ?? assessment.questions?.[0]?.subject ?? "",
     questions: (assessment.questions ?? []).map((question) => ({
       ...question,
       subject: question.subject ?? assessment.subject ?? "",
@@ -63,12 +62,11 @@ export function normalizeAssessment(assessment) {
       math: question.math
         ? {
             ...question.math,
-            solutionLayout:
-              ["horizontal", "multiplication_grid"].includes(
-                question.math.solutionLayout,
-              )
-                ? question.math.solutionLayout
-                : "top_to_bottom",
+            solutionLayout: [
+              "horizontal",
+            ].includes(question.math.solutionLayout)
+              ? question.math.solutionLayout
+              : "top_to_bottom",
           }
         : null,
       assets: question.assets ?? [],

@@ -84,7 +84,7 @@ const questionSchema = new mongoose.Schema(
       verification: { type: mongoose.Schema.Types.Mixed, default: null },
       solutionLayout: {
         type: String,
-        enum: ["top_to_bottom", "horizontal", "multiplication_grid"],
+        enum: ["top_to_bottom", "horizontal"],
         default: "top_to_bottom",
       },
     },
@@ -209,7 +209,7 @@ const assessmentSchema = new mongoose.Schema(
 
       mathSolutionLayout: {
         type: String,
-        enum: ["top_to_bottom", "horizontal", "multiplication_grid"],
+        enum: ["top_to_bottom", "horizontal"],
         default: "top_to_bottom",
       },
 

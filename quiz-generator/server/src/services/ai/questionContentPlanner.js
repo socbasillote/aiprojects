@@ -71,14 +71,16 @@ export function planQuestionContent({
   };
 }
 
-export function createMathSectionInstructions({ topic = "", solutionLayout = "top_to_bottom", instructions = "" }) {
+export function createMathSectionInstructions({
+  topic = "",
+  solutionLayout = "top_to_bottom",
+  instructions = "",
+}) {
   const topicText = topic.trim() || "each problem";
   const layoutText =
     solutionLayout === "top_to_bottom"
       ? "Solve each problem from top to bottom, showing every line of your solution."
-      : solutionLayout === "multiplication_grid"
-        ? "Format the paper as a 7-column by 10-row multiplication grid with vertical factors and an answer line under each problem."
-        : "Solve each problem horizontally, showing your work clearly.";
+      : "Solve each problem horizontally, showing your work clearly.";
   const customText = instructions.trim();
 
   return [
@@ -86,5 +88,7 @@ export function createMathSectionInstructions({ topic = "", solutionLayout = "to
     layoutText,
     "Write the final answer with the correct unit when one is given.",
     customText,
-  ].filter(Boolean).join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }

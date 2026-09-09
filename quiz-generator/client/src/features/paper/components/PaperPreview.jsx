@@ -292,9 +292,7 @@ export default function PaperPreview({ previewRef }) {
                 studentInfo={page.studentInfo}
                 instructions={page.instructions}
                 footer={page.footer}
-                mathSolutionLayout={
-                  paper.mathSolutionLayout ?? "top_to_bottom"
-                }
+                mathSolutionLayout={paper.mathSolutionLayout ?? "top_to_bottom"}
                 englishResponseLayout={
                   paper.englishResponseLayout ?? "standard"
                 }

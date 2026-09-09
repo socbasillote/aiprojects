@@ -80,7 +80,6 @@ Requirements:
 - For math content, include math.expression, math.solution, math.unit, and math.tolerance. The solution must be independently calculable from the expression.
 - For math content, use a plain numeric expression with +, -, *, /, ^, parentheses, or a simple fraction. Put only the numeric answer in math.solution; put measurement units in math.unit. Do not put explanatory text in either field.
 - For math content, set math.solutionLayout to ${mathSolutionLayout}.
-- When the math solution layout is multiplication_grid, generate multiplication problems using mostly single-digit factors, some 0 and 1 factors, and occasional 10s.
 - For math content, return only the problem in content. Do not add per-question instructions such as "solve", "show your work", or numbered steps; those belong to the section instructions.
 - For visual content, include an asset with a useful prompt, accurate altText, source, and URL only when available.
 - Respect the image preference. Generate no image assets when it is none; use grayscale prompts for black_and_white and full-color prompts for color.
@@ -215,7 +214,6 @@ export async function generateAssessmentQuestions(input) {
                         enum: [
                           "top_to_bottom",
                           "horizontal",
-                          "multiplication_grid",
                         ],
                       },
                       verified: { type: "boolean" },
@@ -241,7 +239,7 @@ export async function generateAssessmentQuestions(input) {
                       "solution",
                       "unit",
                       "tolerance",
-                        "solutionLayout",
+                      "solutionLayout",
                       "verified",
                       "verification",
                     ],
@@ -348,28 +346,33 @@ export async function generateAssessmentQuestions(input) {
   const questions = result.data.questions.map((question) => {
     const options = question.options ?? [];
     const answerText = String(
-      question.answer || (question.contentType === "math" ? question.math?.solution : "") || "",
+      question.answer ||
+        (question.contentType === "math" ? question.math?.solution : "") ||
+        "",
     ).trim();
     const letterIndex = /^[A-Za-z]$/.test(answerText)
       ? answerText.toUpperCase().charCodeAt(0) - 65
       : -1;
-    const normalizeOptionText = (value) => String(value ?? "")
-      .trim()
-      .toLowerCase()
-      .replace(/^\(?[a-z]\)?[.)\-:]\s*/i, "");
+    const normalizeOptionText = (value) =>
+      String(value ?? "")
+        .trim()
+        .toLowerCase()
+        .replace(/^\(?[a-z]\)?[.)\-:]\s*/i, "");
     const matchingOption = options.find(
-      (option) => option.id === question.answer ||
+      (option) =>
+        option.id === question.answer ||
         option.text.trim().toLowerCase() === answerText.toLowerCase() ||
         normalizeOptionText(option.text) === normalizeOptionText(answerText),
     );
     const letterOption = options[letterIndex];
     const resolvedOption = matchingOption ?? letterOption;
-    const normalizedOptions = question.type === "multiple_choice" && resolvedOption
-      ? options.map((option) => ({
-          ...option,
-          isCorrect: option.id === resolvedOption.id,
-        }))
-      : options;
+    const normalizedOptions =
+      question.type === "multiple_choice" && resolvedOption
+        ? options.map((option) => ({
+            ...option,
+            isCorrect: option.id === resolvedOption.id,
+          }))
+        : options;
     const isMath = question.contentType === "math" && question.math?.expression;
 
     return {
@@ -377,13 +380,20 @@ export async function generateAssessmentQuestions(input) {
       subject: question.subject || input.subject,
       options: normalizedOptions,
       answer: resolvedOption?.id ?? question.answer,
-      contentType: question.contentType === "math" && !question.math?.expression
-        ? "text"
-        : question.contentType || "text",
-      contentKind: question.contentType === "math" && !question.math?.expression
-        ? "text"
-        : question.contentKind || question.contentType || "text",
-      answer: resolvedOption?.id ?? (question.answer || (question.contentType === "math" ? question.math?.solution ?? "" : "")),
+      contentType:
+        question.contentType === "math" && !question.math?.expression
+          ? "text"
+          : question.contentType || "text",
+      contentKind:
+        question.contentType === "math" && !question.math?.expression
+          ? "text"
+          : question.contentKind || question.contentType || "text",
+      answer:
+        resolvedOption?.id ??
+        (question.answer ||
+          (question.contentType === "math"
+            ? (question.math?.solution ?? "")
+            : "")),
       math: question.math
         ? {
             ...question.math,
@@ -414,7 +424,8 @@ export async function generateAssessmentQuestions(input) {
 }
 
 export async function regenerateAssessmentQuestion(question) {
-  const isMath = question.contentType === "math" || Boolean(question.math?.expression);
+  const isMath =
+    question.contentType === "math" || Boolean(question.math?.expression);
   const questions = await generateAssessmentQuestions({
     subject: isMath ? "Math" : "the same subject",
     gradeLevel: "the same grade level",

@@ -111,12 +111,8 @@ export default function PaperMeasurement({
             <PaperBlock
               key={block.id}
               block={block}
-              mathSolutionLayout={
-                paper.mathSolutionLayout ?? "top_to_bottom"
-              }
-              englishResponseLayout={
-                paper.englishResponseLayout ?? "standard"
-              }
+              mathSolutionLayout={paper.mathSolutionLayout ?? "top_to_bottom"}
+              englishResponseLayout={paper.englishResponseLayout ?? "standard"}
             />
           ))}
         </div>

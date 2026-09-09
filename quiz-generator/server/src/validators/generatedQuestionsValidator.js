@@ -24,7 +24,7 @@ const mathSchema = z.object({
   unit: z.string().default(""),
   tolerance: z.number().min(0).default(0),
   solutionLayout: z
-    .enum(["top_to_bottom", "horizontal", "multiplication_grid"])
+    .enum(["top_to_bottom", "horizontal"])
     .default("top_to_bottom"),
   verified: z.boolean().default(false),
   verification: z.record(z.string(), z.unknown()).nullable().default(null),

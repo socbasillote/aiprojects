@@ -221,7 +221,9 @@ export async function generateQuestions(req, res, next) {
     }
 
     if (questions.some((question) => question.contentType === "math")) {
-      const mathQuestion = questions.find((question) => question.contentType === "math");
+      const mathQuestion = questions.find(
+        (question) => question.contentType === "math",
+      );
       const section = assessment.sections[0];
       if (section && !section.instructions?.trim()) {
         section.instructions = createMathSectionInstructions({

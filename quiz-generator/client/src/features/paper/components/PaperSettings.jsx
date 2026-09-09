@@ -12,6 +12,7 @@ export default function PaperSettings({ isOpen, onToggle }) {
 
   const paper = useSelector((state) => state.editor.paper);
   const subject = useSelector((state) => state.editor.subject);
+  const questions = useSelector((state) => state.editor.questions);
   const selectedQuestionId = useSelector(
     (state) => state.editor.selectedQuestionId,
   );
@@ -30,7 +31,19 @@ export default function PaperSettings({ isOpen, onToggle }) {
   }
 
   const normalizedSubject = subject.trim().toLowerCase();
-  const isMath = normalizedSubject === "math" || normalizedSubject === "mathematics";
+  const isMath =
+    normalizedSubject === "math" ||
+    normalizedSubject === "mathematics" ||
+    questions.some(
+      (question) =>
+        question.contentType === "math" || Boolean(question.math?.expression),
+    );
+  const mathSolutionLayout = [
+    "top_to_bottom",
+    "horizontal",
+  ].includes(paper.mathSolutionLayout)
+    ? paper.mathSolutionLayout
+    : "top_to_bottom";
   const isEnglish = normalizedSubject === "english";
 
   if (!isOpen && !selectedQuestionId) {
@@ -125,25 +138,27 @@ export default function PaperSettings({ isOpen, onToggle }) {
                 </select>
               </label>
 
-              {isEnglish && <label className="block">
-                <span className="text-xs text-slate-500">
-                  English response layout
-                </span>
+              {isEnglish && (
+                <label className="block">
+                  <span className="text-xs text-slate-500">
+                    English response layout
+                  </span>
 
-                <select
-                  value={paper.englishResponseLayout ?? "standard"}
-                  onChange={(event) =>
-                    updateSetting({
-                      englishResponseLayout: event.target.value,
-                    })
-                  }
-                  className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2.5 py-2 text-sm"
-                >
-                  <option value="standard">Standard responses</option>
-                  <option value="writing_lines">Writing lines</option>
-                  <option value="compact">Compact responses</option>
-                </select>
-              </label>}
+                  <select
+                    value={paper.englishResponseLayout ?? "standard"}
+                    onChange={(event) =>
+                      updateSetting({
+                        englishResponseLayout: event.target.value,
+                      })
+                    }
+                    className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2.5 py-2 text-sm"
+                  >
+                    <option value="standard">Standard responses</option>
+                    <option value="writing_lines">Writing lines</option>
+                    <option value="compact">Compact responses</option>
+                  </select>
+                </label>
+              )}
 
               <label className="block">
                 <span className="text-xs text-slate-500">Orientation</span>
@@ -180,33 +195,40 @@ export default function PaperSettings({ isOpen, onToggle }) {
                 </select>
               </label>
 
-              {isMath && <label className="block">
-                <span className="text-xs text-slate-500">
-                  Math paper layout
-                </span>
+              {isMath && (
+                <div className="rounded-lg border border-sky-100 bg-sky-50/60 p-3">
+                  <div className="flex items-start gap-2">
+                    <span className="mt-0.5 text-sm text-sky-700" aria-hidden="true">
+                      ∑
+                    </span>
+                    <div>
+                      <p className="text-xs font-semibold text-sky-900">
+                        Math response layout
+                      </p>
+                      <p className="mt-0.5 text-[11px] leading-4 text-sky-800/70">
+                        Choose how students should show their work.
+                      </p>
+                    </div>
+                  </div>
 
-                <select
-                  value={
-                    ["horizontal", "multiplication_grid"].includes(
-                      paper.mathSolutionLayout,
-                    )
-                      ? paper.mathSolutionLayout
-                      : "top_to_bottom"
-                  }
-                  onChange={(event) =>
-                    updateSetting({
-                      mathSolutionLayout: event.target.value,
-                    })
-                  }
-                  className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2.5 py-2 text-sm"
-                >
-                  <option value="top_to_bottom">Top to bottom</option>
-                  <option value="horizontal">Horizontal</option>
-                  <option value="multiplication_grid">
-                    Multiplication grid (7 x 10)
-                  </option>
-                </select>
-              </label>}
+                  <div className="mt-3 space-y-2">
+                    <MathLayoutOption
+                      value="top_to_bottom"
+                      selected={mathSolutionLayout === "top_to_bottom"}
+                      title="Show your work"
+                      description="Four writing lines under each problem"
+                      onChange={(value) => updateSetting({ mathSolutionLayout: value })}
+                    />
+                    <MathLayoutOption
+                      value="horizontal"
+                      selected={mathSolutionLayout === "horizontal"}
+                      title="Answer line"
+                      description="Compact layout for quick practice"
+                      onChange={(value) => updateSetting({ mathSolutionLayout: value })}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mt-4 border-t border-slate-200 pt-4">
@@ -594,6 +616,39 @@ function Toggle({ label, checked, onChange }) {
       />
 
       <span>{label}</span>
+    </label>
+  );
+}
+
+function MathLayoutOption({
+  value,
+  selected,
+  title,
+  description,
+  onChange,
+}) {
+  return (
+    <label
+      className={`flex cursor-pointer gap-2 rounded-md border px-2.5 py-2 transition ${
+        selected
+          ? "border-sky-400 bg-white shadow-sm"
+          : "border-transparent hover:border-sky-200 hover:bg-white/70"
+      }`}
+    >
+      <input
+        type="radio"
+        name="math-response-layout"
+        value={value}
+        checked={selected}
+        onChange={() => onChange(value)}
+        className="mt-0.5 h-3.5 w-3.5 accent-sky-600"
+      />
+      <span className="min-w-0">
+        <span className="block text-xs font-medium text-slate-800">{title}</span>
+        <span className="mt-0.5 block text-[11px] leading-4 text-slate-500">
+          {description}
+        </span>
+      </span>
     </label>
   );
 }

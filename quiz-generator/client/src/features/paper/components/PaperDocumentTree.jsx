@@ -33,18 +33,25 @@ import {
 } from "../../question-banks/questionBankData";
 import { generateQuestionPreview } from "../../../api/assessmentApi";
 
-function createMathSectionInstructions({ topic = "", solutionLayout = "top_to_bottom", instructions = "" }) {
+function createMathSectionInstructions({
+  topic = "",
+  solutionLayout = "top_to_bottom",
+  instructions = "",
+}) {
   const topicText = topic.trim() || "each problem";
-  const layoutText = solutionLayout === "top_to_bottom"
-    ? "Solve each problem from top to bottom, showing every line of your solution."
-    : "Solve each problem horizontally, showing your work clearly.";
+  const layoutText =
+    solutionLayout === "top_to_bottom"
+      ? "Solve each problem from top to bottom, showing every line of your solution."
+      : "Solve each problem horizontally, showing your work clearly.";
 
   return [
     `Solve the ${topicText} problems.`,
     layoutText,
     "Write the final answer with the correct unit when one is given.",
     instructions.trim(),
-  ].filter(Boolean).join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 export default function PaperDocumentTree() {
@@ -732,24 +739,22 @@ function GenerateQuestionDialog({ onClose, onGenerate }) {
               <option value="mixed">Mixed, planned by subject and topic</option>
             </select>
           </label>
-          {(settings.contentMode === "math" || settings.contentMode === "mixed") && (
+          {(settings.contentMode === "math" ||
+            settings.contentMode === "mixed") && (
             <label className="col-span-2 text-sm text-slate-700">
               Math solution layout
               <select
                 value={settings.mathSolutionLayout}
-                  onChange={(event) =>
-                    updateSetting(
-                      "mathSolutionLayout",
-                      event.target.value || "top_to_bottom",
-                    )
-                  }
+                onChange={(event) =>
+                  updateSetting(
+                    "mathSolutionLayout",
+                    event.target.value || "top_to_bottom",
+                  )
+                }
                 className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
               >
                 <option value="top_to_bottom">Top to bottom</option>
                 <option value="horizontal">Horizontal</option>
-                <option value="multiplication_grid">
-                  Multiplication grid (7 x 10)
-                </option>
               </select>
             </label>
           )}

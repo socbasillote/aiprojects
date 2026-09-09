@@ -1,45 +1,3 @@
-function createMultiplicationProblems(seed) {
-  let value = Array.from(String(seed), (character) => character.charCodeAt(0)).reduce(
-    (total, code) => (total * 31 + code) >>> 0,
-    7,
-  );
-
-  function nextNumber() {
-    value = (value * 1664525 + 1013904223) >>> 0;
-    return value;
-  }
-
-  return Array.from({ length: 70 }, () => {
-    const first = nextNumber() % 10 === 0 ? 10 : nextNumber() % 10;
-    const secondRoll = nextNumber() % 12;
-    const second = secondRoll < 2 ? secondRoll : 1 + (nextNumber() % 9);
-
-    return { first, second };
-  });
-}
-
-function MultiplicationGrid({ question }) {
-  const problems = createMultiplicationProblems(question.id);
-
-  return (
-    <div className="mt-4 grid grid-cols-7 gap-x-2 gap-y-4 border-y border-slate-300 py-3">
-      {problems.map(({ first, second }, index) => (
-        <div
-          key={`${question.id}-multiplication-${index}`}
-          className="font-mono text-center text-xs leading-tight text-slate-700"
-        >
-          <div className="pr-2 text-right">{first}</div>
-          <div className="flex items-end justify-center gap-1 border-b border-slate-700 pb-1">
-            <span aria-hidden="true">×</span>
-            <span>{second}</span>
-          </div>
-          <div className="mt-2 h-3 border-b border-slate-400" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default function QuestionMath({
   question,
   paperMode = false,
@@ -49,50 +7,77 @@ export default function QuestionMath({
     return null;
   }
 
-  const solutionLayout =
-    ["horizontal", "multiplication_grid"].includes(layoutOverride)
-      ? layoutOverride
-      : ["horizontal", "multiplication_grid"].includes(
-            question.math.solutionLayout,
-          )
-        ? question.math.solutionLayout
+  const solutionLayout = [
+    "top_to_bottom",
+    "horizontal",
+  ].includes(layoutOverride)
+    ? layoutOverride
+    : [
+          "top_to_bottom",
+          "horizontal",
+        ].includes(
+          question.math.solutionLayout,
+        )
+      ? question.math.solutionLayout
       : "top_to_bottom";
 
-  if (paperMode && solutionLayout === "multiplication_grid") {
-    return (
-      <div
-        className="my-3 text-sm text-slate-700"
-        data-question-math
-        data-solution-layout={solutionLayout}
-      >
-        <MultiplicationGrid question={question} />
-      </div>
-    );
-  }
+  const expression = String(question.math.expression).trim();
+  const match = expression.match(/^(.*?)\s*([+\-×x*/÷])\s*(.*?)$/);
+  const parsed = match
+    ? {
+        first: match[1].trim(),
+        operator:
+          match[2] === "x" || match[2] === "*"
+            ? "×"
+            : match[2] === "/"
+              ? "÷"
+              : match[2],
+        second: match[3].trim(),
+      }
+    : null;
+
+  const isDivision = parsed?.operator === "÷";
+  const isHorizontal =
+    paperMode && (solutionLayout === "horizontal" || isDivision);
+  const isVertical = paperMode && solutionLayout === "top_to_bottom";
 
   return (
-    <div
-      className="my-3 text-sm text-slate-700"
-      data-question-math
-      data-solution-layout={solutionLayout}
-    >
-      <div className="font-mono">{question.math.expression}</div>
-      {question.math.unit && (
-        <span className="ml-2 text-slate-500">({question.math.unit})</span>
-      )}
-      {paperMode && solutionLayout === "top_to_bottom" && (
-        <div className="mt-4">
-          <div className="space-y-3">
-            {Array.from({ length: 5 }, (_, index) => (
-              <div key={index} className="border-b border-slate-300" />
-            ))}
+    <div className="my-4 text-sm text-slate-700" data-question-math data-solution-layout={solutionLayout}>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+          Solve
+        </span>
+        {question.math.unit && (
+          <span className="text-xs text-slate-500">
+            Unit: {question.math.unit}
+          </span>
+        )}
+      </div>
+      {isHorizontal && parsed ? (
+        <div className="flex items-end gap-3 rounded-md border border-dashed border-slate-300 bg-white px-3 py-3 font-mono text-base font-semibold">
+          <span>{parsed.first} {parsed.operator} {parsed.second}</span>
+          <div className="min-w-0 flex-1 border-b-2 border-slate-400" />
+        </div>
+      ) : isVertical && parsed ? (
+        <div className="mx-auto w-28 font-mono text-right text-base font-semibold">
+          <div>{parsed.first}</div>
+          <div className="relative border-b-2 border-slate-700 pb-1">
+            <span className="absolute -left-5 top-0">{parsed.operator}</span>
+            {parsed.second}
           </div>
+          <div className="mt-3 border-b-2 border-slate-400 pb-1" />
+        </div>
+      ) : (
+        <div className="rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-base font-semibold tracking-wide">
+          {question.math.expression}
         </div>
       )}
-      {paperMode && solutionLayout === "horizontal" && (
-        <div className="mt-4 flex items-end gap-3">
-          <span className="text-xs text-slate-500">Answer</span>
-          <div className="min-w-0 flex-1 border-b border-slate-300" />
+      {paperMode && !isHorizontal && !isVertical && (
+        <div className="mt-3 flex items-end gap-3 rounded-md border border-dashed border-slate-300 bg-white px-3 py-3">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Answer
+          </span>
+          <div className="min-w-0 flex-1 border-b-2 border-slate-400" />
         </div>
       )}
     </div>

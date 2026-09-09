@@ -90,6 +90,10 @@ export function paginateBlocks({
   }
 
   blocks.forEach((block, index) => {
+    if (block.breakBefore && currentColumns.some((column) => column.length > 0)) {
+      pushPage();
+    }
+
     const blockHeight = getBlockHeight(block);
 
     /*

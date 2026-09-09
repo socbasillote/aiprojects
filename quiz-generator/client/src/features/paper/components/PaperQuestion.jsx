@@ -295,6 +295,7 @@ export default function PaperQuestion({
   question,
   number,
   showAnswerKey = false,
+  mathGrid = false,
   mathSolutionLayout,
   englishResponseLayout,
   onEditorReady,
@@ -346,6 +347,40 @@ export default function PaperQuestion({
     handleSelect();
   }
 
+  const isMathQuestion =
+    question.contentType === "math" || Boolean(question.math?.expression);
+
+  if (mathGrid && isMathQuestion) {
+    return (
+      <article
+        data-paper-question
+        className={`min-w-0 break-inside-avoid text-center ${
+          selectedQuestionId === question.id
+            ? "ring-2 ring-sky-400 ring-offset-2"
+            : ""
+        }`}
+        style={{
+          fontFamily: PAPER_STYLES.fontFamily,
+          fontSize: "12px",
+          lineHeight: 1.3,
+        }}
+      >
+        <div className="mb-1 text-left text-[10px] font-semibold text-slate-500">
+          {number}.
+        </div>
+        <div className="rounded border border-slate-200 bg-slate-50 px-1.5 py-2 font-mono font-semibold">
+          {question.math.expression}
+        </div>
+        <div className="mt-2 border-b-2 border-slate-400 pb-1" />
+        {showAnswerKey && (
+          <div className="mt-1 break-words text-left text-[9px] text-slate-500">
+            {question.math.solution ?? question.answer ?? "—"}
+          </div>
+        )}
+      </article>
+    );
+  }
+
   return (
     <article
       data-paper-question
@@ -373,12 +408,6 @@ export default function PaperQuestion({
         </span>
 
         <div className="min-w-0 flex-1">
-          {question.subject && (
-            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-              {question.subject}
-            </div>
-          )}
-
           {isEditing ? (
             <div className="relative">
               <div aria-hidden="true" className="invisible min-h-6">
@@ -416,7 +445,13 @@ export default function PaperQuestion({
               }}
               className="block w-full cursor-text text-left"
             >
-              {hasQuestionContent(question.content) ? (
+              {isMathQuestion ? (
+                <QuestionMath
+                  question={question}
+                  paperMode
+                  layoutOverride={mathSolutionLayout}
+                />
+              ) : hasQuestionContent(question.content) ? (
                 <RichTextRenderer content={question.content} />
               ) : (
                 <span className="text-slate-400">Add question text</span>
@@ -425,20 +460,24 @@ export default function PaperQuestion({
           )}
 
           <QuestionAssets assets={question.assets} />
-          <QuestionMath
-            question={question}
-            paperMode
-            layoutOverride={mathSolutionLayout}
-          />
+          {!isMathQuestion && (
+            <QuestionMath
+              question={question}
+              paperMode
+              layoutOverride={mathSolutionLayout}
+            />
+          )}
 
-          <QuestionAnswerArea
-            question={question}
-            isEditing={isEditing}
-            englishResponseLayout={englishResponseLayout}
-            onStartEditing={startEditing}
-            onOptionChange={handleOptionChange}
-            onAnswerChange={handleAnswerChange}
-          />
+          {!isMathQuestion && (
+            <QuestionAnswerArea
+              question={question}
+              isEditing={isEditing}
+              englishResponseLayout={englishResponseLayout}
+              onStartEditing={startEditing}
+              onOptionChange={handleOptionChange}
+              onAnswerChange={handleAnswerChange}
+            />
+          )}
 
           {showAnswerKey && (
             <div className="mt-3 text-xs font-semibold text-slate-500">
