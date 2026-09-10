@@ -9,12 +9,12 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  Plus,
   Search,
   Settings,
   Sparkles,
   UserCircle2,
   Users,
+  Megaphone,
 } from "lucide-react";
 import { logout } from "../features/auth/authSlice";
 import type { RootState } from "../store/store";
@@ -34,13 +34,13 @@ const operationsNav = [
 
 const growthNav = [
   { label: "Payments", to: "/bookings", icon: CreditCard },
-  { label: "Promotions", to: "/services", icon: Sparkles },
+  { label: "Promotions", to: "/promotions", icon: Megaphone },
   { label: "Reports", to: "/dashboard", icon: LayoutDashboard },
 ];
 
 const footerNav = [
   { label: "Booking Page", to: "/book/maria-studio", icon: BriefcaseBusiness },
-  { label: "Settings", to: "/services", icon: Settings },
+  { label: "Settings", to: "/settings", icon: Settings },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -63,11 +63,6 @@ export function Layout({ children }: { children: ReactNode }) {
           </button>
         </div>
 
-        <button onClick={() => navigate("/bookings?new=1")} className="mb-6 flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800">
-          <Plus size={16} />
-          New Booking
-        </button>
-
         <nav className="space-y-6 text-sm">
           <div>
             <div className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
@@ -79,11 +74,11 @@ export function Layout({ children }: { children: ReactNode }) {
                   key={label}
                   to={to}
                   className={({ isActive }) =>
-                    `sidebar-item ${isActive ? "active" : ""}`
+                    `sidebar-item flex items-center gap-3 rounded-xl px-3 py-2 ${isActive ? "active" : ""}`
                   }
                 >
-                  <Icon size={16} />
-                  {label}
+                  <Icon size={16} className="shrink-0" />
+                  <span className="leading-none">{label}</span>
                 </NavLink>
               ))}
             </div>
@@ -91,7 +86,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
           <div>
             <div className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-              Business
+              Operations
             </div>
             <div className="space-y-1">
               {operationsNav.map(({ label, to, icon: Icon }) => (
@@ -99,11 +94,11 @@ export function Layout({ children }: { children: ReactNode }) {
                   key={label}
                   to={to}
                   className={({ isActive }) =>
-                    `sidebar-item ${isActive ? "active" : ""}`
+                    `sidebar-item flex items-center gap-3 rounded-xl px-3 py-2 ${isActive ? "active" : ""}`
                   }
                 >
-                  <Icon size={16} />
-                  {label}
+                  <Icon size={16} className="shrink-0" />
+                  <span className="leading-none">{label}</span>
                 </NavLink>
               ))}
             </div>
@@ -119,11 +114,11 @@ export function Layout({ children }: { children: ReactNode }) {
                   key={label}
                   to={to}
                   className={({ isActive }) =>
-                    `sidebar-item ${isActive ? "active" : ""}`
+                    `sidebar-item flex items-center gap-3 rounded-xl px-3 py-2 ${isActive ? "active" : ""}`
                   }
                 >
-                  <Icon size={16} />
-                  {label}
+                  <Icon size={16} className="shrink-0" />
+                  <span className="leading-none">{label}</span>
                 </NavLink>
               ))}
             </div>
@@ -136,11 +131,11 @@ export function Layout({ children }: { children: ReactNode }) {
               key={label}
               to={to}
               className={({ isActive }) =>
-                `sidebar-item ${isActive ? "active" : ""}`
+                `sidebar-item flex items-center gap-3 rounded-xl px-3 py-2 ${isActive ? "active" : ""}`
               }
             >
-              <Icon size={16} />
-              {label}
+              <Icon size={16} className="shrink-0" />
+              <span className="leading-none">{label}</span>
             </NavLink>
           ))}
         </div>
@@ -194,7 +189,6 @@ export function Layout({ children }: { children: ReactNode }) {
               </button>
               <button onClick={() => navigate("/bookings?new=1")} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800">
                 <span className="inline-flex items-center gap-2">
-                  <Plus size={16} />
                   New Booking
                 </span>
               </button>

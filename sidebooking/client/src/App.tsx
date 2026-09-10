@@ -13,6 +13,8 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { BusinessSetupPage } from "./pages/BusinessSetupPage";
 import { PublicBookingPage } from "./pages/PublicBookingPage";
 import { HomePage } from "./pages/HomePage";
+import { PromotionsPage } from "./pages/PromotionsPage";
+import { SettingsPage } from "./pages/SettingsPage";
 import "./App.css";
 
 function ProtectedApp() {
@@ -32,6 +34,8 @@ function ProtectedApp() {
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/services" element={<ServicesPage />} />
         <Route path="/team" element={<TeamPage />} />
+        <Route path="/promotions" element={<PromotionsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="/onboarding" element={<BusinessSetupPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
