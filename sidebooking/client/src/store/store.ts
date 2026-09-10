@@ -11,8 +11,12 @@ export const store = configureStore({
 
 store.subscribe(() => {
   const data = store.getState().booking;
-  localStorage.setItem("sidebooking_services", JSON.stringify(data.services));
-  localStorage.setItem("sidebooking_bookings", JSON.stringify(data.bookings));
+  if (Array.isArray(data.services)) {
+    localStorage.setItem("sidebooking_services", JSON.stringify(data.services));
+  }
+  if (Array.isArray(data.bookings)) {
+    localStorage.setItem("sidebooking_bookings", JSON.stringify(data.bookings));
+  }
 });
 
 export type RootState = ReturnType<typeof store.getState>;

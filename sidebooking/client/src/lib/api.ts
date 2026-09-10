@@ -19,7 +19,18 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
   return body.data as T;
 }
 
-export function saveSession(data: { token: string; user: unknown }) {
+export type ServicePayload = { services: Array<{ id: string; name: string; price: number; durationMinutes?: number; duration?: number; category?: string; description?: string; isActive?: boolean; onlineBookingEnabled?: boolean }> };
+export type BookingPayload = { bookings: Array<{ id: string; customer: string; email: string; service: string; staff: string; date: string; time: string; status: "Confirmed" | "Pending" | "Completed"; payment: "Unpaid" | "Deposit" | "Paid"; paymentMethod: "Cash" | "Card" | "GCash" | "Bank transfer" }> };
+
+export async function fetchServices() {
+  return apiRequest<ServicePayload>("/services/");
+}
+
+export async function fetchBookings() {
+  return apiRequest<BookingPayload>("/bookings/");
+}
+
+export async function saveSession(data: { token: string; user: unknown }) {
   localStorage.setItem("sidebooking_token", data.token);
   localStorage.setItem("sidebooking_user", JSON.stringify(data.user));
 }

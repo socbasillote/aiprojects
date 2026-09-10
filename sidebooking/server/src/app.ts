@@ -4,9 +4,12 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { authRouter } from "./routes/auth.routes.js";
+import { bookingRouter } from "./routes/booking.routes.js";
 import { businessRouter } from "./routes/business.routes.js";
+import { customerRouter } from "./routes/customer.routes.js";
 import { publicRouter } from "./routes/public.routes.js";
 import { serviceRouter } from "./routes/service.routes.js";
+import { teamRouter } from "./routes/team.routes.js";
 
 export const app = express();
 
@@ -37,6 +40,9 @@ app.use("/api/auth", authRouter);
 app.use("/api/business", businessRouter);
 app.use("/api/public", publicRouter);
 app.use("/api/services", serviceRouter);
+app.use("/api/bookings", bookingRouter);
+app.use("/api/customers", customerRouter);
+app.use("/api/team", teamRouter);
 
 app.use(
   (
