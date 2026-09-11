@@ -46,7 +46,11 @@ function ProtectedApp() {
 
 function ProtectedOnboarding() {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-  return isAuthenticated ? <BusinessSetupPage /> : <Navigate to="/login" replace />;
+  return isAuthenticated ? (
+    <BusinessSetupPage />
+  ) : (
+    <Navigate to="/login" replace />
+  );
 }
 
 function App() {
@@ -58,7 +62,10 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/onboarding" element={<ProtectedOnboarding />} />
           <Route path="/book/:slug" element={<PublicBookingPage />} />
-          <Route path="/status/:confirmationCode" element={<BookingStatusPage />} />
+          <Route
+            path="/status/:confirmationCode"
+            element={<BookingStatusPage />}
+          />
           <Route path="/" element={<HomePage />} />
           <Route path="*" element={<ProtectedApp />} />
         </Routes>

@@ -159,7 +159,11 @@ export function CalendarPage() {
                 className="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm text-white transition hover:bg-white/20"
                 onClick={() =>
                   setCurrentMonth(
-                    new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+                    new Date(
+                      new Date().getFullYear(),
+                      new Date().getMonth(),
+                      1,
+                    ),
                   )
                 }
               >
@@ -281,7 +285,10 @@ export function CalendarPage() {
               </button>
             </div>
 
-            <form onSubmit={createBooking} className="grid gap-4 sm:grid-cols-2">
+            <form
+              onSubmit={createBooking}
+              className="grid gap-4 sm:grid-cols-2"
+            >
               <label className="text-sm font-medium text-slate-700">
                 Customer
                 <input
@@ -371,7 +378,9 @@ export function CalendarPage() {
                     "17:30",
                     "18:00",
                   ].map((slot) => (
-                    <option key={slot} value={slot}>{slot}</option>
+                    <option key={slot} value={slot}>
+                      {slot}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -417,7 +426,8 @@ export function CalendarPage() {
                   onChange={(event) =>
                     setDraft({
                       ...draft,
-                      paymentMethod: event.target.value as Booking["paymentMethod"],
+                      paymentMethod: event.target
+                        .value as Booking["paymentMethod"],
                     })
                   }
                 >

@@ -83,7 +83,8 @@ export function BookingStatusPage() {
   }
 
   const { booking } = data;
-  const canShowPayment = booking.payment === "Paid" || booking.payment === "Deposit";
+  const canShowPayment =
+    booking.payment === "Paid" || booking.payment === "Deposit";
 
   return (
     <div className="min-h-screen bg-slate-100 px-4 py-10">
@@ -155,7 +156,9 @@ export function BookingStatusPage() {
                   <span className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
                     Payment
                   </span>
-                  <span className={`text-sm font-semibold ${canShowPayment ? "text-emerald-700" : "text-amber-700"}`}>
+                  <span
+                    className={`text-sm font-semibold ${canShowPayment ? "text-emerald-700" : "text-amber-700"}`}
+                  >
                     {booking.payment}
                   </span>
                 </div>
