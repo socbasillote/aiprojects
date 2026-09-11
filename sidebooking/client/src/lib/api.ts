@@ -1,8 +1,16 @@
 const API_URL = import.meta.env.VITE_API_URL ?? "/api";
 
-export type ApiResponse<T> = { success: boolean; data?: T; message?: string; errors?: string[] };
+export type ApiResponse<T> = {
+  success: boolean;
+  data?: T;
+  message?: string;
+  errors?: string[];
+};
 
-export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function apiRequest<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
   const token = localStorage.getItem("sidebooking_token");
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
@@ -14,13 +22,46 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
   });
   const body = (await response.json().catch(() => ({}))) as ApiResponse<T>;
   if (!response.ok || !body.success) {
-    throw new Error(body.message ?? body.errors?.join(", ") ?? "Request failed");
+    throw new Error(
+      body.message ?? body.errors?.join(", ") ?? "Request failed",
+    );
   }
   return body.data as T;
 }
 
-export type ServicePayload = { services: Array<{ id: string; name: string; price: number; durationMinutes?: number; duration?: number; category?: string; description?: string; isActive?: boolean; onlineBookingEnabled?: boolean }> };
-export type BookingPayload = { bookings: Array<{ id: string; customer: string; email: string; service: string; staff: string; date: string; time: string; status: "Confirmed" | "Pending" | "Completed"; payment: "Unpaid" | "Deposit" | "Paid"; paymentMethod: "Cash" | "Card" | "GCash" | "Bank transfer" }> };
+export type ServicePayload = {
+  services: Array<{
+    id: string;
+    name: string;
+    price: number;
+    durationMinutes?: number;
+    duration?: number;
+    category?: string;
+    description?: string;
+    isActive?: boolean;
+    onlineBookingEnabled?: boolean;
+  }>;
+};
+export type PaymentMethod =
+  | "Cash"
+  | "Card"
+  | "GCash"
+  | "Bank transfer"
+  | "PayPal";
+export type BookingPayload = {
+  bookings: Array<{
+    id: string;
+    customer: string;
+    email: string;
+    service: string;
+    staff: string;
+    date: string;
+    time: string;
+    status: "Confirmed" | "Pending" | "Completed";
+    payment: "Unpaid" | "Deposit" | "Paid";
+    paymentMethod: PaymentMethod;
+  }>;
+};
 
 export async function fetchServices() {
   return apiRequest<ServicePayload>("/services/");
@@ -42,7 +83,9 @@ export function clearSession() {
 
 export function getStoredUser<T>() {
   try {
-    return JSON.parse(localStorage.getItem("sidebooking_user") ?? "null") as T | null;
+    return JSON.parse(
+      localStorage.getItem("sidebooking_user") ?? "null",
+    ) as T | null;
   } catch {
     return null;
   }

@@ -12,6 +12,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { BusinessSetupPage } from "./pages/BusinessSetupPage";
 import { PublicBookingPage } from "./pages/PublicBookingPage";
+import { BookingStatusPage } from "./pages/BookingStatusPage";
 import { HomePage } from "./pages/HomePage";
 import { PromotionsPage } from "./pages/PromotionsPage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -57,6 +58,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/onboarding" element={<ProtectedOnboarding />} />
           <Route path="/book/:slug" element={<PublicBookingPage />} />
+          <Route path="/status/:confirmationCode" element={<BookingStatusPage />} />
           <Route path="/" element={<HomePage />} />
           <Route path="*" element={<ProtectedApp />} />
         </Routes>

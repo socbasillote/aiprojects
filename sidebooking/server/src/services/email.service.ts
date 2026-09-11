@@ -2,7 +2,18 @@ import nodemailer from "nodemailer";
 import QRCode from "qrcode";
 import { env } from "../config/env.js";
 
-export async function sendBookingConfirmation(input: { to: string; customer: string; business: string; service: string; date: string; time: string; paymentMethod: string; confirmationCode: string }) {
+export async function sendBookingConfirmation(input: {
+  to: string;
+  customer: string;
+  business: string;
+  service: string;
+  date: string;
+  time: string;
+  paymentMethod: string;
+  payment: string;
+  confirmationCode: string;
+  statusPageUrl?: string;
+}) {
   let qr: string;
 
   try {
@@ -25,11 +36,12 @@ export async function sendBookingConfirmation(input: { to: string; customer: str
       auth: { user: env.smtpUser, pass: env.smtpPassword },
     });
 
+    const statusLink = input.statusPageUrl ?? `http://localhost:5173/status/${input.confirmationCode}`;
     await transporter.sendMail({
       from: env.smtpFrom || env.smtpUser,
       to: input.to,
       subject: `Booking confirmation for ${input.business}`,
-      html: `<h2>Booking confirmed</h2><p>Hi ${input.customer},</p><p>Your booking at <strong>${input.business}</strong> is received.</p><p><strong>${input.service}</strong><br/>${input.date} at ${input.time}<br/>Payment: ${input.paymentMethod}</p><p>Show this QR code at your appointment:</p><img src="cid:booking-qr" alt="Booking QR code" width="220"/><p>Confirmation code: <strong>${input.confirmationCode}</strong></p>`,
+      html: `<h2>Booking confirmed</h2><p>Hi ${input.customer},</p><p>Your booking at <strong>${input.business}</strong> is received.</p><p><strong>${input.service}</strong><br/>${input.date} at ${input.time}<br/>Payment: ${input.paymentMethod}<br/>Payment status: ${input.payment}</p><p>Track or view your booking status here:</p><p><a href="${statusLink}" target="_blank">${statusLink}</a></p><p>Show this QR code at your appointment:</p><img src="cid:booking-qr" alt="Booking QR code" width="220"/><p>Confirmation code: <strong>${input.confirmationCode}</strong></p>`,
       attachments: [{ filename: "booking-qr.png", content: qr.split(",")[1], encoding: "base64", cid: "booking-qr" }],
     });
 

@@ -9,24 +9,43 @@ export interface IBooking extends Document {
   date: string;
   time: string;
   payment: "Unpaid" | "Deposit" | "Paid";
-  paymentMethod: "Cash" | "Card" | "GCash" | "Bank transfer";
+  paymentMethod: "Cash" | "Card" | "GCash" | "Bank transfer" | "PayPal";
   status: "Pending" | "Confirmed" | "Completed";
   confirmationCode: string;
   createdAt: Date;
 }
 
-const bookingSchema = new Schema<IBooking>({
-  businessId: { type: Schema.Types.ObjectId, ref: "Business", required: true },
-  customer: { type: String, required: true, trim: true },
-  email: { type: String, required: true, lowercase: true, trim: true },
-  service: { type: String, required: true, trim: true },
-  staff: { type: String, required: true, default: "Maria", trim: true },
-  date: { type: String, required: true },
-  time: { type: String, required: true },
-  payment: { type: String, enum: ["Unpaid", "Deposit", "Paid"], default: "Unpaid" },
-  paymentMethod: { type: String, enum: ["Cash", "Card", "GCash", "Bank transfer"], required: true },
-  status: { type: String, enum: ["Pending", "Confirmed", "Completed"], default: "Pending" },
-  confirmationCode: { type: String, required: true, unique: true },
-}, { timestamps: true });
+const bookingSchema = new Schema<IBooking>(
+  {
+    businessId: {
+      type: Schema.Types.ObjectId,
+      ref: "Business",
+      required: true,
+    },
+    customer: { type: String, required: true, trim: true },
+    email: { type: String, required: true, lowercase: true, trim: true },
+    service: { type: String, required: true, trim: true },
+    staff: { type: String, required: true, default: "Maria", trim: true },
+    date: { type: String, required: true },
+    time: { type: String, required: true },
+    payment: {
+      type: String,
+      enum: ["Unpaid", "Deposit", "Paid"],
+      default: "Unpaid",
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["Cash", "Card", "GCash", "Bank transfer", "PayPal"],
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["Pending", "Confirmed", "Completed"],
+      default: "Pending",
+    },
+    confirmationCode: { type: String, required: true, unique: true },
+  },
+  { timestamps: true },
+);
 
 export const Booking = model<IBooking>("Booking", bookingSchema);
