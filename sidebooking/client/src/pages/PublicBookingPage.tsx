@@ -13,6 +13,7 @@ type BusinessService = {
 type BookingEntry = {
   date: string;
   time: string;
+  court?: string;
 };
 
 type BusinessData = {
@@ -22,6 +23,7 @@ type BusinessData = {
     openHour?: string;
     closeHour?: string;
     slotsPerHour?: number;
+    courtsCount?: number;
   };
   services: BusinessService[];
   bookings?: BookingEntry[];
@@ -84,9 +86,13 @@ export function PublicBookingPage() {
   const [data, setData] = useState<BusinessData | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
+  const [selectedCourt, setSelectedCourt] = useState<string>("Court 1");
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const courtsCount = Math.max(1, Number(data?.business?.courtsCount ?? 3));
+  const courtNames = Array.from({ length: courtsCount }, (_, index) => `Court ${index + 1}`);
 
   const allSlots = getSlots(
     data?.business?.openHour ?? "08:00",
@@ -167,6 +173,7 @@ export function PublicBookingPage() {
         email: String(form.get("email")),
         service: String(form.get("service")),
         staff: String(form.get("staff") ?? "Maria"),
+        court: selectedCourt,
         date,
         time,
         payment,
@@ -473,37 +480,71 @@ export function PublicBookingPage() {
             <div className="mt-6 rounded-4xl border border-emerald-900/10 bg-[#eef6ed] p-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-                  Choose time
+                  Choose court and time
                 </span>
                 <span className="rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-slate-500 shadow-sm">
-                  {selectedTime ? selectedTime : "No slot"}
+                  {selectedCourt} • {selectedTime ? selectedTime : "No slot"}
                 </span>
               </div>
 
-              <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-6">
-                {allSlots.map((slot) => {
-                  const isBooked = (data?.bookings ?? []).some(
-                    (entry) => entry.date === selectedDate && entry.time === slot,
-                  );
-                  const isActive = selectedTime === slot;
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                {courtNames.map((court) => (
+                  <div
+                    key={court}
+                    className="rounded-3xl border border-emerald-900/10 bg-white p-4 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-black uppercase tracking-[0.2em] text-slate-900">
+                        {court}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCourt(court)}
+                        className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] transition ${
+                          selectedCourt === court
+                            ? "bg-emerald-950 text-lime-300"
+                            : "border border-emerald-900/20 bg-white text-slate-700 hover:bg-lime-50"
+                        }`}
+                      >
+                        {selectedCourt === court ? "Selected" : "Select"}
+                      </button>
+                    </div>
 
-                  return (
-                    <button
-                      key={slot}
-                      type="button"
-                      disabled={isBooked}
-                      onClick={() => setSelectedTime(slot)}
-                      className={`rounded-2xl border px-3 py-2 text-sm font-black transition ${
-                        isActive
-                          ? "border-emerald-950 bg-emerald-950 text-lime-300"
-                          : "border-emerald-900/10 bg-white text-slate-700 hover:border-emerald-950 hover:bg-lime-50"
-                      } ${isBooked ? "cursor-not-allowed line-through opacity-45" : ""}`}
-                    >
-                      {slot}
-                    </button>
-                  );
-                })}
+                    <div className="mt-4 space-y-2">
+                      {allSlots.map((slot) => {
+                        const isBooked = (data?.bookings ?? []).some(
+                          (entry) =>
+                            entry.date === selectedDate &&
+                            entry.time === slot &&
+                            entry.court === court,
+                        );
+                        const isActive = selectedCourt === court && selectedTime === slot;
+
+                        return (
+                          <button
+                            key={`${court}-${slot}`}
+                            type="button"
+                            disabled={isBooked}
+                            onClick={() => {
+                              setSelectedCourt(court);
+                              setSelectedTime(slot);
+                            }}
+                            className={`flex w-full items-center justify-center rounded-2xl border px-3 py-2 text-sm font-black transition ${
+                              isActive
+                                ? "border-emerald-950 bg-emerald-950 text-lime-300"
+                                : "border-emerald-900/10 bg-[#eef6ed] text-slate-700 hover:border-emerald-950 hover:bg-lime-50"
+                            } ${isBooked ? "cursor-not-allowed line-through opacity-45" : ""}`}
+                          >
+                            {slot}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
+
+              <input type="hidden" name="court" value={selectedCourt} required />
               <input type="hidden" name="time" value={selectedTime} required />
             </div>
 

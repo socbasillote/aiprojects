@@ -270,60 +270,6 @@ export function HomePage() {
           </div>
         </section>
 
-        <section
-          id="booking"
-          className="border-b border-emerald-900/10 bg-white"
-        >
-          <div className="mx-auto max-w-7xl px-5 py-12">
-            <div className="grid gap-6 md:grid-cols-[0.9fr,1.1fr]">
-              <div className="flex flex-col justify-center">
-                <div className="text-xs font-black uppercase tracking-[0.26em] text-emerald-700">
-                  Quick booking
-                </div>
-                <h2 className="mt-4 text-3xl font-black tracking-[-0.03em] text-slate-950">
-                  Find your preferred court.
-                </h2>
-                <p className="mt-4 text-sm leading-7 text-slate-600">
-                  Choose a court, select your preferred time, and plan your next
-                  pickleball session.
-                </p>
-              </div>
-              <div className="rounded-4xl border border-emerald-900/10 bg-[#eef6ed] p-5">
-                <div className="grid gap-4 md:grid-cols-[1fr,1fr,auto]">
-                  <div>
-                    <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
-                      Court
-                    </label>
-                    <select className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-white px-4 py-3 text-sm font-bold text-slate-900">
-                      <option>Riverside Courts</option>
-                      <option>Northline Club</option>
-                      <option>Court Garden</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
-                      When
-                    </label>
-                    <input
-                      className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-white px-4 py-3 text-sm font-bold text-slate-900"
-                      value="Today, 6:30 PM"
-                      readOnly
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <Link
-                      to="/book/maria-studio"
-                      className="rounded-2xl bg-emerald-950 px-6 py-3 text-sm font-black text-lime-300 transition hover:bg-emerald-900"
-                    >
-                      Find a Court
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section className="mx-auto max-w-7xl px-5 py-16">
           <div className="flex flex-wrap items-end justify-between gap-8">
             <div>

@@ -10,6 +10,7 @@ type BusinessSettings = {
     openHour?: string;
     closeHour?: string;
     slotsPerHour?: number;
+    courtsCount?: number;
   } | null;
 };
 
@@ -20,6 +21,7 @@ export function SettingsPage() {
   const [openHour, setOpenHour] = useState("08:00");
   const [closeHour, setCloseHour] = useState("20:00");
   const [slotsPerHour, setSlotsPerHour] = useState(2);
+  const [courtsCount, setCourtsCount] = useState(3);
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -33,6 +35,7 @@ export function SettingsPage() {
           setOpenHour(saved.openHour ?? "08:00");
           setCloseHour(saved.closeHour ?? "20:00");
           setSlotsPerHour(saved.slotsPerHour ?? 2);
+          setCourtsCount(saved.courtsCount ?? 3);
         }
       } catch (err) {
         setStatus(
@@ -56,9 +59,11 @@ export function SettingsPage() {
         openHour,
         closeHour,
         slotsPerHour,
+        courtsCount,
         settings: {
           booking: {
             slotsPerHour,
+            courtsCount,
           },
         },
       };
@@ -183,7 +188,7 @@ export function SettingsPage() {
         <h2 className="text-lg font-semibold text-slate-900">Opening Hours</h2>
         <form
           onSubmit={saveBusinessHours}
-          className="mt-4 grid gap-4 md:grid-cols-4"
+          className="mt-4 grid gap-4 md:grid-cols-5"
         >
           <label className="text-sm font-medium text-slate-700">
             Open
@@ -214,6 +219,20 @@ export function SettingsPage() {
             >
               <option value={1}>1 slot</option>
               <option value={2}>2 slots</option>
+            </select>
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Courts
+            <select
+              value={courtsCount}
+              onChange={(event) => setCourtsCount(Number(event.target.value))}
+              className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"
+            >
+              <option value={1}>1 court</option>
+              <option value={2}>2 courts</option>
+              <option value={3}>3 courts</option>
+              <option value={4}>4 courts</option>
+              <option value={5}>5 courts</option>
             </select>
           </label>
           <div className="flex items-end">

@@ -6,6 +6,7 @@ export interface IBooking extends Document {
   email: string;
   service: string;
   staff: string;
+  court: string;
   date: string;
   time: string;
   payment: "Unpaid" | "Deposit" | "Paid";
@@ -26,6 +27,7 @@ const bookingSchema = new Schema<IBooking>(
     email: { type: String, required: true, lowercase: true, trim: true },
     service: { type: String, required: true, trim: true },
     staff: { type: String, required: true, default: "Maria", trim: true },
+    court: { type: String, required: true, default: "Court 1", trim: true },
     date: { type: String, required: true },
     time: { type: String, required: true },
     payment: {

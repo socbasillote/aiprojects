@@ -8,10 +8,12 @@ export interface IBusiness extends Document {
   openHour: string;
   closeHour: string;
   slotsPerHour?: number;
+  courtsCount?: number;
   isActive: boolean;
   settings?: {
     booking: {
       slotsPerHour?: number;
+      courtsCount?: number;
       bookingTypes: Array<{
         name: string;
         description?: string;
@@ -334,6 +336,7 @@ const businessSchema = new Schema<IBusiness>(
     openHour: { type: String, default: "08:00" },
     closeHour: { type: String, default: "20:00" },
     slotsPerHour: { type: Number, default: 2, min: 1, max: 2 },
+    courtsCount: { type: Number, default: 3, min: 1 },
     isActive: { type: Boolean, default: true },
     settings: {
       type: Object,

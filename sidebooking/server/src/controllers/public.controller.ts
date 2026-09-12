@@ -16,6 +16,7 @@ const bookingSchema = z.object({
   email: z.string().email(),
   service: z.string().trim().min(2),
   staff: z.string().trim().min(2).default("Maria"),
+  court: z.string().trim().min(1).default("Court 1"),
   date: z.string().min(8),
   time: z.string().regex(/^([01]\d|2[0-3]):(00|30)$/),
   payment: z.enum(["Unpaid", "Deposit", "Paid"]).default("Unpaid"),
@@ -26,7 +27,7 @@ export async function getPublicBusiness(req: Request, res: Response) {
   const business = await Business.findOne({
     slug: req.params.slug,
     isActive: true,
-  }).select("name slug description openHour closeHour slotsPerHour settings");
+  }).select("name slug description openHour closeHour slotsPerHour courtsCount settings");
   if (!business)
     return res
       .status(404)
@@ -43,11 +44,12 @@ export async function getPublicBusiness(req: Request, res: Response) {
   const bookings = await Booking.find({
     businessId: business._id,
   })
-    .select("date time")
+    .select("date time court")
     .lean();
 
   const slotsPerHour =
     business.slotsPerHour ?? business.settings?.booking?.slotsPerHour ?? 2;
+  const courtsCount = business.courtsCount ?? 3;
 
   return res.json({
     success: true,
@@ -59,6 +61,7 @@ export async function getPublicBusiness(req: Request, res: Response) {
         openHour: business.openHour ?? "08:00",
         closeHour: business.closeHour ?? "20:00",
         slotsPerHour,
+        courtsCount,
       },
       services: services.map((service) => ({
         id: service._id.toString(),
@@ -70,6 +73,7 @@ export async function getPublicBusiness(req: Request, res: Response) {
       bookings: bookings.map((booking) => ({
         date: booking.date,
         time: booking.time,
+        court: booking.court,
       })),
     },
   });
@@ -148,12 +152,13 @@ export async function createPublicBooking(req: Request, res: Response) {
     businessId: business._id,
     date: input.date,
     time: input.time,
+    court: input.court,
   }).select("_id");
 
   if (existing) {
     return res.status(409).json({
       success: false,
-      message: "That date and time is already fully booked.",
+      message: "That date, court, and time is already fully booked.",
     });
   }
 

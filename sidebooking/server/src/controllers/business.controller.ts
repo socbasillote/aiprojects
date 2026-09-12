@@ -9,6 +9,7 @@ const settingsSchema = z
     booking: z
       .object({
         slotsPerHour: z.number().int().min(1).max(2).optional(),
+        courtsCount: z.number().int().min(1).optional(),
         bookingTypes: z
           .array(
             z.object({
@@ -163,6 +164,7 @@ const businessSchema = z.object({
     .regex(/^([01]\d|2[0-3]):(00|30)$/)
     .default("20:00"),
   slotsPerHour: z.number().int().min(1).max(2).optional().default(2),
+  courtsCount: z.number().int().min(1).optional().default(3),
   settings: settingsSchema.optional(),
 });
 
@@ -441,7 +443,8 @@ export async function saveBusiness(req: AuthRequest, res: Response) {
 
     business.settings = mergedSettings;
     business.slotsPerHour = slotsPerHour;
-    Object.assign(business, input, { slotsPerHour });
+    business.courtsCount = input.courtsCount ?? 3;
+    Object.assign(business, input, { slotsPerHour, courtsCount: input.courtsCount ?? 3 });
     await business.save();
   } else {
     const normalizedSettings: any = {
@@ -458,6 +461,7 @@ export async function saveBusiness(req: AuthRequest, res: Response) {
       ...input,
       ownerId: user._id,
       slotsPerHour,
+      courtsCount: input.courtsCount ?? 3,
       settings: normalizedSettings,
     });
     user.businessIds = [business._id];
