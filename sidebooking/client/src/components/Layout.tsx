@@ -50,7 +50,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="app-shell flex min-h-screen bg-slate-50 text-slate-900">
-      <aside className="hidden w-72 border-r border-slate-200 bg-white p-4 lg:flex lg:flex-col">
+      <aside className="fixed left-0 top-0 hidden h-screen w-72 border-r border-slate-200 bg-white p-4 lg:flex lg:flex-col">
         <div className="mb-5 flex items-center justify-between">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -164,8 +164,8 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className="flex-1">
-        <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
+      <main className="min-h-screen flex-1 lg:ml-72">
+        <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur-sm">
           <div className="flex items-center justify-between gap-3 px-4 py-4 lg:px-7">
             <div className="flex items-center gap-3">
               <button className="rounded-lg border border-slate-200 p-2 text-slate-600 lg:hidden">

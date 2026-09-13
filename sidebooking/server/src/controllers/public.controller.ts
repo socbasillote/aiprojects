@@ -16,9 +16,20 @@ const bookingSchema = z.object({
   email: z.string().email(),
   service: z.string().trim().min(2),
   staff: z.string().trim().min(2).default("Maria"),
-  court: z.string().trim().min(1).default("Court 1"),
+  court: z.string().trim().min(1).default("Court 1").optional(),
   date: z.string().min(8),
-  time: z.string().regex(/^([01]\d|2[0-3]):(00|30)$/),
+  time: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):(00|30)$/)
+    .optional(),
+  slots: z
+    .array(
+      z.object({
+        court: z.string().trim().min(1),
+        time: z.string().regex(/^([01]\d|2[0-3]):(00|30)$/),
+      }),
+    )
+    .optional(),
   payment: z.enum(["Unpaid", "Deposit", "Paid"]).default("Unpaid"),
   paymentMethod: z.enum(["Cash", "Card", "GCash", "Bank transfer", "PayPal"]),
 });
@@ -27,7 +38,9 @@ export async function getPublicBusiness(req: Request, res: Response) {
   const business = await Business.findOne({
     slug: req.params.slug,
     isActive: true,
-  }).select("name slug description openHour closeHour slotsPerHour courtsCount settings");
+  }).select(
+    "name slug description openHour closeHour slotsPerHour courtsCount settings",
+  );
   if (!business)
     return res
       .status(404)
@@ -139,58 +152,98 @@ export async function createPublicBooking(req: Request, res: Response) {
 
   const openMinutes = minutesFromTime(business.openHour ?? "08:00");
   const closeMinutes = minutesFromTime(business.closeHour ?? "20:00");
-  const selectedMinutes = minutesFromTime(input.time);
 
-  if (selectedMinutes < openMinutes || selectedMinutes >= closeMinutes) {
+  const chosenSlots = input.slots?.length
+    ? input.slots
+    : [{ court: input.court ?? "Court 1", time: input.time ?? "" }];
+
+  if (!chosenSlots.length) {
     return res.status(400).json({
       success: false,
-      message: "Booking time must be inside the business open hours.",
+      message: "Choose at least one valid booking time.",
     });
   }
 
-  const existing = await Booking.findOne({
-    businessId: business._id,
-    date: input.date,
-    time: input.time,
-    court: input.court,
-  }).select("_id");
+  for (const slot of chosenSlots) {
+    if (!/^([01]\d|2[0-3]):(00|30)$/.test(slot.time)) {
+      return res.status(400).json({
+        success: false,
+        message: "Choose booking times in 30-minute steps, such as 09:00 or 09:30.",
+      });
+    }
 
-  if (existing) {
-    return res.status(409).json({
-      success: false,
-      message: "That date, court, and time is already fully booked.",
-    });
+    const selectedMinutes = minutesFromTime(slot.time);
+    if (selectedMinutes < openMinutes || selectedMinutes >= closeMinutes) {
+      return res.status(400).json({
+        success: false,
+        message: "Booking time must be inside the business open hours.",
+      });
+    }
   }
 
   const normalizedPayment =
     input.paymentMethod === "PayPal" ? "Paid" : input.payment;
-  const confirmationCode = `SB-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
-  const booking = await Booking.create({
-    ...input,
-    payment: normalizedPayment,
-    businessId: business._id,
-    confirmationCode,
-    status: "Pending",
-  });
 
-  const statusPageUrl = `${process.env.CLIENT_URL ?? "http://localhost:5173"}/status/${confirmationCode}`;
+  const created = [];
+  for (const slot of chosenSlots) {
+    const existing = await Booking.findOne({
+      businessId: business._id,
+      date: input.date,
+      time: slot.time,
+      court: slot.court,
+    }).select("_id");
+
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        message: `That date, court, and time is already fully booked: ${slot.court} ${slot.time}`,
+      });
+    }
+  }
+
+  for (const slot of chosenSlots) {
+    const confirmationCode = `SB-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+    const booking = await Booking.create({
+      customer: input.customer,
+      email: input.email,
+      service: input.service,
+      staff: input.staff,
+      court: slot.court,
+      date: input.date,
+      time: slot.time,
+      payment: normalizedPayment,
+      paymentMethod: input.paymentMethod,
+      businessId: business._id,
+      confirmationCode,
+      status: "Pending",
+    });
+
+    created.push(booking);
+  }
+
+  const statusPageUrl = `${process.env.CLIENT_URL ?? "http://localhost:5173"}/status/${created[0].confirmationCode}`;
+  const firstBooking = created[0];
   const email = await sendBookingConfirmation({
     to: input.email,
     customer: input.customer,
     business: business.name,
     service: input.service,
     date: input.date,
-    time: input.time,
+    time: chosenSlots.map((slot) => slot.time).join(", "),
     paymentMethod: input.paymentMethod,
     payment: normalizedPayment,
-    confirmationCode,
+    confirmationCode: firstBooking.confirmationCode,
     statusPageUrl,
   });
 
   return res.status(201).json({
     success: true,
     data: {
-      booking: { id: booking._id, confirmationCode, status: booking.status },
+      booking: {
+        id: firstBooking._id,
+        confirmationCode: firstBooking.confirmationCode,
+        status: firstBooking.status,
+      },
       qr: email.qr,
       emailDelivered: email.delivered,
     },

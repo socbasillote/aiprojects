@@ -444,7 +444,10 @@ export async function saveBusiness(req: AuthRequest, res: Response) {
     business.settings = mergedSettings;
     business.slotsPerHour = slotsPerHour;
     business.courtsCount = input.courtsCount ?? 3;
-    Object.assign(business, input, { slotsPerHour, courtsCount: input.courtsCount ?? 3 });
+    Object.assign(business, input, {
+      slotsPerHour,
+      courtsCount: input.courtsCount ?? 3,
+    });
     await business.save();
   } else {
     const normalizedSettings: any = {

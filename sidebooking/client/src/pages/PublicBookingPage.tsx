@@ -35,6 +35,12 @@ type Confirmation = {
   emailDelivered: boolean;
 };
 
+type ChosenSlot = {
+  date: string;
+  court: string;
+  time: string;
+};
+
 const isValidBookingTime = (value: string) =>
   /^([01]\d|2[0-3]):(00|30)$/.test(value);
 
@@ -85,20 +91,32 @@ export function PublicBookingPage() {
   const { slug = "maria-studio" } = useParams();
   const [data, setData] = useState<BusinessData | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
-  const [selectedTime, setSelectedTime] = useState<string>("");
   const [selectedCourt, setSelectedCourt] = useState<string>("Court 1");
+  const [selectedSlots, setSelectedSlots] = useState<ChosenSlot[]>([]);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   const courtsCount = Math.max(1, Number(data?.business?.courtsCount ?? 3));
-  const courtNames = Array.from({ length: courtsCount }, (_, index) => `Court ${index + 1}`);
+  const courtNames = Array.from(
+    { length: courtsCount },
+    (_, index) => `Court ${index + 1}`,
+  );
 
   const allSlots = getSlots(
     data?.business?.openHour ?? "08:00",
     data?.business?.closeHour ?? "20:00",
     data?.business?.slotsPerHour ?? 2,
   );
+
+  const courtGridStyle =
+    courtsCount <= 1
+      ? { gridTemplateColumns: "repeat(1, minmax(150px, 1fr))" }
+      : courtsCount === 2
+        ? { gridTemplateColumns: "repeat(2, minmax(150px, 1fr))" }
+        : courtsCount >= 5
+          ? { gridTemplateColumns: "repeat(5, minmax(150px, 1fr))" }
+          : { gridTemplateColumns: "repeat(3, minmax(150px, 1fr))" };
 
   function isDateFullyBooked(date: string) {
     const dayBookings = (data?.bookings ?? []).filter(
@@ -112,13 +130,8 @@ export function PublicBookingPage() {
 
   function chooseDate(date: string) {
     setSelectedDate(date);
-    const availableTimes = allSlots.filter(
-      (slot) =>
-        !(data?.bookings ?? []).some(
-          (entry) => entry.date === date && entry.time === slot,
-        ),
-    );
-    setSelectedTime(availableTimes[0] ?? "");
+    setSelectedSlots([]);
+    setSelectedCourt("Court 1");
   }
 
   useEffect(() => {
@@ -127,18 +140,9 @@ export function PublicBookingPage() {
         setData(payload);
         const firstAvailable =
           getDateOptions(45)[0] ?? dateKeyFromDate(new Date());
-        const firstAvailableSlots = getSlots(
-          payload.business.openHour ?? "08:00",
-          payload.business.closeHour ?? "20:00",
-          payload.business.slotsPerHour ?? 2,
-        ).filter(
-          (slot) =>
-            !(payload.bookings ?? []).some(
-              (entry) => entry.date === firstAvailable && entry.time === slot,
-            ),
-        );
         setSelectedDate(firstAvailable);
-        setSelectedTime(firstAvailableSlots[0] ?? "");
+        setSelectedCourt("Court 1");
+        setSelectedSlots([]);
       })
       .catch((err) =>
         setError(
@@ -155,12 +159,20 @@ export function PublicBookingPage() {
     const form = new FormData(event.currentTarget);
     try {
       const date = selectedDate || String(form.get("date") ?? "");
-      const time = selectedTime || String(form.get("time") ?? "");
-      if (!isValidBookingTime(time)) {
-        throw new Error(
-          "Choose a booking time in 30-minute steps, such as 09:00 or 09:30.",
-        );
+      if (!selectedDate || !date) {
+        throw new Error("Choose a booking date first.");
       }
+      if (selectedSlots.length === 0) {
+        throw new Error("Choose at least one time slot.");
+      }
+
+      selectedSlots.forEach((slot) => {
+        if (!isValidBookingTime(slot.time)) {
+          throw new Error(
+            "Choose booking times in 30-minute steps, such as 09:00 or 09:30.",
+          );
+        }
+      });
 
       const paymentMethod = String(form.get("paymentMethod") ?? "PayPal");
       const payment =
@@ -173,9 +185,11 @@ export function PublicBookingPage() {
         email: String(form.get("email")),
         service: String(form.get("service")),
         staff: String(form.get("staff") ?? "Maria"),
-        court: selectedCourt,
         date,
-        time,
+        slots: selectedSlots.map((slot) => ({
+          court: slot.court,
+          time: slot.time,
+        })),
         payment,
         paymentMethod,
       };
@@ -211,7 +225,10 @@ export function PublicBookingPage() {
             className="mx-auto mt-5 h-48 w-48 rounded-2xl border border-emerald-900/10 bg-white p-2"
           />
           <p className="mt-4 text-sm font-black uppercase tracking-[0.2em] text-slate-500">
-            Code: <strong className="text-slate-950">{confirmation.booking.confirmationCode}</strong>
+            Code:{" "}
+            <strong className="text-slate-950">
+              {confirmation.booking.confirmationCode}
+            </strong>
           </p>
           {!confirmation.emailDelivered && (
             <p className="mt-4 rounded-2xl bg-amber-50 p-3 text-xs font-bold text-amber-800">
@@ -244,22 +261,17 @@ export function PublicBookingPage() {
           </Link>
 
           <nav className="hidden items-center gap-8 lg:flex">
-            {[
-              "Club",
-              "Courts",
-              "Programs",
-              "Events",
-              "Reviews",
-              "About",
-            ].map((item) => (
-              <a
-                key={item}
-                href="#"
-                className="text-sm font-bold uppercase tracking-[0.14em] text-emerald-50 transition hover:text-lime-300"
-              >
-                {item}
-              </a>
-            ))}
+            {["Club", "Courts", "Programs", "Events", "Reviews", "About"].map(
+              (item) => (
+                <a
+                  key={item}
+                  href="#"
+                  className="text-sm font-bold uppercase tracking-[0.14em] text-emerald-50 transition hover:text-lime-300"
+                >
+                  {item}
+                </a>
+              ),
+            )}
           </nav>
 
           <div className="flex items-center gap-3">
@@ -298,7 +310,8 @@ export function PublicBookingPage() {
               </h1>
 
               <p className="mt-5 max-w-xl text-lg leading-8 text-emerald-50">
-                {data?.business.description ?? "Choose a service and time that works for you."}
+                {data?.business.description ??
+                  "Choose a service and time that works for you."}
               </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -328,7 +341,10 @@ export function PublicBookingPage() {
                       ["Court", "03"],
                       ["Status", "Live"],
                     ].map(([label, value]) => (
-                      <div key={label} className="rounded-2xl border border-emerald-900/10 bg-white p-3 text-center">
+                      <div
+                        key={label}
+                        className="rounded-2xl border border-emerald-900/10 bg-white p-3 text-center"
+                      >
                         <div className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
                           {label}
                         </div>
@@ -446,7 +462,9 @@ export function PublicBookingPage() {
                 {getDateOptions(45).map((date) => {
                   const booked = isDateFullyBooked(date);
                   const isActive = selectedDate === date;
-                  const display = new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
+                  const display = new Date(
+                    `${date}T00:00:00`,
+                  ).toLocaleDateString(undefined, {
                     weekday: "short",
                     month: "short",
                     day: "numeric",
@@ -483,11 +501,13 @@ export function PublicBookingPage() {
                   Choose court and time
                 </span>
                 <span className="rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-slate-500 shadow-sm">
-                  {selectedCourt} • {selectedTime ? selectedTime : "No slot"}
+                  {selectedSlots.length > 0
+                    ? `${selectedSlots.length} selected slot${selectedSlots.length > 1 ? "s" : ""}`
+                    : "No slot"}
                 </span>
               </div>
 
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="mt-4 grid gap-3 overflow-x-auto" style={courtGridStyle}>
                 {courtNames.map((court) => (
                   <div
                     key={court}
@@ -518,7 +538,12 @@ export function PublicBookingPage() {
                             entry.time === slot &&
                             entry.court === court,
                         );
-                        const isActive = selectedCourt === court && selectedTime === slot;
+                        const exists = selectedSlots.some(
+                          (entry) =>
+                            entry.date === selectedDate &&
+                            entry.court === court &&
+                            entry.time === slot,
+                        );
 
                         return (
                           <button
@@ -527,10 +552,29 @@ export function PublicBookingPage() {
                             disabled={isBooked}
                             onClick={() => {
                               setSelectedCourt(court);
-                              setSelectedTime(slot);
+                              const nextSlot = {
+                                date: selectedDate,
+                                court,
+                                time: slot,
+                              };
+                              setSelectedSlots((current) => {
+                                const found = current.some(
+                                  (entry) =>
+                                    entry.date === selectedDate &&
+                                    entry.court === court &&
+                                    entry.time === slot,
+                                );
+                                if (found) {
+                                  return current.filter(
+                                    (entry) =>
+                                      !(entry.date === selectedDate && entry.court === court && entry.time === slot),
+                                  );
+                                }
+                                return [...current, nextSlot];
+                              });
                             }}
                             className={`flex w-full items-center justify-center rounded-2xl border px-3 py-2 text-sm font-black transition ${
-                              isActive
+                              exists
                                 ? "border-emerald-950 bg-emerald-950 text-lime-300"
                                 : "border-emerald-900/10 bg-[#eef6ed] text-slate-700 hover:border-emerald-950 hover:bg-lime-50"
                             } ${isBooked ? "cursor-not-allowed line-through opacity-45" : ""}`}
@@ -544,11 +588,17 @@ export function PublicBookingPage() {
                 ))}
               </div>
 
-              <input type="hidden" name="court" value={selectedCourt} required />
-              <input type="hidden" name="time" value={selectedTime} required />
+              <input
+                type="hidden"
+                name="court"
+                value={selectedCourt}
+                required
+              />
             </div>
 
-            {error && <p className="mt-4 text-sm font-bold text-red-600">{error}</p>}
+            {error && (
+              <p className="mt-4 text-sm font-bold text-red-600">{error}</p>
+            )}
 
             <button
               type="submit"
@@ -574,30 +624,68 @@ export function PublicBookingPage() {
             </Link>
 
             <nav className="flex flex-wrap items-center gap-5 text-xs font-black uppercase tracking-[0.18em]">
-              {[
-                "Club",
-                "Courts",
-                "Programs",
-                "Events",
-                "Reviews",
-                "About",
-              ].map((link) => (
-                <a key={link} href="#" className="transition hover:text-lime-300">
-                  {link}
-                </a>
-              ))}
+              {["Club", "Courts", "Programs", "Events", "Reviews", "About"].map(
+                (link) => (
+                  <a
+                    key={link}
+                    href="#"
+                    className="transition hover:text-lime-300"
+                  >
+                    {link}
+                  </a>
+                ),
+              )}
               <a href="#" className="transition hover:text-lime-300">
                 Contact
               </a>
             </nav>
 
             <div className="flex items-center gap-3">
-              {['Instagram', 'Facebook', 'LinkedIn'].map((label) => (
-                <a key={label} href="#" className="inline-flex items-center justify-center">
-                  <svg className="h-9 w-9 rounded-full border border-slate-200 p-2 text-slate-600 transition hover:bg-lime-300 hover:text-slate-950" viewBox="0 0 24 24" fill="none" aria-label={label}>
-                    {label === "Instagram" && <><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2" /><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2" /><circle cx="16.5" cy="7.5" r="1" fill="currentColor" /></>}
-                    {label === "Facebook" && <path d="M14 8h3V4h-3c-3 0-5 2-5 5v2H7v4h2v6h4v-6h3l1-4h-4V9c0-.6.4-1 1-1Z" fill="currentColor" />}
-                    {label === "LinkedIn" && <path d="M4 4h4v16H4zM10 4h4v3h.2c.7-1.3 2.3-2.6 4.8-2.6C20.4 4.4 21 7 21 9.2V20h-4v-18.8C17 10.2 16.7 10 16.2 10H14v10h-4z" fill="currentColor" />}
+              {["Instagram", "Facebook", "LinkedIn"].map((label) => (
+                <a
+                  key={label}
+                  href="#"
+                  className="inline-flex items-center justify-center"
+                >
+                  <svg
+                    className="h-9 w-9 rounded-full border border-slate-200 p-2 text-slate-600 transition hover:bg-lime-300 hover:text-slate-950"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-label={label}
+                  >
+                    {label === "Instagram" && (
+                      <>
+                        <rect
+                          x="3"
+                          y="3"
+                          width="18"
+                          height="18"
+                          rx="5"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        />
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="4"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        />
+                        <circle cx="16.5" cy="7.5" r="1" fill="currentColor" />
+                      </>
+                    )}
+                    {label === "Facebook" && (
+                      <path
+                        d="M14 8h3V4h-3c-3 0-5 2-5 5v2H7v4h2v6h4v-6h3l1-4h-4V9c0-.6.4-1 1-1Z"
+                        fill="currentColor"
+                      />
+                    )}
+                    {label === "LinkedIn" && (
+                      <path
+                        d="M4 4h4v16H4zM10 4h4v3h.2c.7-1.3 2.3-2.6 4.8-2.6C20.4 4.4 21 7 21 9.2V20h-4v-18.8C17 10.2 16.7 10 16.2 10H14v10h-4z"
+                        fill="currentColor"
+                      />
+                    )}
                   </svg>
                 </a>
               ))}
@@ -606,7 +694,9 @@ export function PublicBookingPage() {
 
           <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-6 text-xs font-black uppercase tracking-[0.2em] text-emerald-200">
             <span>© 2026 PicklePark</span>
-            <span className="text-lime-300">Open play • Club courts • Leagues</span>
+            <span className="text-lime-300">
+              Open play • Club courts • Leagues
+            </span>
           </div>
         </div>
       </footer>
