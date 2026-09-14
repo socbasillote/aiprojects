@@ -23,6 +23,10 @@ body,
 
 body {
   min-width: 320px;
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cg fill='none'%3E%3Ccircle cx='18' cy='18' r='14' fill='%23eef6ed' stroke='%2389b36b' stroke-width='2'/%3E%3Ccircle cx='18' cy='18' r='8' fill='%23edf7da' stroke='%23A7C472' stroke-width='1'/%3E%3Ccircle cx='18' cy='18' r='2.2' fill='%23678666'/%3E%3C/g%3E%3C/svg%3E")
+      18 18,
+    auto;
 }
 
 * {
@@ -34,4 +38,94 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button,
+.hero-button,
+.hero-button a,
+button a,
+[role="button"] {
+  cursor: pointer;
+}
+
+/* =========================================================
+   PICKLEBALL COURT
+   ========================================================= */
+
+.court-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.court {
+  position: absolute;
+  top: 2%;
+  right: 2%;
+  bottom: 2%;
+  left: 2%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+/* =========================================================
+   KITCHEN LINES
+   ========================================================= */
+
+.kitchen-left {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 34.09%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.kitchen-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 65.91%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* =========================================================
+   SERVICE LINES
+   ========================================================= */
+
+.service-left {
+  position: absolute;
+  left: 0;
+  width: 34.09%;
+  top: 50%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-50%);
+}
+
+.service-right {
+  position: absolute;
+  right: 0;
+  width: 34.09%;
+  top: 50%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-50%);
+}
+
+/* =========================================================
+   CENTER / NET LINE
+   ========================================================= */
+
+.center-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateX(-50%);
 }

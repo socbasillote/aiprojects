@@ -168,7 +168,8 @@ export async function createPublicBooking(req: Request, res: Response) {
     if (!/^([01]\d|2[0-3]):(00|30)$/.test(slot.time)) {
       return res.status(400).json({
         success: false,
-        message: "Choose booking times in 30-minute steps, such as 09:00 or 09:30.",
+        message:
+          "Choose booking times in 30-minute steps, such as 09:00 or 09:30.",
       });
     }
 

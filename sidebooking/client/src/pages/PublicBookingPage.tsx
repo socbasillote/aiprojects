@@ -114,9 +114,15 @@ export function PublicBookingPage() {
       ? { gridTemplateColumns: "repeat(1, minmax(150px, 1fr))" }
       : courtsCount === 2
         ? { gridTemplateColumns: "repeat(2, minmax(150px, 1fr))" }
-        : courtsCount >= 5
-          ? { gridTemplateColumns: "repeat(5, minmax(150px, 1fr))" }
-          : { gridTemplateColumns: "repeat(3, minmax(150px, 1fr))" };
+        : courtsCount === 3
+          ? { gridTemplateColumns: "repeat(3, minmax(150px, 1fr))" }
+          : courtsCount === 4
+            ? { gridTemplateColumns: "repeat(4, minmax(150px, 1fr))" }
+            : courtsCount === 5
+              ? { gridTemplateColumns: "repeat(5, minmax(150px, 1fr))" }
+              : courtsCount >= 6
+                ? { gridTemplateColumns: "repeat(5, minmax(150px, 1fr))" }
+                : { gridTemplateColumns: "repeat(3, minmax(150px, 1fr))" };
 
   function isDateFullyBooked(date: string) {
     const dayBookings = (data?.bookings ?? []).filter(
@@ -507,20 +513,23 @@ export function PublicBookingPage() {
                 </span>
               </div>
 
-              <div className="mt-4 grid gap-3 overflow-x-auto" style={courtGridStyle}>
+              <div
+                className="mt-4 grid gap-3 overflow-x-auto"
+                style={courtGridStyle}
+              >
                 {courtNames.map((court) => (
                   <div
                     key={court}
                     className="rounded-3xl border border-emerald-900/10 bg-white p-4 shadow-sm"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-black uppercase tracking-[0.2em] text-slate-900">
+                      <span className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-900">
                         {court}
                       </span>
                       <button
                         type="button"
                         onClick={() => setSelectedCourt(court)}
-                        className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] transition ${
+                        className={`rounded-full px-2 py-1 text-[6px] font-black uppercase tracking-[0.2em] transition ${
                           selectedCourt === court
                             ? "bg-emerald-950 text-lime-300"
                             : "border border-emerald-900/20 bg-white text-slate-700 hover:bg-lime-50"
@@ -567,7 +576,11 @@ export function PublicBookingPage() {
                                 if (found) {
                                   return current.filter(
                                     (entry) =>
-                                      !(entry.date === selectedDate && entry.court === court && entry.time === slot),
+                                      !(
+                                        entry.date === selectedDate &&
+                                        entry.court === court &&
+                                        entry.time === slot
+                                      ),
                                   );
                                 }
                                 return [...current, nextSlot];

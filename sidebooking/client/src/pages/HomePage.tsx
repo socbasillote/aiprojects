@@ -1,4 +1,7 @@
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import pickleballImage from "../assets/heropickle2.png";
+import picklogo from "../assets/wesmontlogo3.png";
 
 function SocialIcon({ label }: { label: string }) {
   const common =
@@ -59,6 +62,217 @@ function SocialIcon({ label }: { label: string }) {
 }
 
 export function HomePage() {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return undefined;
+    }
+
+    const section = canvas.parentElement as HTMLElement | null;
+    const court = section?.querySelector(".court") as HTMLDivElement | null;
+    const context = canvas.getContext("2d");
+    if (!section || !court || !context) {
+      return undefined;
+    }
+
+    const resizeCanvas = () => {
+      const rect = section.getBoundingClientRect();
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+
+      canvas.width = Math.round(rect.width * ratio);
+      canvas.height = Math.round(rect.height * ratio);
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.scale(ratio, ratio);
+    };
+
+    const getCourtRoutes = () => {
+      const sectionRect = section.getBoundingClientRect();
+      const courtRect = court.getBoundingClientRect();
+
+      const left = courtRect.left - sectionRect.left;
+      const right = courtRect.right - sectionRect.left;
+      const top = courtRect.top - sectionRect.top;
+      const bottom = courtRect.bottom - sectionRect.top;
+      const centerX = courtRect.left - sectionRect.left + courtRect.width / 2;
+      const centerY = courtRect.top - sectionRect.top + courtRect.height / 2;
+
+      const routeA = [
+        { x: centerX, y: centerY },
+        { x: centerX, y: top },
+        { x: right, y: top },
+        { x: right, y: bottom },
+        { x: centerX, y: bottom },
+        { x: centerX, y: centerY },
+      ];
+
+      const routeB = [
+        { x: centerX, y: centerY },
+        { x: centerX, y: bottom },
+        { x: left, y: bottom },
+        { x: left, y: top },
+        { x: centerX, y: top },
+        { x: centerX, y: centerY },
+      ];
+
+      return { routeA, routeB };
+    };
+
+    const routeLength = (route: Array<{ x: number; y: number }>) => {
+      let total = 0;
+      for (let i = 1; i < route.length; i += 1) {
+        total += Math.sqrt(
+          (route[i].x - route[i - 1].x) ** 2 +
+            (route[i].y - route[i - 1].y) ** 2,
+        );
+      }
+      return total;
+    };
+
+    const distanceBetween = (
+      from: { x: number; y: number },
+      to: { x: number; y: number },
+    ) => Math.sqrt((to.x - from.x) ** 2 + (to.y - from.y) ** 2);
+
+    const pointOnSegment = (
+      from: { x: number; y: number },
+      to: { x: number; y: number },
+      t: number,
+    ) => ({
+      x: from.x + (to.x - from.x) * clamp(t, 0, 1),
+      y: from.y + (to.y - from.y) * clamp(t, 0, 1),
+    });
+
+    const clamp = (value: number, min: number, max: number) =>
+      Math.min(Math.max(value, min), max);
+
+    const colorToRgba = (hex: string, alpha: number) => {
+      const value = hex.replace("#", "");
+      const bigint = Number.parseInt(
+        value.length === 3
+          ? value
+              .split("")
+              .map((c) => c + c)
+              .join("")
+          : value,
+        16,
+      );
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
+
+    const drawRoute = (
+      route: Array<{ x: number; y: number }>,
+      travelled: number,
+      color: string,
+    ) => {
+      const routeTrack = routeLength(route);
+      const highlightLength = routeTrack * 1;
+      const start = Math.max(0, travelled - highlightLength);
+      const end = Math.min(routeTrack, travelled);
+
+      const segments: Array<{
+        from: { x: number; y: number };
+        to: { x: number; y: number };
+        alpha: number;
+      }> = [];
+      let cursor = 0;
+
+      for (let i = 1; i < route.length; i += 1) {
+        const from = route[i - 1];
+        const to = route[i];
+        const len = distanceBetween(from, to);
+        const segStart = cursor;
+        const segEnd = cursor + len;
+
+        if (segEnd < start || segStart > end) {
+          cursor = segEnd;
+          continue;
+        }
+
+        const overlapLeft = Math.max(segStart, start);
+        const overlapRight = Math.min(segEnd, end);
+
+        if (overlapLeft >= overlapRight) {
+          cursor = segEnd;
+          continue;
+        }
+
+        const tLeft = clamp(
+          (overlapLeft - segStart) / Math.max(len, 0.0001),
+          0,
+          1,
+        );
+        const tRight = clamp(
+          (overlapRight - segStart) / Math.max(len, 0.0001),
+          0,
+          1,
+        );
+        const edgeFrom = pointOnSegment(from, to, tLeft);
+        const edgeTo = pointOnSegment(from, to, tRight);
+
+        const alpha = clamp(
+          ((overlapRight - start) / Math.max(highlightLength, 0.0001)) * 0.5,
+          0,
+          1,
+        );
+
+        segments.push({ from: edgeFrom, to: edgeTo, alpha });
+        cursor = segEnd;
+      }
+
+      context.save();
+      context.lineCap = "round";
+      context.lineJoin = "round";
+      context.shadowColor = color;
+      context.shadowBlur = 8;
+      context.lineWidth = 4;
+
+      for (const seg of segments) {
+        context.strokeStyle = colorToRgba(color, clamp(seg.alpha, 0, 1));
+        context.beginPath();
+        context.moveTo(seg.from.x, seg.from.y);
+        context.lineTo(seg.to.x, seg.to.y);
+        context.stroke();
+      }
+
+      context.restore();
+    };
+
+    resizeCanvas();
+
+    const start = performance.now();
+    const cycle = 5000;
+
+    const animate = (now: number) => {
+      const routeData = getCourtRoutes();
+      const routeALength = routeLength(routeData.routeA);
+      const routeBLength = routeLength(routeData.routeB);
+      const cyclePosition = ((now - start) % cycle) / cycle;
+
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      const distanceA = cyclePosition * routeALength;
+      const distanceB = cyclePosition * routeBLength;
+
+      drawRoute(routeData.routeA, distanceA, "#dfffd9");
+      drawRoute(routeData.routeB, distanceB, "#d2ffe4");
+
+      window.requestAnimationFrame(animate);
+    };
+
+    window.requestAnimationFrame(animate);
+    window.addEventListener("resize", resizeCanvas);
+
+    return () => window.removeEventListener("resize", resizeCanvas);
+  }, []);
+
   const navLinks = ["Club", "Courts", "Programs", "Events", "Reviews", "About"];
 
   const whyBook = [
@@ -142,12 +356,11 @@ export function HomePage() {
       <header className="border-b border-emerald-900/10 bg-[#173f2d] text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
           <Link to="/" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-lime-300 bg-lime-300 text-sm font-black text-slate-950 shadow-sm">
-              PB
-            </span>
-            <span className="text-lg font-black tracking-tight">
-              PicklePark
-            </span>
+            <img
+              src={picklogo}
+              alt="Logo"
+              className="h-8 w-auto object-contain"
+            />
           </Link>
 
           <nav className="hidden items-center gap-8 lg:flex">
@@ -169,6 +382,7 @@ export function HomePage() {
             >
               Club login
             </Link>
+
             <Link
               to="/book/maria-studio"
               className="rounded-xl bg-lime-300 px-4 py-2.5 text-sm font-black text-slate-950 shadow-sm transition hover:bg-lime-200"
@@ -180,53 +394,85 @@ export function HomePage() {
       </header>
 
       <main>
-        <section className="relative overflow-hidden border-b border-emerald-900/10 bg-[#183f2e] text-white">
+        {/* HEADER + HERO = 100vh */}
+        <section className="relative h-[calc(100vh-73px)] min-h-[600px] overflow-hidden border-b border-emerald-900/10 bg-[#183f2e] text-white">
+          <canvas
+            ref={canvasRef}
+            className="court-canvas"
+            aria-label="Pickleball court highlight path"
+          />
+
+          <div className="court" aria-hidden="true">
+            <span className="kitchen-left" />
+            <span className="kitchen-right" />
+            <span className="service-left" />
+            <span className="service-right" />
+            <span className="center-line" />
+          </div>
+
           <div className="absolute -right-24 top-0 h-80 w-80 rounded-full bg-lime-300/20 blur-3xl" />
           <div className="absolute left-0 top-16 h-56 w-56 rounded-full bg-emerald-400/20 blur-3xl" />
 
-          <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 py-16 md:grid-cols-[1fr,0.95fr] md:py-20">
-            <div className="max-w-2xl">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-lime-300" />
-                <span className="text-xs font-black uppercase tracking-[0.26em] text-lime-200">
-                  Pickleball Club
-                </span>
-              </div>
+          {/* HERO CONTENT */}
+          <div className="relative mx-auto flex h-full max-w-7xl flex-col px-5 py-10 md:px-8 md:py-12">
+            {/* TOP LEFT */}
+            <div className="relative z-20 max-w-3xl">
+              <span className="text-xs font-black uppercase tracking-[0.26em] text-lime-200">
+                Pickleball Club
+              </span>
 
-              <h1 className="mt-6 text-5xl font-black leading-none tracking-[-0.045em] md:text-7xl">
-                Rally up your next match.
+              <h1 className="mt-6 text-left text-5xl font-black leading-[0.9] tracking-[-0.055em] md:text-7xl lg:text-8xl">
+                Rally up your
+                <br />
+                next match.
               </h1>
+            </div>
 
-              <p className="mt-6 max-w-xl text-lg leading-8 text-emerald-50">
-                Book your court, join open play, and enjoy a friendly club built
-                around pickleball energy and connection.
-              </p>
+            {/* CENTER IMAGE */}
+            <div className="group absolute left-1/2 top-1/2 z-10 w-[75%] max-w-3xl -translate-x-1/2 -translate-y-1/2 transition-[z-index] duration-300 hover:z-50 md:w-[60%] lg:w-[52%]">
+              <img
+                src={pickleballImage}
+                alt="Pickleball court"
+                className="h-auto w-full rounded-3xl transform transition-transform duration-500 ease-in-out group-hover:scale-110"
+              />
+            </div>
 
-              <div className="mt-8 flex flex-wrap items-center gap-4">
+            {/* DESCRIPTION */}
+            <p className="relative z-20 mt-auto max-w-xl pb-24 text-left text-lg leading-8 text-emerald-50 md:pb-20">
+              Book your court, join open play, and enjoy a friendly club built
+              around pickleball energy and connection.
+            </p>
+
+            {/* BOTTOM */}
+            <div className="absolute bottom-8 left-5 right-5 z-30 flex items-end justify-between md:left-8 md:right-8">
+              {/* CTA */}
+              <div className="flex flex-wrap items-center gap-4">
                 <Link
                   to="/book/maria-studio"
-                  className="rounded-2xl bg-lime-300 px-7 py-3 text-sm font-black text-slate-950 shadow-sm transition hover:bg-lime-200"
+                  className="hero-button rounded-2xl bg-lime-300 px-7 py-3 text-sm font-black text-slate-950 shadow-sm transition hover:bg-lime-200"
                 >
                   Book a Court
                 </Link>
+
                 <a
                   href="#booking"
-                  className="rounded-2xl border border-white/30 px-7 py-3 text-sm font-black text-white transition hover:bg-white/10"
+                  className="hero-button rounded-2xl border border-white/30 px-7 py-3 text-sm font-black text-white transition hover:bg-white/10"
                 >
                   Find a Court
                 </a>
               </div>
 
-              <div className="mt-9 flex flex-wrap gap-6">
+              {/* DATA */}
+              <div className="flex flex-wrap justify-end gap-x-10 gap-y-6 text-right">
                 {[
-                  ["28+", "Indoor Courts"],
-                  ["02", "Training Nights"],
-                  ["7d", "Weekly Play"],
+                  ["3+", "Indoor Courts"],
+                  ["24/7", "Open"],
                 ].map(([number, label]) => (
                   <div key={label}>
                     <div className="text-3xl font-black text-white">
                       {number}
                     </div>
+
                     <div className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-200">
                       {label}
                     </div>
@@ -234,39 +480,6 @@ export function HomePage() {
                 ))}
               </div>
             </div>
-
-            <aside className="relative">
-              <div className="rounded-4xl border border-lime-300/30 bg-white/8 p-2 shadow-2xl shadow-slate-950/50 backdrop-blur">
-                <div className="rounded-[1.7rem] bg-[#eaf7d7] p-5 text-slate-900">
-                  <div className="overflow-hidden rounded-[1.4rem]">
-                    <img
-                      src="https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=1600&q=80"
-                      className="h-64 w-full object-cover"
-                      alt=""
-                    />
-                  </div>
-                  <div className="mt-5 grid grid-cols-3 gap-2">
-                    {[
-                      ["Booked", "08"],
-                      ["Open", "12"],
-                      ["Players", "66"],
-                    ].map(([label, value]) => (
-                      <div
-                        key={label}
-                        className="rounded-2xl border border-emerald-900/10 bg-white p-3 text-center"
-                      >
-                        <div className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
-                          {label}
-                        </div>
-                        <div className="mt-2 text-lg font-black text-slate-900">
-                          {value}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </aside>
           </div>
         </section>
 

@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Pickleball Court Animation</title>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      body {
+        background: #07633f;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      .hero {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      /* =========================================================
+   PICKLEBALL COURT
+   ========================================================= */
+
+      .court {
+        position: absolute;
+
+        top: 5%;
+        right: 5%;
+        bottom: 5%;
+        left: 5%;
+
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      /* =========================================================
+   KITCHEN LINES
+   ========================================================= */
+
+      .kitchen-left {
+        position: absolute;
+
+        top: 0;
+        bottom: 0;
+        left: 34.09%;
+
+        width: 1px;
+
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .kitchen-right {
+        position: absolute;
+
+        top: 0;
+        bottom: 0;
+        left: 65.91%;
+
+        width: 1px;
+
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      /* =========================================================
+   SERVICE LINES
+   ========================================================= */
+
+      .service-left {
+        position: absolute;
+
+        left: 0;
+        width: 34.09%;
+
+        top: 50%;
+
+        height: 1px;
+
+        background: rgba(255, 255, 255, 0.12);
+
+        transform: translateY(-50%);
+      }
+
+      .service-right {
+        position: absolute;
+
+        right: 0;
+        width: 34.09%;
+
+        top: 50%;
+
+        height: 1px;
+
+        background: rgba(255, 255, 255, 0.12);
+
+        transform: translateY(-50%);
+      }
+
+      /* =========================================================
+   CENTER / NET LINE
+   ========================================================= */
+
+      .center-line {
+        position: absolute;
+
+        top: 0;
+        bottom: 0;
+
+        left: 50%;
+
+        width: 1px;
+
+        background: rgba(255, 255, 255, 0.22);
+
+        transform: translateX(-50%);
+      }
+
+      /* =========================================================
+   ANIMATION CANVAS
+   ========================================================= */
+
+      #animationCanvas {
+        position: absolute;
+
+        top: 5%;
+        left: 5%;
+
+        width: 90%;
+        height: 90%;
+
+        pointer-events: none;
+      }
+
+      /* =========================================================
+   HERO TEXT
+   ========================================================= */
+
+      .content {
+        position: absolute;
+
+        inset: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        z-index: 10;
+
+        pointer-events: none;
+      }
+
+      .content h1 {
+        color: #fff;
+
+        font-size: clamp(48px, 8vw, 100px);
+
+        font-weight: 700;
+
+        letter-spacing: -0.06em;
+      }
+
+      /* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+      @media (prefers-reduced-motion: reduce) {
+        #animationCanvas {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="hero">
+      <!-- PICKLEBALL COURT -->
+
+      <div class="court">
+        <div class="kitchen-left"></div>
+        <div class="kitchen-right"></div>
+
+        <div class="service-left"></div>
+        <div class="service-right"></div>
+
+        <div class="center-line"></div>
+      </div>
+
+      <!-- TWO MOVING HIGHLIGHTS -->
+
+      <canvas id="animationCanvas"> </canvas>
+
+      <div class="content">
+        <h1>Pickleball</h1>
+      </div>
+    </div>
+
+    <script>
+      /*
+================================================================
+CORRECTED DUAL HIGHLIGHT PATH
+================================================================
+
+IMPORTANT:
+
+There are NO diagonal sections.
+
+RIGHT HIGHLIGHT:
+
+                    TOP
+              ┌──────────────┐
+              │              │
+              │              ↓
+              ↑              │
+              │              │
+              │              │
+              ●              │
+              │              │
+              │              │
+              ↓              │
+              └──────────────┘
+                     ←
+                     │
+                     ●
+
+
+Actual path:
+
+CENTER
+  ↑
+TOP CENTER
+  →
+TOP RIGHT
+  ↓
+BOTTOM RIGHT
+  ←
+BOTTOM CENTER
+  ↑
+CENTER
+
+
+LEFT HIGHLIGHT:
+
+CENTER
+  ↓
+BOTTOM CENTER
+  ←
+BOTTOM LEFT
+  ↑
+TOP LEFT
+  →
+TOP CENTER
+  ↓
+CENTER
+
+
+EVERY SINGLE SEGMENT IS:
+
+    vertical
+       OR
+    horizontal
+
+There is absolutely no diagonal segment.
+================================================================
+*/
+
+      const canvas = document.getElementById("animationCanvas");
+
+      const ctx = canvas.getContext("2d");
+
+      let width = 0;
+      let height = 0;
+
+      /* =========================================================
+   SETTINGS
+   ========================================================= */
+
+      /*
+One complete circuit = 3 seconds.
+*/
+
+      const duration = 3000;
+
+      /*
+Fixed highlight length.
+
+It NEVER stretches.
+*/
+
+      const highlightPercent = 0.05;
+
+      /*
+Default court line = 1px.
+
+Animated highlight = 3px.
+*/
+
+      const highlightWidth = 3;
+
+      /*
+High-resolution rendering.
+*/
+
+      const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+      /* =========================================================
+   RESIZE
+   ========================================================= */
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+
+        width = rect.width;
+
+        height = rect.height;
+
+        canvas.width = Math.round(width * DPR);
+
+        canvas.height = Math.round(height * DPR);
+
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      }
+
+      window.addEventListener("resize", resize);
+
+      resize();
+
+      /* =========================================================
+   CREATE PATH
+   ========================================================= */
+
+      function createPath(points) {
+        const segments = [];
+
+        let totalLength = 0;
+
+        for (let i = 0; i < points.length - 1; i++) {
+          const a = points[i];
+
+          const b = points[i + 1];
+
+          const dx = b.x - a.x;
+
+          const dy = b.y - a.y;
+
+          const length = Math.sqrt(dx * dx + dy * dy);
+
+          segments.push({
+            start: a,
+            end: b,
+
+            length: length,
+
+            distance: totalLength,
+          });
+
+          totalLength += length;
+        }
+
+        return {
+          segments: segments,
+          length: totalLength,
+        };
+      }
+
+      /* =========================================================
+   BUILD COURT PATHS
+   ========================================================= */
+
+      function buildPaths() {
+        const cx = width / 2;
+
+        const cy = height / 2;
+
+        /*
+    ============================================================
+    RIGHT PATH
+
+    CENTER
+       ↑
+       │
+    TOP CENTER
+       ─────────────→ TOP RIGHT
+                       │
+                       │
+                       ↓
+                   BOTTOM RIGHT
+                       ──────────→ BOTTOM CENTER
+                                     │
+                                     ↑
+                                     │
+                                   CENTER
+
+    NO DIAGONALS.
+    ============================================================
+    */
+
+        const rightPath = createPath([
+          /* CENTER */
+
+          {
+            x: cx,
+            y: cy,
+          },
+
+          /* TOP CENTER */
+
+          {
+            x: cx,
+            y: 0,
+          },
+
+          /* TOP RIGHT */
+
+          {
+            x: width,
+            y: 0,
+          },
+
+          /* BOTTOM RIGHT */
+
+          {
+            x: width,
+            y: height,
+          },
+
+          /* BOTTOM CENTER */
+
+          {
+            x: cx,
+            y: height,
+          },
+
+          /* CENTER */
+
+          {
+            x: cx,
+            y: cy,
+          },
+        ]);
+
+        /*
+    ============================================================
+    LEFT PATH
+
+    CENTER
+       ↓
+       │
+    BOTTOM CENTER
+       ←───────────── BOTTOM LEFT
+                       │
+                       ↑
+                       │
+                    TOP LEFT
+                       ──────────→ TOP CENTER
+                                      │
+                                      ↓
+                                    CENTER
+
+    NO DIAGONALS.
+    ============================================================
+    */
+
+        const leftPath = createPath([
+          /* CENTER */
+
+          {
+            x: cx,
+            y: cy,
+          },
+
+          /* BOTTOM CENTER */
+
+          {
+            x: cx,
+            y: height,
+          },
+
+          /* BOTTOM LEFT */
+
+          {
+            x: 0,
+            y: height,
+          },
+
+          /* TOP LEFT */
+
+          {
+            x: 0,
+            y: 0,
+          },
+
+          /* TOP CENTER */
+
+          {
+            x: cx,
+            y: 0,
+          },
+
+          /* CENTER */
+
+          {
+            x: cx,
+            y: cy,
+          },
+        ]);
+
+        return {
+          right: rightPath,
+          left: leftPath,
+        };
+      }
+
+      /* =========================================================
+   GET POINT ON PATH
+   ========================================================= */
+
+      function getPoint(path, distance) {
+        /*
+    Keep distance inside the path.
+    */
+
+        distance = ((distance % path.length) + path.length) % path.length;
+
+        /*
+    Find the correct horizontal/vertical
+    segment.
+    */
+
+        for (let i = 0; i < path.segments.length; i++) {
+          const segment = path.segments[i];
+
+          const segmentEnd = segment.distance + segment.length;
+
+          if (distance <= segmentEnd) {
+            const localDistance = distance - segment.distance;
+
+            const ratio =
+              segment.length === 0 ? 0 : localDistance / segment.length;
+
+            return {
+              x: segment.start.x + (segment.end.x - segment.start.x) * ratio,
+
+              y: segment.start.y + (segment.end.y - segment.start.y) * ratio,
+            };
+          }
+        }
+
+        return path.segments[path.segments.length - 1].end;
+      }
+
+      /* =========================================================
+   DRAW HIGHLIGHT
+   ========================================================= */
+
+      function drawHighlight(path, centerDistance) {
+        /*
+    ----------------------------------------------------------
+    FIXED LENGTH
+    ----------------------------------------------------------
+
+    This NEVER changes.
+    */
+
+        const highlightLength = path.length * highlightPercent;
+
+        /*
+    Center the highlight on its
+    current location.
+    */
+
+        const start = centerDistance - highlightLength / 2;
+
+        /*
+    We use small pieces ONLY to create
+    the opacity gradient.
+
+    They are all part of the same
+    fixed-length highlight.
+    */
+
+        const samples = 120;
+
+        for (let i = 0; i < samples; i++) {
+          const t1 = i / samples;
+
+          const t2 = (i + 1) / samples;
+
+          const distance1 = start + highlightLength * t1;
+
+          const distance2 = start + highlightLength * t2;
+
+          /*
+        ------------------------------------------------------
+        GET ACTUAL PATH POINTS
+        ------------------------------------------------------
+
+        Both points are guaranteed to be
+        on the court path.
+        */
+
+          const p1 = getPoint(path, distance1);
+
+          const p2 = getPoint(path, distance2);
+
+          /*
+        ------------------------------------------------------
+        IMPORTANT CORNER FIX
+        ------------------------------------------------------
+
+        If these two samples happen to be
+        on different court segments, DON'T
+        draw a diagonal line between them.
+
+        Instead, stop at the corner.
+
+        This guarantees that every pixel of
+        the highlight follows an actual
+        court line.
+        */
+
+          const segment1 = findSegment(path, distance1);
+
+          const segment2 = findSegment(path, distance2);
+
+          /*
+        Opacity:
+
+        0% → 100%
+
+        Tail is invisible.
+        Head is fully visible.
+        */
+
+          const opacity = Math.pow(t1, 0.55);
+
+          ctx.strokeStyle = `rgba(255,255,255,${opacity})`;
+
+          ctx.lineWidth = highlightWidth;
+
+          ctx.lineCap = "butt";
+
+          /*
+        ------------------------------------------------------
+        SAME SEGMENT
+        ------------------------------------------------------
+        */
+
+          if (segment1 === segment2) {
+            ctx.beginPath();
+
+            ctx.moveTo(p1.x, p1.y);
+
+            ctx.lineTo(p2.x, p2.y);
+
+            ctx.stroke();
+          } else {
+            /*
+        ------------------------------------------------------
+        DIFFERENT SEGMENT
+
+        Draw each portion independently.
+
+        NO diagonal connection.
+        ------------------------------------------------------
+        */
+            /*
+            Draw p1 to its segment endpoint.
+            */
+
+            const segment = path.segments[segment1];
+
+            const endpoint = segment.end;
+
+            ctx.beginPath();
+
+            ctx.moveTo(p1.x, p1.y);
+
+            ctx.lineTo(endpoint.x, endpoint.y);
+
+            ctx.stroke();
+
+            /*
+            The next portion begins at
+            the actual corner.
+
+            It never connects diagonally.
+            */
+
+            const nextSegment = path.segments[segment2];
+
+            const nextStart = nextSegment.start;
+
+            ctx.beginPath();
+
+            ctx.moveTo(nextStart.x, nextStart.y);
+
+            ctx.lineTo(p2.x, p2.y);
+
+            ctx.stroke();
+          }
+        }
+      }
+
+      /* =========================================================
+   FIND PATH SEGMENT
+   ========================================================= */
+
+      function findSegment(path, distance) {
+        distance = ((distance % path.length) + path.length) % path.length;
+
+        for (let i = 0; i < path.segments.length; i++) {
+          const segment = path.segments[i];
+
+          if (
+            distance >= segment.distance &&
+            distance <= segment.distance + segment.length
+          ) {
+            return i;
+          }
+        }
+
+        return path.segments.length - 1;
+      }
+
+      /* =========================================================
+   ANIMATION
+   ========================================================= */
+
+      function animate(time) {
+        ctx.clearRect(0, 0, width, height);
+
+        /*
+    Build the two paths.
+    */
+
+        const paths = buildPaths();
+
+        /*
+    Progress:
+
+        0 → 1
+
+    every 3 seconds.
+    */
+
+        const progress = (time % duration) / duration;
+
+        /*
+    =========================================================
+    RIGHT HIGHLIGHT
+
+    CENTER
+      ↑
+    TOP CENTER
+      →
+    TOP RIGHT
+      ↓
+    BOTTOM RIGHT
+      ←
+    BOTTOM CENTER
+      ↑
+    CENTER
+    =========================================================
+    */
+
+        const rightDistance = progress * paths.right.length;
+
+        drawHighlight(paths.right, rightDistance);
+
+        /*
+    =========================================================
+    LEFT HIGHLIGHT
+
+    CENTER
+      ↓
+    BOTTOM CENTER
+      ←
+    BOTTOM LEFT
+      ↑
+    TOP LEFT
+      →
+    TOP CENTER
+      ↓
+    CENTER
+    =========================================================
+    */
+
+        const leftDistance = progress * paths.left.length;
+
+        drawHighlight(paths.left, leftDistance);
+
+        requestAnimationFrame(animate);
+      }
+
+      /* =========================================================
+   START
+   ========================================================= */
+
+      requestAnimationFrame(animate);
+    </script>
+  </body>
+</html>

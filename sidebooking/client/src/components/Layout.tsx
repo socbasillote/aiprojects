@@ -187,7 +187,10 @@ export function Layout({ children }: { children: ReactNode }) {
               <button className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50">
                 <Bell size={18} />
               </button>
-              <button onClick={() => navigate("/bookings?new=1")} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800">
+              <button
+                onClick={() => navigate("/bookings?new=1")}
+                className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+              >
                 <span className="inline-flex items-center gap-2">
                   New Booking
                 </span>
