@@ -96,12 +96,18 @@ export function PublicBookingPage() {
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [courtPage, setCourtPage] = useState(0);
 
   const courtsCount = Math.max(1, Number(data?.business?.courtsCount ?? 3));
   const courtNames = Array.from(
     { length: courtsCount },
     (_, index) => `Court ${index + 1}`,
   );
+
+  const handleDateChange = (date) => {
+    setCourtPage(0);
+    chooseDate(date);
+  };
 
   const allSlots = getSlots(
     data?.business?.openHour ?? "08:00",
@@ -371,255 +377,535 @@ export function PublicBookingPage() {
             <div className="text-xs font-black uppercase tracking-[0.26em] text-emerald-700">
               Court booking
             </div>
+
             <h2 className="mt-3 text-4xl font-black tracking-[-0.03em] text-slate-950">
               Reserve your court
             </h2>
+
+            <p className="mx-auto mt-3 max-w-xl text-sm font-medium text-slate-500">
+              Pick your date and time first, then choose an available court.
+            </p>
           </div>
 
           <form
             onSubmit={submit}
-            className="rounded-4xl border border-emerald-900/10 bg-white p-6 shadow-sm shadow-emerald-900/10"
+            className="overflow-hidden rounded-[2rem] border border-emerald-900/10 bg-white shadow-sm shadow-emerald-900/10"
           >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-                Your name
-                <input
-                  name="customer"
-                  required
-                  minLength={2}
-                  className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
-                />
-              </label>
+            {/* =========================================================
+        STEP 1 — DATE
+    ========================================================= */}
+            <div className="border-b border-emerald-900/10 p-5 sm:p-7">
+              <div className="flex items-start gap-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-950 text-sm font-black text-lime-300">
+                  1
+                </div>
 
-              <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-                Email for confirmation
-                <input
-                  name="email"
-                  required
-                  type="email"
-                  className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
-                />
-              </label>
-
-              <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-                Service
-                <select
-                  name="service"
-                  required
-                  className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
-                >
-                  {(data?.services ?? []).map((service) => (
-                    <option key={service.id} value={service.name}>
-                      {service.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-                Staff
-                <input
-                  name="staff"
-                  required
-                  defaultValue="Maria"
-                  className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
-                />
-              </label>
-
-              <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-                Payment method
-                <select
-                  name="paymentMethod"
-                  defaultValue="PayPal"
-                  className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
-                >
-                  <option>Cash</option>
-                  <option>Card</option>
-                  <option>GCash</option>
-                  <option>Bank transfer</option>
-                  <option>PayPal</option>
-                </select>
-              </label>
-
-              <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-                Payment
-                <select
-                  name="payment"
-                  className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
-                >
-                  <option>Unpaid</option>
-                  <option>Deposit</option>
-                  <option>Paid</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="mt-6 rounded-4xl border border-emerald-900/10 bg-[#eef6ed] p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-                  Choose date
-                </span>
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-slate-500 shadow-sm">
-                  {selectedDate ? selectedDate : "Select a date"}
-                </span>
-              </div>
-
-              <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
-                {getDateOptions(45).map((date) => {
-                  const booked = isDateFullyBooked(date);
-                  const isActive = selectedDate === date;
-                  const display = new Date(
-                    `${date}T00:00:00`,
-                  ).toLocaleDateString(undefined, {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                  });
-
-                  return (
-                    <button
-                      key={date}
-                      type="button"
-                      disabled={booked}
-                      onClick={() => chooseDate(date)}
-                      className={`min-w-24 rounded-2xl border px-3 py-2.5 text-center transition ${
-                        isActive
-                          ? "border-emerald-950 bg-emerald-950 text-lime-300 shadow-sm"
-                          : "border-emerald-900/10 bg-white text-slate-700 hover:border-emerald-950 hover:bg-lime-50"
-                      } ${booked ? "cursor-not-allowed opacity-45" : ""}`}
-                    >
-                      <span className="block text-[10px] font-black uppercase tracking-wide">
-                        {display.split(",")[0]}
-                      </span>
-                      <span className="mt-1 block text-xs font-black">
-                        {display.split(",")[1] ?? display}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              <input type="hidden" name="date" value={selectedDate} required />
-            </div>
-
-            <div className="mt-6 rounded-4xl border border-emerald-900/10 bg-[#eef6ed] p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-                  Choose court and time
-                </span>
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-slate-500 shadow-sm">
-                  {selectedSlots.length > 0
-                    ? `${selectedSlots.length} selected slot${selectedSlots.length > 1 ? "s" : ""}`
-                    : "No slot"}
-                </span>
-              </div>
-
-              <div
-                className="mt-4 grid gap-3 overflow-x-auto"
-                style={courtGridStyle}
-              >
-                {courtNames.map((court) => (
-                  <div
-                    key={court}
-                    className="rounded-3xl border border-emerald-900/10 bg-white p-4 shadow-sm"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-900">
-                        {court}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedCourt(court)}
-                        className={`rounded-full px-2 py-1 text-[6px] font-black uppercase tracking-[0.2em] transition ${
-                          selectedCourt === court
-                            ? "bg-emerald-950 text-lime-300"
-                            : "border border-emerald-900/20 bg-white text-slate-700 hover:bg-lime-50"
-                        }`}
-                      >
-                        {selectedCourt === court ? "Selected" : "Select"}
-                      </button>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
+                        Step 1
+                      </p>
+                      <h3 className="mt-1 text-xl font-black text-slate-950">
+                        Choose your date
+                      </h3>
                     </div>
 
-                    <div className="mt-4 space-y-2">
-                      {allSlots.map((slot) => {
-                        const isBooked = (data?.bookings ?? []).some(
-                          (entry) =>
-                            entry.date === selectedDate &&
-                            entry.time === slot &&
-                            entry.court === court,
+                    {selectedDate && (
+                      <span className="rounded-full bg-emerald-950 px-4 py-2 text-xs font-black text-lime-300">
+                        {new Date(
+                          `${selectedDate}T00:00:00`,
+                        ).toLocaleDateString(undefined, {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-7">
+                    {getDateOptions(45).map((date) => {
+                      const booked = isDateFullyBooked(date);
+                      const isActive = selectedDate === date;
+
+                      const display = new Date(
+                        `${date}T00:00:00`,
+                      ).toLocaleDateString(undefined, {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      });
+
+                      const [weekday, monthDay] = display.split(",");
+
+                      return (
+                        <button
+                          key={date}
+                          type="button"
+                          disabled={booked}
+                          onClick={() => chooseDate(date)}
+                          className={`rounded-2xl border px-3 py-3 text-center transition ${
+                            isActive
+                              ? "border-emerald-950 bg-emerald-950 text-lime-300 shadow-md"
+                              : "border-emerald-900/10 bg-[#eef6ed] text-slate-700 hover:border-emerald-950 hover:bg-lime-50"
+                          } ${booked ? "cursor-not-allowed opacity-35" : ""}`}
+                        >
+                          <span className="block text-[10px] font-black uppercase tracking-wider">
+                            {weekday}
+                          </span>
+
+                          <span className="mt-1 block text-sm font-black">
+                            {monthDay}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <input
+                    type="hidden"
+                    name="date"
+                    value={selectedDate}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* =========================================================
+        STEP 3 — COURTS
+    ========================================================= */}
+            <div
+              className={`border-b border-emerald-900/10 p-5 sm:p-7 ${
+                !selectedDate ? "opacity-50" : ""
+              }`}
+            >
+              <div className="flex items-start gap-4">
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black ${
+                    selectedDate
+                      ? "bg-emerald-950 text-lime-300"
+                      : "bg-slate-200 text-slate-500"
+                  }`}
+                >
+                  2
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
+                        Step 2
+                      </p>
+
+                      <h3 className="mt-1 text-xl font-black text-slate-950">
+                        Choose your court and time
+                      </h3>
+                    </div>
+
+                    <span className="rounded-full bg-[#eef6ed] px-4 py-2 text-xs font-black text-slate-600">
+                      {courtNames.length} courts
+                    </span>
+                  </div>
+
+                  {!selectedDate ? (
+                    <div className="mt-5 rounded-2xl border border-dashed border-emerald-900/15 bg-[#eef6ed] px-4 py-5 text-center">
+                      <p className="text-sm font-bold text-slate-500">
+                        Select a date first.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* 
+                Replace these with state:
+                const [courtPage, setCourtPage] = useState(0)
+              */}
+                      {(() => {
+                        const courtsPerPage = 4;
+                        const totalPages = Math.ceil(
+                          courtNames.length / courtsPerPage,
                         );
-                        const exists = selectedSlots.some(
-                          (entry) =>
-                            entry.date === selectedDate &&
-                            entry.court === court &&
-                            entry.time === slot,
+
+                        const currentPage = Math.min(
+                          courtPage,
+                          Math.max(0, totalPages - 1),
+                        );
+
+                        const visibleCourts = courtNames.slice(
+                          currentPage * courtsPerPage,
+                          currentPage * courtsPerPage + courtsPerPage,
                         );
 
                         return (
-                          <button
-                            key={`${court}-${slot}`}
-                            type="button"
-                            disabled={isBooked}
-                            onClick={() => {
-                              setSelectedCourt(court);
-                              const nextSlot = {
-                                date: selectedDate,
-                                court,
-                                time: slot,
-                              };
-                              setSelectedSlots((current) => {
-                                const found = current.some(
-                                  (entry) =>
-                                    entry.date === selectedDate &&
-                                    entry.court === court &&
-                                    entry.time === slot,
-                                );
-                                if (found) {
-                                  return current.filter(
+                          <>
+                            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                              {visibleCourts.map((court) => {
+                                const courtSlots = allSlots.filter((slot) =>
+                                  selectedSlots.some(
                                     (entry) =>
-                                      !(
-                                        entry.date === selectedDate &&
-                                        entry.court === court &&
-                                        entry.time === slot
-                                      ),
-                                  );
-                                }
-                                return [...current, nextSlot];
-                              });
-                            }}
-                            className={`flex w-full items-center justify-center rounded-2xl border px-3 py-2 text-sm font-black transition ${
-                              exists
-                                ? "border-emerald-950 bg-emerald-950 text-lime-300"
-                                : "border-emerald-900/10 bg-[#eef6ed] text-slate-700 hover:border-emerald-950 hover:bg-lime-50"
-                            } ${isBooked ? "cursor-not-allowed line-through opacity-45" : ""}`}
-                          >
-                            {slot}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                                      entry.date === selectedDate &&
+                                      entry.court === court &&
+                                      entry.time === slot,
+                                  ),
+                                );
 
-              <input
-                type="hidden"
-                name="court"
-                value={selectedCourt}
-                required
-              />
+                                const isSelected = selectedCourt === court;
+
+                                return (
+                                  <div
+                                    key={court}
+                                    className={`rounded-3xl border p-4 transition ${
+                                      isSelected
+                                        ? "border-emerald-950 bg-emerald-950 shadow-md"
+                                        : "border-emerald-900/10 bg-[#eef6ed]"
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between gap-3">
+                                      <div>
+                                        <p
+                                          className={`text-[10px] font-black uppercase tracking-[0.2em] ${
+                                            isSelected
+                                              ? "text-lime-300"
+                                              : "text-emerald-700"
+                                          }`}
+                                        >
+                                          Court
+                                        </p>
+
+                                        <h4
+                                          className={`mt-1 text-lg font-black ${
+                                            isSelected
+                                              ? "text-white"
+                                              : "text-slate-950"
+                                          }`}
+                                        >
+                                          {court}
+                                        </h4>
+                                      </div>
+
+                                      {isSelected && (
+                                        <div className="rounded-full bg-lime-300 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-emerald-950">
+                                          Selected
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    <div className="mt-4 space-y-2">
+                                      {allSlots.map((slot) => {
+                                        const isBooked = (
+                                          data?.bookings ?? []
+                                        ).some(
+                                          (entry) =>
+                                            entry.date === selectedDate &&
+                                            entry.time === slot &&
+                                            entry.court === court,
+                                        );
+
+                                        const exists = selectedSlots.some(
+                                          (entry) =>
+                                            entry.date === selectedDate &&
+                                            entry.court === court &&
+                                            entry.time === slot,
+                                        );
+
+                                        return (
+                                          <button
+                                            key={`${court}-${slot}`}
+                                            type="button"
+                                            disabled={isBooked}
+                                            onClick={() => {
+                                              setSelectedCourt(court);
+
+                                              const nextSlot = {
+                                                date: selectedDate,
+                                                court,
+                                                time: slot,
+                                              };
+
+                                              setSelectedSlots((current) => {
+                                                const found = current.some(
+                                                  (entry) =>
+                                                    entry.date ===
+                                                      selectedDate &&
+                                                    entry.court === court &&
+                                                    entry.time === slot,
+                                                );
+
+                                                if (found) {
+                                                  return current.filter(
+                                                    (entry) =>
+                                                      !(
+                                                        entry.date ===
+                                                          selectedDate &&
+                                                        entry.court === court &&
+                                                        entry.time === slot
+                                                      ),
+                                                  );
+                                                }
+
+                                                return [...current, nextSlot];
+                                              });
+                                            }}
+                                            className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-sm font-black transition ${
+                                              exists
+                                                ? "border-lime-300 bg-lime-300 text-emerald-950"
+                                                : isSelected
+                                                  ? "border-white/10 bg-white/10 text-white hover:bg-white/20"
+                                                  : "border-emerald-900/10 bg-white text-slate-700 hover:border-emerald-950 hover:bg-lime-50"
+                                            } ${
+                                              isBooked
+                                                ? "cursor-not-allowed opacity-35 line-through"
+                                                : ""
+                                            }`}
+                                          >
+                                            <span>{slot}</span>
+
+                                            <span className="text-[9px] uppercase tracking-wider opacity-60">
+                                              {isBooked
+                                                ? "Booked"
+                                                : exists
+                                                  ? "Added"
+                                                  : "Available"}
+                                            </span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Pagination only when 5+ courts */}
+                            {courtNames.length >= 5 && (
+                              <div className="mt-5 flex items-center justify-between border-t border-emerald-900/10 pt-4">
+                                <button
+                                  type="button"
+                                  disabled={currentPage === 0}
+                                  onClick={() =>
+                                    setCourtPage((page) =>
+                                      Math.max(0, page - 1),
+                                    )
+                                  }
+                                  className="rounded-xl border border-emerald-900/10 bg-white px-4 py-2 text-xs font-black uppercase tracking-wider text-slate-700 transition hover:bg-lime-50 disabled:cursor-not-allowed disabled:opacity-30"
+                                >
+                                  ← Previous
+                                </button>
+
+                                <div className="flex items-center gap-2">
+                                  {Array.from(
+                                    { length: totalPages },
+                                    (_, index) => (
+                                      <button
+                                        key={index}
+                                        type="button"
+                                        onClick={() => setCourtPage(index)}
+                                        className={`h-8 min-w-8 rounded-full px-2 text-xs font-black transition ${
+                                          currentPage === index
+                                            ? "bg-emerald-950 text-lime-300"
+                                            : "bg-[#eef6ed] text-slate-600 hover:bg-lime-50"
+                                        }`}
+                                      >
+                                        {index + 1}
+                                      </button>
+                                    ),
+                                  )}
+                                </div>
+
+                                <button
+                                  type="button"
+                                  disabled={currentPage === totalPages - 1}
+                                  onClick={() =>
+                                    setCourtPage((page) =>
+                                      Math.min(totalPages - 1, page + 1),
+                                    )
+                                  }
+                                  className="rounded-xl border border-emerald-900/10 bg-white px-4 py-2 text-xs font-black uppercase tracking-wider text-slate-700 transition hover:bg-lime-50 disabled:cursor-not-allowed disabled:opacity-30"
+                                >
+                                  Next →
+                                </button>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </>
+                  )}
+
+                  <input
+                    type="hidden"
+                    name="court"
+                    value={selectedCourt}
+                    required
+                  />
+                </div>
+              </div>
             </div>
 
-            {error && (
-              <p className="mt-4 text-sm font-bold text-red-600">{error}</p>
-            )}
+            {/* =========================================================
+        STEP 4 — CUSTOMER DETAILS
+    ========================================================= */}
+            <div className="border-b border-emerald-900/10 p-5 sm:p-7">
+              <div className="mb-5 flex items-start gap-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-950 text-sm font-black text-lime-300">
+                  3
+                </div>
 
-            <button
-              type="submit"
-              disabled={busy || !data}
-              className="mt-6 w-full rounded-2xl bg-emerald-950 px-4 py-3 text-sm font-black uppercase tracking-[0.26em] text-lime-300 shadow-sm transition hover:bg-slate-950 disabled:opacity-50"
-            >
-              {busy ? "Booking…" : "Confirm booking"}
-            </button>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
+                    Step 3
+                  </p>
+
+                  <h3 className="mt-1 text-xl font-black text-slate-950">
+                    Your booking details
+                  </h3>
+
+                  <p className="mt-1 text-sm font-medium text-slate-500">
+                    Tell us who the booking is for.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
+                  Your name
+                  <input
+                    name="customer"
+                    required
+                    minLength={2}
+                    className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
+                  />
+                </label>
+
+                <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
+                  Email for confirmation
+                  <input
+                    name="email"
+                    required
+                    type="email"
+                    className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
+                  />
+                </label>
+
+                <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
+                  Service
+                  <select
+                    name="service"
+                    required
+                    className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
+                  >
+                    {(data?.services ?? []).map((service) => (
+                      <option key={service.id} value={service.name}>
+                        {service.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
+                  Staff
+                  <input
+                    name="staff"
+                    required
+                    defaultValue="Maria"
+                    className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
+                  />
+                </label>
+
+                <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
+                  Payment method
+                  <select
+                    name="paymentMethod"
+                    defaultValue="PayPal"
+                    className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
+                  >
+                    <option>Cash</option>
+                    <option>Card</option>
+                    <option>GCash</option>
+                    <option>Bank transfer</option>
+                    <option>PayPal</option>
+                  </select>
+                </label>
+
+                <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
+                  Payment
+                  <select
+                    name="payment"
+                    className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
+                  >
+                    <option>Unpaid</option>
+                    <option>Deposit</option>
+                    <option>Paid</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            {/* =========================================================
+        SUMMARY
+    ========================================================= */}
+            <div className="bg-[#eef6ed] p-5 sm:p-7">
+              <div className="rounded-3xl border border-emerald-900/10 bg-white p-5">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
+                      Booking summary
+                    </p>
+
+                    <h3 className="mt-2 text-xl font-black text-slate-950">
+                      {selectedDate
+                        ? new Date(
+                            `${selectedDate}T00:00:00`,
+                          ).toLocaleDateString(undefined, {
+                            weekday: "long",
+                            month: "long",
+                            day: "numeric",
+                          })
+                        : "Choose a date"}
+                    </h3>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-400">
+                      Selected
+                    </p>
+
+                    <p className="mt-1 text-sm font-black text-slate-950">
+                      {selectedSlots.length} slot
+                      {selectedSlots.length === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedSlots.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {selectedSlots.map((entry) => (
+                      <span
+                        key={`${entry.date}-${entry.court}-${entry.time}`}
+                        className="rounded-full bg-emerald-950 px-3 py-1.5 text-xs font-black text-lime-300"
+                      >
+                        {entry.court} · {entry.time}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {error && (
+                <p className="mt-4 text-sm font-bold text-red-600">{error}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={
+                  busy || !data || !selectedDate || selectedSlots.length === 0
+                }
+                className="mt-5 w-full rounded-2xl bg-emerald-950 px-4 py-4 text-sm font-black uppercase tracking-[0.26em] text-lime-300 shadow-sm transition hover:bg-slate-950 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {busy ? "Booking…" : "Confirm booking"}
+              </button>
+            </div>
           </form>
         </section>
       </main>

@@ -418,7 +418,7 @@ export function HomePage() {
             {/* TOP LEFT */}
             <div className="relative z-20 max-w-3xl">
               <span className="text-xs font-black uppercase tracking-[0.26em] text-lime-200">
-                Pickleball Club
+                Pickleball Court
               </span>
 
               <h1 className="mt-6 text-left text-5xl font-black leading-[0.9] tracking-[-0.055em] md:text-7xl lg:text-8xl">
@@ -482,50 +482,156 @@ export function HomePage() {
             </div>
           </div>
         </section>
+        <section className="overflow-hidden bg-[#183f2e] py-6 text-white">
+          <div className="flex w-max animate-[marquee_18s_linear_infinite]">
+            {[1, 2, 3, 4].map((group) => (
+              <div
+                key={group}
+                className="flex shrink-0 items-center gap-10 pr-10 whitespace-nowrap"
+              >
+                <span className="text-xl font-black uppercase tracking-wide">
+                  BOOK NOW
+                </span>
 
-        <section className="mx-auto max-w-7xl px-5 py-16">
-          <div className="flex flex-wrap items-end justify-between gap-8">
-            <div>
-              <div className="text-xs font-black uppercase tracking-[0.26em] text-emerald-700">
-                Why Book With Us
+                <span className="text-xl font-black text-lime-300">✦</span>
+
+                <span className="text-xl font-black uppercase tracking-wide">
+                  ENJOY
+                </span>
+
+                <span className="text-xl font-black text-lime-300">✦</span>
+
+                <span className="text-xl font-black uppercase tracking-wide">
+                  SPECIAL PROMO
+                </span>
+
+                <span className="text-xl font-black text-lime-300">✦</span>
+
+                <span className="text-xl font-black uppercase tracking-wide">
+                  PLAY & SAVE
+                </span>
+
+                <span className="text-xl font-black text-lime-300">✦</span>
               </div>
-              <h2 className="mt-4 text-4xl font-black tracking-[-0.03em] text-slate-950">
-                Book your next pickleball session.
-              </h2>
-            </div>
-            <span className="rounded-full border border-emerald-900/10 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-slate-700">
-              Play easy • Play fast
-            </span>
+            ))}
           </div>
-          <div className="mt-8 grid gap-4 md:grid-cols-[0.88fr,1.12fr]">
-            <div className="rounded-4xl border border-emerald-900/10 bg-white p-8 shadow-sm">
-              <div className="grid gap-4">
-                {whyBook.map((feature) => (
+        </section>
+
+        <section className="mx-auto max-w-7xl px-5 py-20">
+          <div className="grid items-stretch gap-6 lg:grid-cols-[1.05fr,0.95fr]">
+            {/* Left — Content */}
+            <div className="flex flex-col justify-between rounded-[2.5rem] bg-[#eef6ed] p-8 md:p-10">
+              <div>
+                <div className="flex items-center gap-3">
+                  <span className="h-2 w-2 rounded-full bg-lime-400" />
+                  <div className="text-xs font-black uppercase tracking-[0.26em] text-emerald-800">
+                    Why Book With Us
+                  </div>
+                </div>
+
+                <h2 className="mt-5 max-w-xl text-4xl font-black leading-[0.95] tracking-[-0.04em] text-slate-950 md:text-5xl">
+                  Your court.
+                  <br />
+                  Your game.
+                  <br />
+                  <span className="text-emerald-800">Your time.</span>
+                </h2>
+
+                <p className="mt-6 max-w-lg text-base leading-7 text-slate-600">
+                  Everything you need for a great pickleball session — easy
+                  booking, quality courts, convenient parking, and food and
+                  drinks right where you play.
+                </p>
+              </div>
+
+              {/* Features */}
+              <div className="mt-10 grid gap-3 sm:grid-cols-2">
+                {[
+                  ...whyBook,
+                  {
+                    icon: "P",
+                    title: "Easy Parking",
+                    copy: "Convenient parking area available, so you can arrive, park, and get straight to the game.",
+                  },
+                  {
+                    icon: "F",
+                    title: "Food & Drinks",
+                    copy: "Grab refreshing drinks and tasty food from our on-site store before or after your session.",
+                  },
+                ].map((feature, index) => (
                   <article
                     key={feature.title}
-                    className="flex items-start gap-4 rounded-2xl border border-emerald-900/10 bg-[#eef6ed] p-4"
+                    className="group rounded-2xl border border-emerald-900/10 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                   >
-                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-950 text-xs font-black text-lime-300">
-                      {feature.icon}
-                    </span>
-                    <div>
-                      <div className="text-sm font-black uppercase tracking-[0.2em] text-slate-900">
-                        {feature.title}
-                      </div>
-                      <p className="mt-2 text-sm leading-7 text-slate-600">
-                        {feature.copy}
-                      </p>
+                    <div className="flex items-start justify-between">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-950 text-xs font-black text-lime-300">
+                        {feature.icon}
+                      </span>
+
+                      <span className="text-xs font-black text-emerald-900/30">
+                        0{index + 1}
+                      </span>
                     </div>
+
+                    <div className="mt-5 text-sm font-black uppercase tracking-[0.15em] text-slate-900">
+                      {feature.title}
+                    </div>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      {feature.copy}
+                    </p>
                   </article>
                 ))}
               </div>
             </div>
-            <div className="overflow-hidden rounded-4xl border border-emerald-900/10 bg-white shadow-sm">
+
+            {/* Right — Image */}
+            <div className="group relative min-h-125 overflow-hidden rounded-[2.5rem] bg-emerald-950">
               <img
-                src="https://images.unsplash.com/photo-1599058917765-a7801dff89ea?auto=format&fit=crop&w=1600&q=80"
-                className="h-full min-h-105 w-full object-cover"
-                alt=""
+                src="https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1600&q=85"
+                className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                alt="Pickleball court"
               />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/90 via-emerald-950/10 to-transparent" />
+
+              <div className="absolute left-6 top-6 rounded-full bg-white/95 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-950 backdrop-blur">
+                Everything's here
+              </div>
+
+              <div className="absolute bottom-0 left-0 right-0 p-7 md:p-9">
+                <div className="text-xs font-black uppercase tracking-[0.22em] text-lime-300">
+                  Play. Refresh. Repeat.
+                </div>
+
+                <h3 className="mt-3 max-w-md text-3xl font-black leading-tight tracking-[-0.03em] text-white md:text-4xl">
+                  Get on the court.
+                  <br />
+                  Stay for the fun.
+                </h3>
+
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <span className="rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur">
+                    🅿️ Parking
+                  </span>
+
+                  <span className="rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur">
+                    🥤 Drinks
+                  </span>
+
+                  <span className="rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur">
+                    🍔 Food
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  className="mt-6 inline-flex items-center gap-3 rounded-full bg-lime-300 px-6 py-3 text-sm font-black uppercase tracking-[0.12em] text-emerald-950 transition hover:bg-white"
+                >
+                  Book a Court
+                  <span className="text-lg">→</span>
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -561,55 +667,156 @@ export function HomePage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-5 py-16">
-          <div className="flex flex-wrap items-end justify-between gap-8">
-            <div>
-              <div className="text-xs font-black uppercase tracking-[0.26em] text-emerald-700">
-                Featured Courts
+        <section className="mx-auto max-w-7xl px-5 py-20">
+          {/* Header */}
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-3">
+                <span className="h-2 w-2 rounded-full bg-lime-400" />
+
+                <div className="text-xs font-black uppercase tracking-[0.26em] text-emerald-700">
+                  Pickleball Community
+                </div>
               </div>
-              <h2 className="mt-4 text-4xl font-black tracking-[-0.03em] text-slate-950">
-                Find your court community.
+
+              <h2 className="mt-4 text-4xl font-black leading-[0.95] tracking-[-0.04em] text-slate-950 md:text-5xl">
+                Find your people.
+                <br />
+                <span className="text-emerald-800">Find your game.</span>
               </h2>
+
+              <p className="mt-5 max-w-xl text-base leading-7 text-slate-600">
+                More than just a place to play. Meet players, join the
+                community, enjoy friendly games, and discover your new favorite
+                pickleball crew.
+              </p>
             </div>
+
             <Link
               to="/book/maria-studio"
-              className="rounded-2xl border border-emerald-900/20 bg-white px-6 py-3 text-sm font-black text-slate-900 transition hover:bg-emerald-950 hover:text-white"
+              className="group inline-flex items-center gap-3 rounded-full bg-emerald-950 px-6 py-3 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:bg-lime-300 hover:text-emerald-950"
             >
-              Find a Court
+              Explore Clubs
+              <span className="text-lg transition-transform group-hover:translate-x-1">
+                →
+              </span>
             </Link>
           </div>
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {courts.map((court) => (
-              <article
-                key={court.name}
-                className="overflow-hidden rounded-4xl border border-emerald-900/10 bg-white shadow-sm"
-              >
+
+          {/* Club Feature */}
+          <div className="mt-10 overflow-hidden rounded-[2.5rem] border border-emerald-900/10 bg-white shadow-sm">
+            <div className="grid lg:grid-cols-[1.15fr,0.85fr]">
+              {/* Image */}
+              <div className="group relative min-h-105 overflow-hidden lg:min-h-130">
                 <img
-                  src={court.image}
-                  alt=""
-                  className="h-56 w-full object-cover"
+                  src="https://www.ronshoal.com/pickleball/images/slider/pickleball_beginner.jpg"
+                  alt="Group of people playing pickleball together"
+                  className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
                 />
-                <div className="p-6">
+
+                <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-transparent to-transparent" />
+
+                {/* Image Badge */}
+                <div className="absolute left-6 top-6 rounded-full bg-white/95 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-950 backdrop-blur">
+                  Community • Games • Friends
+                </div>
+
+                {/* Bottom Image Text */}
+                <div className="absolute bottom-6 left-6 right-6">
+                  <div className="text-xs font-black uppercase tracking-[0.2em] text-lime-300">
+                    Play together
+                  </div>
+
+                  <div className="mt-2 text-3xl font-black tracking-[-0.03em] text-white md:text-4xl">
+                    Good games.
+                    <br />
+                    Better company.
+                  </div>
+                </div>
+              </div>
+
+              {/* Club Information */}
+              <div className="flex flex-col justify-between bg-[#eef6ed] p-8 md:p-10 lg:p-12">
+                <div>
                   <div className="flex items-center justify-between">
-                    <div className="text-lg font-black text-slate-950">
-                      {court.name}
-                    </div>
-                    <span className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] bg-lime-100 text-emerald-700">
-                      {court.location}
+                    <span className="rounded-full bg-lime-200 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-900">
+                      Featured Club
+                    </span>
+
+                    <span className="text-xs font-black text-emerald-900/30">
+                      01
                     </span>
                   </div>
-                  <p className="mt-4 text-sm leading-7 text-slate-600">
-                    {court.copy}
+
+                  <h3 className="mt-7 text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">
+                    Pickleball Club
+                  </h3>
+
+                  <p className="mt-5 text-sm leading-7 text-slate-600">
+                    Whether you're picking up a paddle for the first time or
+                    already love the game, there's always room for another
+                    player. Join a welcoming community where games are
+                    competitive, social, and fun.
                   </p>
-                  <Link
-                    to="/book/maria-studio"
-                    className="mt-5 inline-flex rounded-2xl border border-emerald-900/20 px-4 py-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-900 transition hover:bg-emerald-950 hover:text-white"
-                  >
-                    View Court
-                  </Link>
+
+                  {/* Club Features */}
+                  <div className="mt-8 grid gap-3">
+                    <div className="flex items-center gap-4 rounded-2xl bg-white p-4">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-950 text-lime-300">
+                        ✦
+                      </span>
+
+                      <div>
+                        <div className="text-sm font-black text-slate-900">
+                          Meet New Players
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          Make friends and find your next game.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 rounded-2xl bg-white p-4">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-950 text-lime-300">
+                        +
+                      </span>
+
+                      <div>
+                        <div className="text-sm font-black text-slate-900">
+                          All Skill Levels
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          Beginners and experienced players welcome.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 rounded-2xl bg-white p-4">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-950 text-lime-300">
+                        ♥
+                      </span>
+
+                      <div>
+                        <div className="text-sm font-black text-slate-900">
+                          Play. Connect. Repeat.
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          Come for the game, stay for the community.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </article>
-            ))}
+
+                <Link
+                  to="/book/maria-studio"
+                  className="mt-8 flex items-center justify-center gap-3 rounded-2xl bg-emerald-950 px-6 py-4 text-sm font-black uppercase tracking-[0.15em] text-white transition hover:bg-lime-300 hover:text-emerald-950"
+                >
+                  Join the Club
+                  <span className="text-lg">→</span>
+                </Link>
+              </div>
+            </div>
           </div>
         </section>
 
