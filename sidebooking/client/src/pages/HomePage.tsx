@@ -1,7 +1,13 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import pickleballImage from "../assets/heropickle2.png";
 import picklogo from "../assets/wesmontlogo3.png";
+import aerialview from "../assets/aerialview.png";
+import courtzoomview from "../assets/courtzoomview.png";
+import netview from "../assets/netview.png";
+import morningview from "../assets/morningview.png";
+import playerperspective from "../assets/playerperspective.png";
+import pantryview from "../assets/pantryview.png";
 
 function SocialIcon({ label }: { label: string }) {
   const common =
@@ -316,30 +322,6 @@ export function HomePage() {
     },
   ];
 
-  const courts = [
-    {
-      name: "Riverside Courts",
-      location: "Downtown",
-      copy: "A bright indoor court space with flexible day and evening play.",
-      image:
-        "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=1600&q=80",
-    },
-    {
-      name: "Northline Club",
-      location: "East Ridge",
-      copy: "A social club with leagues, open play, and private coaching sessions.",
-      image:
-        "https://images.unsplash.com/photo-1556817411-31ae72fa3ea0?auto=format&fit=crop&w=1600&q=80",
-    },
-    {
-      name: "Court Garden",
-      location: "Green District",
-      copy: "A relaxed outdoor court courtyard built for casual and team play.",
-      image:
-        "https://images.unsplash.com/photo-1599058917765-a7801dff89ea?auto=format&fit=crop&w=1600&q=80",
-    },
-  ];
-
   const reviews = [
     {
       name: "Avery Morgan",
@@ -350,6 +332,73 @@ export function HomePage() {
       text: "The court quality is excellent and I love the open play evenings.",
     },
   ];
+
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const galleryImages = [
+    {
+      src: aerialview,
+      alt: "Pickleball court",
+    },
+    {
+      src: playerperspective,
+      alt: "Pickleball player",
+    },
+    {
+      src: courtzoomview,
+      alt: "Pickleball game",
+    },
+    {
+      src: netview,
+      alt: "Pickleball player on court",
+    },
+    {
+      src: morningview,
+      alt: "Pickleball players",
+    },
+    {
+      src: pantryview,
+      alt: "Pickleball game",
+    },
+  ];
+
+  const openGallery = (index) => {
+    setSelectedImage(index);
+  };
+
+  const closeGallery = () => {
+    setSelectedImage(null);
+  };
+
+  const nextImage = () => {
+    setSelectedImage((current) =>
+      current === galleryImages.length - 1 ? 0 : current + 1,
+    );
+  };
+
+  const previousImage = () => {
+    setSelectedImage((current) =>
+      current === 0 ? galleryImages.length - 1 : current - 1,
+    );
+  };
+
+  useEffect(() => {
+    if (selectedImage === null) return;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") closeGallery();
+      if (event.key === "ArrowRight") nextImage();
+      if (event.key === "ArrowLeft") previousImage();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [selectedImage]);
 
   return (
     <div className="min-h-screen bg-[#eef6ed] text-slate-900">
@@ -490,19 +539,13 @@ export function HomePage() {
                 className="flex shrink-0 items-center gap-10 pr-10 whitespace-nowrap"
               >
                 <span className="text-xl font-black uppercase tracking-wide">
-                  BOOK NOW
-                </span>
-
-                <span className="text-xl font-black text-lime-300">✦</span>
-
-                <span className="text-xl font-black uppercase tracking-wide">
-                  ENJOY
-                </span>
-
-                <span className="text-xl font-black text-lime-300">✦</span>
-
-                <span className="text-xl font-black uppercase tracking-wide">
                   SPECIAL PROMO
+                </span>
+
+                <span className="text-xl font-black text-lime-300">✦</span>
+
+                <span className="text-xl font-black uppercase tracking-wide">
+                  BOOK NOW
                 </span>
 
                 <span className="text-xl font-black text-lime-300">✦</span>
@@ -512,10 +555,273 @@ export function HomePage() {
                 </span>
 
                 <span className="text-xl font-black text-lime-300">✦</span>
+
+                <span className="text-xl font-black uppercase tracking-wide">
+                  ENJOY
+                </span>
+
+                <span className="text-xl font-black text-lime-300">✦</span>
               </div>
             ))}
           </div>
         </section>
+
+        {/* Gallery */}
+        <section className="mx-auto max-w-7xl px-5 py-20">
+          <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            <div>
+              <div className="flex items-center gap-3">
+                <span className="h-2 w-2 rounded-full bg-lime-400" />
+
+                <div className="text-xs font-black uppercase tracking-[0.26em] text-emerald-800">
+                  Gallery
+                </div>
+              </div>
+
+              <h2 className="mt-4 text-4xl font-black leading-[0.95] tracking-[-0.04em] text-slate-950 md:text-6xl">
+                See the
+                <br />
+                <span className="text-emerald-800">game in action.</span>
+              </h2>
+            </div>
+
+            <p className="max-w-md text-sm leading-6 text-slate-500 md:text-right">
+              Take a look at the courts, players, and pickleball moments that
+              make every session worth coming back for.
+            </p>
+          </div>
+
+          {/* Photo Grid */}
+          <div className="grid auto-rows-[220px] grid-cols-2 gap-4 md:grid-cols-4">
+            {/* Large Feature */}
+            <button
+              type="button"
+              onClick={() => openGallery(0)}
+              className="group relative col-span-2 row-span-2 overflow-hidden rounded-[2rem] bg-emerald-950 text-left"
+            >
+              <img
+                src={galleryImages[0].src}
+                alt={galleryImages[0].alt}
+                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+              />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-emerald-950/10 to-transparent" />
+
+              <div className="absolute left-6 top-6">
+                <span className="rounded-full bg-lime-300 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-950">
+                  Pickleball
+                </span>
+              </div>
+
+              <div className="absolute bottom-6 left-6">
+                <div className="text-xs font-black uppercase tracking-[0.2em] text-lime-300">
+                  Game on
+                </div>
+
+                <h3 className="mt-2 text-2xl font-black text-white md:text-3xl">
+                  Ready when you are.
+                </h3>
+              </div>
+
+              {/* View icon */}
+              <div className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white opacity-0 backdrop-blur transition duration-300 group-hover:opacity-100">
+                <span className="text-lg">↗</span>
+              </div>
+            </button>
+
+            {/* Photo 2 */}
+            <button
+              type="button"
+              onClick={() => openGallery(1)}
+              className="group relative overflow-hidden rounded-[2rem] bg-emerald-950"
+            >
+              <img
+                src={galleryImages[1].src}
+                alt={galleryImages[1].alt}
+                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+              />
+
+              <div className="absolute inset-0 bg-emerald-950/0 transition group-hover:bg-emerald-950/20" />
+
+              <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white opacity-0 backdrop-blur transition group-hover:opacity-100">
+                ↗
+              </div>
+            </button>
+
+            {/* Photo 3 */}
+            <button
+              type="button"
+              onClick={() => openGallery(2)}
+              className="group relative overflow-hidden rounded-[2rem] bg-emerald-950"
+            >
+              <img
+                src={galleryImages[2].src}
+                alt={galleryImages[2].alt}
+                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+              />
+
+              <div className="absolute inset-0 bg-emerald-950/0 transition group-hover:bg-emerald-950/20" />
+
+              <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white opacity-0 backdrop-blur transition group-hover:opacity-100">
+                ↗
+              </div>
+            </button>
+
+            {/* Photo 4 */}
+            <button
+              type="button"
+              onClick={() => openGallery(3)}
+              className="group relative overflow-hidden rounded-[2rem] bg-emerald-950"
+            >
+              <img
+                src={galleryImages[3].src}
+                alt={galleryImages[3].alt}
+                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+              />
+
+              <div className="absolute inset-0 bg-emerald-950/0 transition group-hover:bg-emerald-950/20" />
+
+              <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white opacity-0 backdrop-blur transition group-hover:opacity-100">
+                ↗
+              </div>
+            </button>
+
+            {/* Photo 5 */}
+            <button
+              type="button"
+              onClick={() => openGallery(4)}
+              className="group relative overflow-hidden rounded-[2rem] bg-emerald-950"
+            >
+              <img
+                src={galleryImages[4].src}
+                alt={galleryImages[4].alt}
+                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+              />
+
+              <div className="absolute inset-0 bg-emerald-950/0 transition group-hover:bg-emerald-950/20" />
+
+              <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white opacity-0 backdrop-blur transition group-hover:opacity-100">
+                ↗
+              </div>
+            </button>
+
+            {/* Photo 6 */}
+            <button
+              type="button"
+              onClick={() => openGallery(5)}
+              className="group relative col-span-2 overflow-hidden rounded-[2rem] bg-emerald-950 text-left"
+            >
+              <img
+                src={galleryImages[5].src}
+                alt={galleryImages[5].alt}
+                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+              />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-transparent to-transparent" />
+
+              <div className="absolute bottom-5 left-6">
+                <div className="text-xs font-black uppercase tracking-[0.2em] text-lime-300">
+                  More than a game
+                </div>
+
+                <div className="mt-1 text-xl font-black text-white">
+                  Good people. Good energy.
+                </div>
+              </div>
+
+              <div className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white opacity-0 backdrop-blur transition duration-300 group-hover:opacity-100">
+                ↗
+              </div>
+            </button>
+          </div>
+
+          {/* Gallery CTA */}
+          <div className="mt-8 flex flex-col items-center justify-between gap-5 rounded-[2rem] bg-[#eef6ed] p-6 sm:flex-row sm:px-8">
+            <div>
+              <div className="text-sm font-black uppercase tracking-[0.15em] text-emerald-950">
+                Like what you see?
+              </div>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Come experience the courts for yourself.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="inline-flex items-center gap-3 rounded-full bg-emerald-950 px-6 py-3 text-sm font-black uppercase tracking-[0.12em] text-lime-300 transition hover:bg-emerald-800"
+            >
+              Book a Court
+              <span className="text-lg">→</span>
+            </button>
+          </div>
+        </section>
+
+        {/* Fullscreen Gallery Lightbox */}
+        {selectedImage !== null && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Pickleball gallery"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) {
+                closeGallery();
+              }
+            }}
+          >
+            {/* Close */}
+            <button
+              type="button"
+              onClick={closeGallery}
+              aria-label="Close gallery"
+              className="absolute right-5 top-5 z-20 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-2xl text-white backdrop-blur transition hover:bg-white/20"
+            >
+              ×
+            </button>
+
+            {/* Pagination */}
+            <div className="absolute left-1/2 top-6 z-20 -translate-x-1/2 rounded-full bg-white/10 px-4 py-2 text-xs font-black tracking-[0.15em] text-white backdrop-blur">
+              {selectedImage + 1} / {galleryImages.length}
+            </div>
+
+            {/* Previous */}
+            <button
+              type="button"
+              onClick={previousImage}
+              aria-label="Previous image"
+              className="absolute left-4 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-2xl text-white backdrop-blur transition hover:bg-lime-300 hover:text-emerald-950 md:left-8"
+            >
+              ←
+            </button>
+
+            {/* Image */}
+            <div className="relative flex h-full w-full items-center justify-center px-12 py-16 md:px-20">
+              <img
+                src={galleryImages[selectedImage].src}
+                alt={galleryImages[selectedImage].alt}
+                className="max-h-full max-w-full rounded-2xl object-contain shadow-2xl"
+              />
+            </div>
+
+            {/* Next */}
+            <button
+              type="button"
+              onClick={nextImage}
+              aria-label="Next image"
+              className="absolute right-4 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-2xl text-white backdrop-blur transition hover:bg-lime-300 hover:text-emerald-950 md:right-8"
+            >
+              →
+            </button>
+
+            {/* Bottom caption */}
+            <div className="absolute bottom-5 left-1/2 z-20 -translate-x-1/2 text-center">
+              <p className="text-xs font-bold uppercase tracking-[0.15em] text-white/60">
+                {galleryImages[selectedImage].alt}
+              </p>
+            </div>
+          </div>
+        )}
 
         <section className="mx-auto max-w-7xl px-5 py-20">
           <div className="grid items-stretch gap-6 lg:grid-cols-[1.05fr,0.95fr]">
