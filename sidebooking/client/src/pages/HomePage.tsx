@@ -4,10 +4,11 @@ import pickleballImage from "../assets/heropickle2.png";
 import picklogo from "../assets/wesmontlogo3.png";
 import aerialview from "../assets/aerialview.png";
 import courtzoomview from "../assets/courtzoomview.png";
-import netview from "../assets/netview.png";
+import netview from "../assets/netview2.png";
 import morningview from "../assets/morningview.png";
-import playerperspective from "../assets/playerperspective.png";
+import playerperspective from "../assets/playerperspective2.png";
 import pantryview from "../assets/pantryview.png";
+import portraittest from "../assets/portraittest.png";
 
 function SocialIcon({ label }: { label: string }) {
   const common =
@@ -566,201 +567,237 @@ export function HomePage() {
           </div>
         </section>
 
-        {/* Gallery */}
-        <section className="mx-auto max-w-7xl px-5 py-20">
-          <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <div>
-              <div className="flex items-center gap-3">
-                <span className="h-2 w-2 rounded-full bg-lime-400" />
-
-                <div className="text-xs font-black uppercase tracking-[0.26em] text-emerald-800">
-                  Gallery
+        {/* =========================================================
+    SECTION 1 — GALLERY
+========================================================= */}
+        <section className="relative overflow-hidden bg-[#f7faf5] py-24 md:py-32">
+          <div className="mx-auto max-w-[1400px] px-5 md:px-8">
+            {/* Header */}
+            <div className="grid gap-8 lg:grid-cols-[1fr_420px] lg:items-end">
+              <div>
+                <div className="mb-5 flex items-center gap-3">
+                  <span className="h-2.5 w-2.5 rounded-full bg-lime-400" />
+                  <span className="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-800">
+                    Inside the club
+                  </span>
                 </div>
+
+                <h2 className="max-w-4xl text-5xl font-black leading-[0.88] tracking-[-0.06em] text-emerald-950 md:text-7xl lg:text-8xl">
+                  This is where
+                  <br />
+                  <span className="text-emerald-700">the fun happens.</span>
+                </h2>
               </div>
 
-              <h2 className="mt-4 text-4xl font-black leading-[0.95] tracking-[-0.04em] text-slate-950 md:text-6xl">
-                See the
-                <br />
-                <span className="text-emerald-800">game in action.</span>
-              </h2>
+              <div className="lg:pb-2">
+                <p className="text-base leading-7 text-slate-500">
+                  Real games. Real people. Real energy. Get a feel for the
+                  courts before you step onto them.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => openGallery(0)}
+                  className="mt-5 inline-flex items-center gap-3 text-sm font-black uppercase tracking-[0.14em] text-emerald-950 transition hover:text-emerald-700"
+                >
+                  Explore gallery
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-lime-300 transition group-hover:translate-x-1">
+                    ↗
+                  </span>
+                </button>
+              </div>
             </div>
 
-            <p className="max-w-md text-sm leading-6 text-slate-500 md:text-right">
-              Take a look at the courts, players, and pickleball moments that
-              make every session worth coming back for.
-            </p>
-          </div>
+            {/* Editorial Gallery */}
+            <div className="mt-14 grid gap-4 md:grid-cols-12 md:grid-rows-[260px_260px_180px]">
+              {/* Main */}
+              <button
+                type="button"
+                onClick={() => openGallery(0)}
+                className="group relative overflow-hidden rounded-[2rem] bg-emerald-950 text-left md:col-span-7 md:row-span-2"
+              >
+                <img
+                  src={galleryImages[0].src}
+                  alt={galleryImages[0].alt}
+                  className="absolute inset-0 h-full w-full object-cover transition duration-1000 group-hover:scale-105"
+                />
 
-          {/* Photo Grid */}
-          <div className="grid auto-rows-[220px] grid-cols-2 gap-4 md:grid-cols-4">
-            {/* Large Feature */}
-            <button
-              type="button"
-              onClick={() => openGallery(0)}
-              className="group relative col-span-2 row-span-2 overflow-hidden rounded-[2rem] bg-emerald-950 text-left"
-            >
-              <img
-                src={galleryImages[0].src}
-                alt={galleryImages[0].alt}
-                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-              />
+                <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-950/20 to-transparent" />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-emerald-950/10 to-transparent" />
-
-              <div className="absolute left-6 top-6">
-                <span className="rounded-full bg-lime-300 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-950">
-                  Pickleball
-                </span>
-              </div>
-
-              <div className="absolute bottom-6 left-6">
-                <div className="text-xs font-black uppercase tracking-[0.2em] text-lime-300">
-                  Game on
+                <div className="absolute left-6 top-6 md:left-8 md:top-8">
+                  <span className="rounded-full bg-lime-300 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-950">
+                    The main event
+                  </span>
                 </div>
 
-                <h3 className="mt-2 text-2xl font-black text-white md:text-3xl">
-                  Ready when you are.
-                </h3>
-              </div>
+                <div className="absolute bottom-6 left-6 right-6 md:bottom-8 md:left-8">
+                  <div className="text-xs font-black uppercase tracking-[0.2em] text-lime-300">
+                    Game on
+                  </div>
 
-              {/* View icon */}
-              <div className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white opacity-0 backdrop-blur transition duration-300 group-hover:opacity-100">
-                <span className="text-lg">↗</span>
-              </div>
-            </button>
-
-            {/* Photo 2 */}
-            <button
-              type="button"
-              onClick={() => openGallery(1)}
-              className="group relative overflow-hidden rounded-[2rem] bg-emerald-950"
-            >
-              <img
-                src={galleryImages[1].src}
-                alt={galleryImages[1].alt}
-                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-              />
-
-              <div className="absolute inset-0 bg-emerald-950/0 transition group-hover:bg-emerald-950/20" />
-
-              <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white opacity-0 backdrop-blur transition group-hover:opacity-100">
-                ↗
-              </div>
-            </button>
-
-            {/* Photo 3 */}
-            <button
-              type="button"
-              onClick={() => openGallery(2)}
-              className="group relative overflow-hidden rounded-[2rem] bg-emerald-950"
-            >
-              <img
-                src={galleryImages[2].src}
-                alt={galleryImages[2].alt}
-                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-              />
-
-              <div className="absolute inset-0 bg-emerald-950/0 transition group-hover:bg-emerald-950/20" />
-
-              <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white opacity-0 backdrop-blur transition group-hover:opacity-100">
-                ↗
-              </div>
-            </button>
-
-            {/* Photo 4 */}
-            <button
-              type="button"
-              onClick={() => openGallery(3)}
-              className="group relative overflow-hidden rounded-[2rem] bg-emerald-950"
-            >
-              <img
-                src={galleryImages[3].src}
-                alt={galleryImages[3].alt}
-                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-              />
-
-              <div className="absolute inset-0 bg-emerald-950/0 transition group-hover:bg-emerald-950/20" />
-
-              <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white opacity-0 backdrop-blur transition group-hover:opacity-100">
-                ↗
-              </div>
-            </button>
-
-            {/* Photo 5 */}
-            <button
-              type="button"
-              onClick={() => openGallery(4)}
-              className="group relative overflow-hidden rounded-[2rem] bg-emerald-950"
-            >
-              <img
-                src={galleryImages[4].src}
-                alt={galleryImages[4].alt}
-                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-              />
-
-              <div className="absolute inset-0 bg-emerald-950/0 transition group-hover:bg-emerald-950/20" />
-
-              <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white opacity-0 backdrop-blur transition group-hover:opacity-100">
-                ↗
-              </div>
-            </button>
-
-            {/* Photo 6 */}
-            <button
-              type="button"
-              onClick={() => openGallery(5)}
-              className="group relative col-span-2 overflow-hidden rounded-[2rem] bg-emerald-950 text-left"
-            >
-              <img
-                src={galleryImages[5].src}
-                alt={galleryImages[5].alt}
-                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-              />
-
-              <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-transparent to-transparent" />
-
-              <div className="absolute bottom-5 left-6">
-                <div className="text-xs font-black uppercase tracking-[0.2em] text-lime-300">
-                  More than a game
+                  <h3 className="mt-2 max-w-lg text-3xl font-black leading-tight tracking-[-0.03em] text-white md:text-5xl">
+                    Ready when
+                    <br />
+                    you are.
+                  </h3>
                 </div>
 
-                <div className="mt-1 text-xl font-black text-white">
-                  Good people. Good energy.
+                <div className="absolute bottom-7 right-7 flex h-12 w-12 items-center justify-center rounded-full bg-white text-lg text-emerald-950 opacity-0 shadow-xl transition duration-300 group-hover:opacity-100">
+                  ↗
                 </div>
-              </div>
+              </button>
 
-              <div className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white opacity-0 backdrop-blur transition duration-300 group-hover:opacity-100">
-                ↗
-              </div>
-            </button>
-          </div>
+              {/* Image 2 */}
+              <button
+                type="button"
+                onClick={() => openGallery(1)}
+                className="group relative min-h-[240px] overflow-hidden rounded-[2rem] bg-emerald-950 text-left md:col-span-5"
+              >
+                <img
+                  src={galleryImages[1].src}
+                  alt={galleryImages[1].alt}
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                />
 
-          {/* Gallery CTA */}
-          <div className="mt-8 flex flex-col items-center justify-between gap-5 rounded-[2rem] bg-[#eef6ed] p-6 sm:flex-row sm:px-8">
-            <div>
-              <div className="text-sm font-black uppercase tracking-[0.15em] text-emerald-950">
-                Like what you see?
-              </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
-              <p className="mt-1 text-sm text-slate-500">
-                Come experience the courts for yourself.
-              </p>
+                <div className="absolute bottom-5 left-5 text-white">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-lime-300">
+                    01
+                  </span>
+                </div>
+
+                <div className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-white text-emerald-950 opacity-0 transition group-hover:opacity-100">
+                  ↗
+                </div>
+              </button>
+
+              {/* Image 3 */}
+              <button
+                type="button"
+                onClick={() => openGallery(2)}
+                className="group relative min-h-[240px] overflow-hidden rounded-[2rem] bg-emerald-950 text-left md:col-span-5"
+              >
+                <img
+                  src={galleryImages[2].src}
+                  alt={galleryImages[2].alt}
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+
+                <div className="absolute bottom-5 left-5">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-lime-300">
+                    02
+                  </span>
+                </div>
+
+                <div className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-white text-emerald-950 opacity-0 transition group-hover:opacity-100">
+                  ↗
+                </div>
+              </button>
+
+              {/* Image 4 */}
+              <button
+                type="button"
+                onClick={() => openGallery(3)}
+                className="group relative min-h-[180px] overflow-hidden rounded-[2rem] bg-emerald-950 md:col-span-3"
+              >
+                <img
+                  src={galleryImages[3].src}
+                  alt={galleryImages[3].alt}
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                />
+
+                <div className="absolute inset-0 bg-black/10 transition group-hover:bg-black/30" />
+
+                <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm text-emerald-950 opacity-0 transition group-hover:opacity-100">
+                  ↗
+                </div>
+              </button>
+
+              {/* Image 5 */}
+              <button
+                type="button"
+                onClick={() => openGallery(4)}
+                className="group relative min-h-[180px] overflow-hidden rounded-[2rem] bg-emerald-950 md:col-span-3"
+              >
+                <img
+                  src={galleryImages[4].src}
+                  alt={galleryImages[4].alt}
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                />
+
+                <div className="absolute inset-0 bg-black/10 transition group-hover:bg-black/30" />
+
+                <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm text-emerald-950 opacity-0 transition group-hover:opacity-100">
+                  ↗
+                </div>
+              </button>
+
+              {/* Bottom CTA image */}
+              <button
+                type="button"
+                onClick={() => openGallery(5)}
+                className="group relative min-h-[180px] overflow-hidden rounded-[2rem] bg-emerald-950 text-left md:col-span-6"
+              >
+                <img
+                  src={galleryImages[5].src}
+                  alt={galleryImages[5].alt}
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                />
+
+                <div className="absolute inset-0 bg-emerald-950/50 transition group-hover:bg-emerald-950/40" />
+
+                <div className="absolute inset-0 flex items-center justify-between p-6 md:p-8">
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.22em] text-lime-300">
+                      More than a game
+                    </div>
+
+                    <div className="mt-2 text-2xl font-black tracking-[-0.03em] text-white">
+                      Good people.
+                      <br />
+                      Good energy.
+                    </div>
+                  </div>
+
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-emerald-950 transition group-hover:scale-110">
+                    ↗
+                  </span>
+                </div>
+              </button>
             </div>
 
-            <button
-              type="button"
-              className="inline-flex items-center gap-3 rounded-full bg-emerald-950 px-6 py-3 text-sm font-black uppercase tracking-[0.12em] text-lime-300 transition hover:bg-emerald-800"
-            >
-              Book a Court
-              <span className="text-lg">→</span>
-            </button>
+            {/* Gallery CTA */}
+            <div className="mt-5 flex flex-col justify-between gap-5 rounded-[2rem] bg-lime-300 p-6 md:flex-row md:items-center md:px-8">
+              <div>
+                <div className="text-sm font-black uppercase tracking-[0.15em] text-emerald-950">
+                  Like what you see?
+                </div>
+
+                <p className="mt-1 text-sm text-emerald-950/65">
+                  Your next game is closer than you think.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="inline-flex items-center justify-center gap-3 rounded-full bg-emerald-950 px-7 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-lime-300 transition hover:bg-emerald-800"
+              >
+                Book a Court
+                <span className="text-lg">→</span>
+              </button>
+            </div>
           </div>
         </section>
 
-        {/* Fullscreen Gallery Lightbox */}
+        {/* =========================================================
+    FULLSCREEN GALLERY
+========================================================= */}
         {selectedImage !== null && (
           <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-emerald-950/95 p-4 backdrop-blur-xl"
             role="dialog"
             aria-modal="true"
             aria-label="Pickleball gallery"
@@ -775,14 +812,15 @@ export function HomePage() {
               type="button"
               onClick={closeGallery}
               aria-label="Close gallery"
-              className="absolute right-5 top-5 z-20 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-2xl text-white backdrop-blur transition hover:bg-white/20"
+              className="absolute right-5 top-5 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-white text-xl text-emerald-950 transition hover:bg-lime-300"
             >
               ×
             </button>
 
-            {/* Pagination */}
-            <div className="absolute left-1/2 top-6 z-20 -translate-x-1/2 rounded-full bg-white/10 px-4 py-2 text-xs font-black tracking-[0.15em] text-white backdrop-blur">
-              {selectedImage + 1} / {galleryImages.length}
+            {/* Counter */}
+            <div className="absolute left-1/2 top-6 z-30 -translate-x-1/2 rounded-full bg-white/10 px-4 py-2 text-xs font-black tracking-[0.18em] text-white backdrop-blur">
+              {String(selectedImage + 1).padStart(2, "0")} /{" "}
+              {String(galleryImages.length).padStart(2, "0")}
             </div>
 
             {/* Previous */}
@@ -790,13 +828,13 @@ export function HomePage() {
               type="button"
               onClick={previousImage}
               aria-label="Previous image"
-              className="absolute left-4 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-2xl text-white backdrop-blur transition hover:bg-lime-300 hover:text-emerald-950 md:left-8"
+              className="absolute left-4 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white backdrop-blur transition hover:border-lime-300 hover:bg-lime-300 hover:text-emerald-950 md:left-8"
             >
               ←
             </button>
 
             {/* Image */}
-            <div className="relative flex h-full w-full items-center justify-center px-12 py-16 md:px-20">
+            <div className="flex h-full w-full items-center justify-center px-12 py-16 md:px-24">
               <img
                 src={galleryImages[selectedImage].src}
                 alt={galleryImages[selectedImage].alt}
@@ -809,344 +847,472 @@ export function HomePage() {
               type="button"
               onClick={nextImage}
               aria-label="Next image"
-              className="absolute right-4 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-2xl text-white backdrop-blur transition hover:bg-lime-300 hover:text-emerald-950 md:right-8"
+              className="absolute right-4 top-1/2 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white backdrop-blur transition hover:border-lime-300 hover:bg-lime-300 hover:text-emerald-950 md:right-8"
             >
               →
             </button>
 
-            {/* Bottom caption */}
-            <div className="absolute bottom-5 left-1/2 z-20 -translate-x-1/2 text-center">
-              <p className="text-xs font-bold uppercase tracking-[0.15em] text-white/60">
+            {/* Caption */}
+            <div className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2 text-center">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/60">
                 {galleryImages[selectedImage].alt}
               </p>
             </div>
           </div>
         )}
 
-        <section className="mx-auto max-w-7xl px-5 py-20">
-          <div className="grid items-stretch gap-6 lg:grid-cols-[1.05fr,0.95fr]">
-            {/* Left — Content */}
-            <div className="flex flex-col justify-between rounded-[2.5rem] bg-[#eef6ed] p-8 md:p-10">
-              <div>
-                <div className="flex items-center gap-3">
-                  <span className="h-2 w-2 rounded-full bg-lime-400" />
-                  <div className="text-xs font-black uppercase tracking-[0.26em] text-emerald-800">
-                    Why Book With Us
+        {/* =========================================================
+    SECTION 2 — WHY BOOK
+========================================================= */}
+        <section className="bg-white py-24 md:py-32">
+          <div className="mx-auto max-w-[1400px] px-5 md:px-8">
+            <div className="grid overflow-hidden rounded-[2.5rem] bg-[#eef6ed] lg:grid-cols-[0.9fr_1.1fr]">
+              {/* Content */}
+              <div className="flex flex-col justify-between p-7 md:p-12 lg:p-16">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="h-2.5 w-2.5 rounded-full bg-lime-400" />
+
+                    <span className="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-800">
+                      Why book with us
+                    </span>
                   </div>
+
+                  <h2 className="mt-6 text-5xl font-black leading-[0.88] tracking-[-0.055em] text-emerald-950 md:text-6xl">
+                    Everything
+                    <br />
+                    you need.
+                    <br />
+                    <span className="text-emerald-700">Nothing extra.</span>
+                  </h2>
+
+                  <p className="mt-7 max-w-lg text-base leading-7 text-slate-600">
+                    Show up, play your game, and enjoy the rest. We've made the
+                    experience simple from the moment you arrive.
+                  </p>
                 </div>
 
-                <h2 className="mt-5 max-w-xl text-4xl font-black leading-[0.95] tracking-[-0.04em] text-slate-950 md:text-5xl">
-                  Your court.
-                  <br />
-                  Your game.
-                  <br />
-                  <span className="text-emerald-800">Your time.</span>
-                </h2>
-
-                <p className="mt-6 max-w-lg text-base leading-7 text-slate-600">
-                  Everything you need for a great pickleball session — easy
-                  booking, quality courts, convenient parking, and food and
-                  drinks right where you play.
-                </p>
-              </div>
-
-              {/* Features */}
-              <div className="mt-10 grid gap-3 sm:grid-cols-2">
-                {[
-                  ...whyBook,
-                  {
-                    icon: "P",
-                    title: "Easy Parking",
-                    copy: "Convenient parking area available, so you can arrive, park, and get straight to the game.",
-                  },
-                  {
-                    icon: "F",
-                    title: "Food & Drinks",
-                    copy: "Grab refreshing drinks and tasty food from our on-site store before or after your session.",
-                  },
-                ].map((feature, index) => (
-                  <article
-                    key={feature.title}
-                    className="group rounded-2xl border border-emerald-900/10 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-                  >
-                    <div className="flex items-start justify-between">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-950 text-xs font-black text-lime-300">
+                {/* Feature list */}
+                <div className="mt-12 border-t border-emerald-950/10">
+                  {[
+                    ...whyBook,
+                    {
+                      icon: "P",
+                      title: "Easy Parking",
+                      copy: "Convenient parking so you can get from your car to the court without the hassle.",
+                    },
+                    {
+                      icon: "F",
+                      title: "Food & Drinks",
+                      copy: "Grab refreshing drinks and food before or after your game.",
+                    },
+                  ].map((feature, index) => (
+                    <div
+                      key={feature.title}
+                      className="group grid grid-cols-[44px_1fr_auto] items-start gap-4 border-b border-emerald-950/10 py-5"
+                    >
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-950 text-xs font-black text-lime-300 transition group-hover:bg-lime-300 group-hover:text-emerald-950">
                         {feature.icon}
                       </span>
 
-                      <span className="text-xs font-black text-emerald-900/30">
+                      <div>
+                        <div className="text-sm font-black uppercase tracking-[0.12em] text-emerald-950">
+                          {feature.title}
+                        </div>
+
+                        <p className="mt-1 max-w-md text-sm leading-6 text-slate-500">
+                          {feature.copy}
+                        </p>
+                      </div>
+
+                      <span className="pt-1 text-xs font-black text-emerald-950/30">
                         0{index + 1}
                       </span>
                     </div>
-
-                    <div className="mt-5 text-sm font-black uppercase tracking-[0.15em] text-slate-900">
-                      {feature.title}
-                    </div>
-
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                      {feature.copy}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </div>
-
-            {/* Right — Image */}
-            <div className="group relative min-h-125 overflow-hidden rounded-[2.5rem] bg-emerald-950">
-              <img
-                src="https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1600&q=85"
-                className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                alt="Pickleball court"
-              />
-
-              <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/90 via-emerald-950/10 to-transparent" />
-
-              <div className="absolute left-6 top-6 rounded-full bg-white/95 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-950 backdrop-blur">
-                Everything's here
-              </div>
-
-              <div className="absolute bottom-0 left-0 right-0 p-7 md:p-9">
-                <div className="text-xs font-black uppercase tracking-[0.22em] text-lime-300">
-                  Play. Refresh. Repeat.
+                  ))}
                 </div>
+              </div>
 
-                <h3 className="mt-3 max-w-md text-3xl font-black leading-tight tracking-[-0.03em] text-white md:text-4xl">
-                  Get on the court.
-                  <br />
-                  Stay for the fun.
-                </h3>
+              {/* Visual */}
+              <div className="relative min-h-[600px] overflow-hidden bg-emerald-950 lg:min-h-[760px]">
+                <img
+                  src={portraittest}
+                  className="absolute inset-0 h-full w-full object-cover transition duration-1000 hover:scale-105"
+                  alt="Pickleball court"
+                />
 
-                <div className="mt-6 flex flex-wrap gap-2">
-                  <span className="rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur">
-                    🅿️ Parking
-                  </span>
+                <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-950/10 to-transparent" />
 
-                  <span className="rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur">
-                    🥤 Drinks
-                  </span>
-
-                  <span className="rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur">
-                    🍔 Food
+                {/* Floating label */}
+                <div className="absolute left-6 top-6 md:left-8 md:top-8">
+                  <span className="rounded-full bg-white px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-950">
+                    Everything's here
                   </span>
                 </div>
 
-                <button
-                  type="button"
-                  className="mt-6 inline-flex items-center gap-3 rounded-full bg-lime-300 px-6 py-3 text-sm font-black uppercase tracking-[0.12em] text-emerald-950 transition hover:bg-white"
-                >
-                  Book a Court
-                  <span className="text-lg">→</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-[#183f2e] py-16 text-white">
-          <div className="mx-auto max-w-7xl px-5">
-            <div className="mb-8">
-              <div className="text-xs font-black uppercase tracking-[0.26em] text-lime-300">
-                How It Works
-              </div>
-              <h2 className="mt-4 text-4xl font-black tracking-[-0.03em]">
-                Choose → Book → Play
-              </h2>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              {steps.map((step) => (
-                <article
-                  key={step.title}
-                  className="rounded-3xl border border-white/10 bg-white/8 p-7"
-                >
-                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime-300 text-sm font-black text-slate-950">
-                    {step.icon}
-                  </span>
-                  <div className="mt-6 text-2xl font-black text-white">
-                    {step.title}
+                {/* Bottom content */}
+                <div className="absolute bottom-0 left-0 right-0 p-7 md:p-12">
+                  <div className="text-xs font-black uppercase tracking-[0.25em] text-lime-300">
+                    Play. Refresh. Repeat.
                   </div>
-                  <p className="mt-3 text-sm leading-8 text-emerald-50">
-                    {step.copy}
-                  </p>
-                </article>
-              ))}
+
+                  <h3 className="mt-4 max-w-xl text-4xl font-black leading-[0.95] tracking-[-0.04em] text-white md:text-6xl">
+                    Get on the court.
+                    <br />
+                    Stay for the fun.
+                  </h3>
+
+                  <div className="mt-7 flex flex-wrap gap-2">
+                    {["🅿️ Parking", "🥤 Drinks", "🍔 Food"].map((item) => (
+                      <span
+                        key={item}
+                        className="rounded-full border border-white/15 bg-white/10 px-4 py-2.5 text-xs font-bold text-white backdrop-blur-md"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="mt-7 inline-flex items-center gap-3 rounded-full bg-lime-300 px-7 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-emerald-950 transition hover:bg-white"
+                  >
+                    Book a Court
+                    <span className="text-lg">→</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-5 py-20">
-          {/* Header */}
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <div className="max-w-2xl">
-              <div className="flex items-center gap-3">
-                <span className="h-2 w-2 rounded-full bg-lime-400" />
+        {/* =========================================================
+    SECTION 3 — HOW IT WORKS
+========================================================= */}
+        <section className="relative overflow-hidden bg-emerald-950 py-24 text-white md:py-32">
+          {/* Decorative background */}
+          <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-lime-300/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-emerald-400/10 blur-3xl" />
 
-                <div className="text-xs font-black uppercase tracking-[0.26em] text-emerald-700">
-                  Pickleball Community
+          <div className="relative mx-auto max-w-[1400px] px-5 md:px-8">
+            {/* Header */}
+            <div className="flex flex-col justify-between gap-8 border-b border-white/10 pb-10 lg:flex-row lg:items-end">
+              <div>
+                <div className="flex items-center gap-3">
+                  <span className="h-2.5 w-2.5 rounded-full bg-lime-300" />
+
+                  <span className="text-[11px] font-black uppercase tracking-[0.3em] text-lime-300">
+                    How it works
+                  </span>
                 </div>
+
+                <h2 className="mt-5 text-5xl font-black leading-[0.9] tracking-[-0.05em] md:text-7xl">
+                  Three steps.
+                  <br />
+                  <span className="text-lime-300">That's it.</span>
+                </h2>
               </div>
 
-              <h2 className="mt-4 text-4xl font-black leading-[0.95] tracking-[-0.04em] text-slate-950 md:text-5xl">
-                Find your people.
-                <br />
-                <span className="text-emerald-800">Find your game.</span>
-              </h2>
-
-              <p className="mt-5 max-w-xl text-base leading-7 text-slate-600">
-                More than just a place to play. Meet players, join the
-                community, enjoy friendly games, and discover your new favorite
-                pickleball crew.
+              <p className="max-w-sm text-sm leading-7 text-emerald-100/65 lg:pb-1">
+                No complicated process. Pick your court, lock in your time, and
+                show up ready to play.
               </p>
             </div>
 
-            <Link
-              to="/book/maria-studio"
-              className="group inline-flex items-center gap-3 rounded-full bg-emerald-950 px-6 py-3 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:bg-lime-300 hover:text-emerald-950"
-            >
-              Explore Clubs
-              <span className="text-lg transition-transform group-hover:translate-x-1">
-                →
-              </span>
-            </Link>
-          </div>
+            {/* Steps */}
+            <div className="mt-12 grid gap-px overflow-hidden rounded-[2rem] border border-white/10 bg-white/10 md:grid-cols-3">
+              {steps.map((step, index) => (
+                <article
+                  key={step.title}
+                  className="group relative bg-emerald-950 p-7 transition duration-500 hover:bg-[#1d4b37] md:p-10"
+                >
+                  {/* Number */}
+                  <div className="flex items-start justify-between">
+                    <span className="text-[5rem] font-black leading-none tracking-[-0.08em] text-white/10 transition duration-500 group-hover:text-lime-300/20 md:text-[7rem]">
+                      0{index + 1}
+                    </span>
 
-          {/* Club Feature */}
-          <div className="mt-10 overflow-hidden rounded-[2.5rem] border border-emerald-900/10 bg-white shadow-sm">
-            <div className="grid lg:grid-cols-[1.15fr,0.85fr]">
-              {/* Image */}
-              <div className="group relative min-h-105 overflow-hidden lg:min-h-130">
-                <img
-                  src="https://www.ronshoal.com/pickleball/images/slider/pickleball_beginner.jpg"
-                  alt="Group of people playing pickleball together"
-                  className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                />
-
-                <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-transparent to-transparent" />
-
-                {/* Image Badge */}
-                <div className="absolute left-6 top-6 rounded-full bg-white/95 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-950 backdrop-blur">
-                  Community • Games • Friends
-                </div>
-
-                {/* Bottom Image Text */}
-                <div className="absolute bottom-6 left-6 right-6">
-                  <div className="text-xs font-black uppercase tracking-[0.2em] text-lime-300">
-                    Play together
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-lime-300 text-sm font-black text-emerald-950">
+                      {step.icon}
+                    </span>
                   </div>
 
-                  <div className="mt-2 text-3xl font-black tracking-[-0.03em] text-white md:text-4xl">
-                    Good games.
-                    <br />
-                    Better company.
+                  {/* Content */}
+                  <div className="mt-10">
+                    <div className="text-2xl font-black tracking-[-0.02em] text-white md:text-3xl">
+                      {step.title}
+                    </div>
+
+                    <p className="mt-4 max-w-sm text-sm leading-7 text-emerald-100/60">
+                      {step.copy}
+                    </p>
                   </div>
+
+                  {/* Arrow */}
+                  {index < steps.length - 1 && (
+                    <div className="absolute bottom-10 right-8 hidden text-2xl text-lime-300/40 md:block">
+                      →
+                    </div>
+                  )}
+
+                  {/* Bottom accent */}
+                  <div className="mt-10 h-1 w-10 rounded-full bg-white/10 transition-all duration-500 group-hover:w-20 group-hover:bg-lime-300" />
+                </article>
+              ))}
+            </div>
+
+            {/* Bottom CTA */}
+            <div className="mt-6 flex flex-col items-start justify-between gap-6 rounded-[2rem] border border-lime-300/20 bg-lime-300 p-7 md:flex-row md:items-center md:px-10">
+              <div>
+                <div className="text-lg font-black tracking-[-0.02em] text-emerald-950">
+                  Ready to play?
                 </div>
+
+                <p className="mt-1 text-sm text-emerald-950/60">
+                  Pick a time and we'll see you on the court.
+                </p>
               </div>
 
-              {/* Club Information */}
-              <div className="flex flex-col justify-between bg-[#eef6ed] p-8 md:p-10 lg:p-12">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="rounded-full bg-lime-200 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-900">
-                      Featured Club
-                    </span>
+              <button
+                type="button"
+                className="inline-flex items-center gap-3 rounded-full bg-emerald-950 px-7 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-lime-300 transition hover:bg-emerald-800"
+              >
+                Book a Court
+                <span className="text-lg">→</span>
+              </button>
+            </div>
+          </div>
+        </section>
 
-                    <span className="text-xs font-black text-emerald-900/30">
-                      01
+        <section className="relative overflow-hidden bg-[#f7faf5]">
+          {/* Decorative background */}
+          <div className="pointer-events-none absolute -right-40 top-20 h-96 w-96 rounded-full bg-lime-300/20 blur-3xl" />
+          <div className="pointer-events-none absolute -left-40 bottom-0 h-96 w-96 rounded-full bg-emerald-300/10 blur-3xl" />
+
+          <div className="relative mx-auto max-w-7xl px-5 py-24 lg:py-32">
+            {/* Header */}
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <div className="inline-flex items-center gap-3 rounded-full border border-emerald-900/10 bg-white px-4 py-2 shadow-sm">
+                  <span className="h-2 w-2 rounded-full bg-lime-400" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-800">
+                    Pickleball Community
+                  </span>
+                </div>
+
+                <h2 className="mt-6 text-5xl font-black leading-[0.92] tracking-[-0.055em] text-slate-950 sm:text-6xl lg:text-7xl">
+                  Find your people.
+                  <br />
+                  <span className="text-emerald-800">Find your game.</span>
+                </h2>
+
+                <p className="mt-7 max-w-2xl text-base leading-8 text-slate-600 md:text-lg">
+                  Pick up a paddle, meet new people, and find a community that
+                  makes every game worth showing up for.
+                </p>
+              </div>
+
+              <Link
+                to="/book/maria-studio"
+                className="group inline-flex w-fit items-center gap-4 rounded-full bg-emerald-950 px-7 py-4 text-xs font-black uppercase tracking-[0.16em] text-white transition duration-300 hover:bg-lime-300 hover:text-emerald-950"
+              >
+                Explore Clubs
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-base transition group-hover:translate-x-1 group-hover:bg-emerald-950/10">
+                  →
+                </span>
+              </Link>
+            </div>
+
+            {/* Featured Club */}
+            <div className="mt-14 overflow-hidden rounded-[2.75rem] bg-emerald-950 shadow-[0_30px_80px_-30px_rgba(6,78,59,0.35)]">
+              <div className="grid lg:grid-cols-[1.15fr,0.85fr]">
+                {/* Image */}
+                <div className="group relative min-h-120 overflow-hidden lg:min-h-150">
+                  <img
+                    src="https://www.ronshoal.com/pickleball/images/slider/pickleball_beginner.jpg"
+                    alt="Group of people playing pickleball together"
+                    className="absolute inset-0 h-full w-full object-cover transition duration-1000 group-hover:scale-105"
+                  />
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-950/10 to-transparent" />
+
+                  <div className="absolute left-7 top-7">
+                    <span className="inline-flex rounded-full bg-white/95 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-950 backdrop-blur">
+                      Featured Club
                     </span>
                   </div>
 
-                  <h3 className="mt-7 text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">
-                    Pickleball Club
-                  </h3>
-
-                  <p className="mt-5 text-sm leading-7 text-slate-600">
-                    Whether you're picking up a paddle for the first time or
-                    already love the game, there's always room for another
-                    player. Join a welcoming community where games are
-                    competitive, social, and fun.
-                  </p>
-
-                  {/* Club Features */}
-                  <div className="mt-8 grid gap-3">
-                    <div className="flex items-center gap-4 rounded-2xl bg-white p-4">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-950 text-lime-300">
-                        ✦
-                      </span>
-
-                      <div>
-                        <div className="text-sm font-black text-slate-900">
-                          Meet New Players
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          Make friends and find your next game.
-                        </div>
-                      </div>
+                  <div className="absolute bottom-8 left-7 right-7 md:bottom-10 md:left-10">
+                    <div className="text-[10px] font-black uppercase tracking-[0.25em] text-lime-300">
+                      Play together
                     </div>
 
-                    <div className="flex items-center gap-4 rounded-2xl bg-white p-4">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-950 text-lime-300">
-                        +
-                      </span>
+                    <h3 className="mt-3 max-w-lg text-4xl font-black leading-[0.95] tracking-[-0.04em] text-white md:text-5xl">
+                      Good games.
+                      <br />
+                      Better company.
+                    </h3>
 
-                      <div>
-                        <div className="text-sm font-black text-slate-900">
-                          All Skill Levels
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          Beginners and experienced players welcome.
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 rounded-2xl bg-white p-4">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-950 text-lime-300">
-                        ♥
-                      </span>
-
-                      <div>
-                        <div className="text-sm font-black text-slate-900">
-                          Play. Connect. Repeat.
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          Come for the game, stay for the community.
-                        </div>
-                      </div>
+                    <div className="mt-6 flex flex-wrap gap-2">
+                      {["Social games", "All levels", "New friends"].map(
+                        (item) => (
+                          <span
+                            key={item}
+                            className="rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur"
+                          >
+                            {item}
+                          </span>
+                        ),
+                      )}
                     </div>
                   </div>
                 </div>
 
-                <Link
-                  to="/book/maria-studio"
-                  className="mt-8 flex items-center justify-center gap-3 rounded-2xl bg-emerald-950 px-6 py-4 text-sm font-black uppercase tracking-[0.15em] text-white transition hover:bg-lime-300 hover:text-emerald-950"
-                >
-                  Join the Club
-                  <span className="text-lg">→</span>
-                </Link>
+                {/* Content */}
+                <div className="flex flex-col justify-between p-8 text-white md:p-10 lg:p-12">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-[0.22em] text-lime-300">
+                        01 / Community
+                      </span>
+
+                      <span className="text-xs font-bold text-white/20">
+                        PICKLEBALL
+                      </span>
+                    </div>
+
+                    <h3 className="mt-8 text-3xl font-black tracking-[-0.04em] md:text-4xl">
+                      More than a court.
+                    </h3>
+
+                    <p className="mt-5 text-sm leading-7 text-emerald-50/70">
+                      Whether you're playing your first game or already obsessed
+                      with the sport, there's a place for you here. Meet
+                      players, build friendships, and keep coming back for the
+                      next game.
+                    </p>
+
+                    {/* Feature list */}
+                    <div className="mt-9 divide-y divide-white/10 border-y border-white/10">
+                      {[
+                        {
+                          number: "01",
+                          title: "Meet New Players",
+                          text: "Find people who love the game as much as you do.",
+                        },
+                        {
+                          number: "02",
+                          title: "Every Skill Level",
+                          text: "Beginner, intermediate, or experienced — everyone belongs.",
+                        },
+                        {
+                          number: "03",
+                          title: "Build Your Crew",
+                          text: "Turn casual games into a community you look forward to.",
+                        },
+                      ].map((item) => (
+                        <div
+                          key={item.number}
+                          className="flex gap-5 py-5 first:pt-6 last:pb-6"
+                        >
+                          <span className="pt-1 text-[10px] font-black tracking-widest text-lime-300">
+                            {item.number}
+                          </span>
+
+                          <div>
+                            <div className="text-sm font-black text-white">
+                              {item.title}
+                            </div>
+                            <p className="mt-1 text-xs leading-5 text-emerald-50/50">
+                              {item.text}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Link
+                    to="/book/maria-studio"
+                    className="group mt-10 flex items-center justify-between rounded-2xl bg-lime-300 px-6 py-4 text-sm font-black uppercase tracking-[0.14em] text-emerald-950 transition hover:bg-lime-200"
+                  >
+                    Join the Club
+                    <span className="text-xl transition-transform group-hover:translate-x-1">
+                      →
+                    </span>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
+        {/* Social Proof */}
         <section className="bg-white">
-          <div className="mx-auto max-w-7xl px-5 py-16">
-            <div className="grid gap-8 md:grid-cols-[0.95fr,1.05fr]">
-              <div className="rounded-4xl border border-emerald-900/10 bg-[#eef6ed] p-8">
-                <div className="text-xs font-black uppercase tracking-[0.26em] text-emerald-700">
-                  Social proof
+          <div className="mx-auto max-w-7xl px-5 py-24 lg:py-28">
+            <div className="grid gap-12 lg:grid-cols-[0.75fr,1.25fr] lg:items-center">
+              {/* Intro */}
+              <div>
+                <div className="flex items-center gap-3">
+                  <span className="h-2 w-2 rounded-full bg-lime-400" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-700">
+                    Player Stories
+                  </span>
                 </div>
-                <h2 className="mt-4 text-4xl font-black tracking-[-0.03em] text-slate-950">
-                  Players love the energy.
+
+                <h2 className="mt-5 text-4xl font-black leading-none tracking-[-0.045em] text-slate-950 md:text-5xl">
+                  Come for the game.
+                  <br />
+                  <span className="text-emerald-800">Stay for the people.</span>
                 </h2>
-                <div className="mt-8 space-y-4">
-                  {reviews.map((review) => (
-                    <article
-                      key={review.name}
-                      className="rounded-2xl bg-white p-5"
-                    >
-                      <div className="flex items-center gap-1 text-lime-600">
-                        {Array.from({ length: 5 }).map((_, index) => (
+
+                <p className="mt-6 max-w-md text-sm leading-7 text-slate-500">
+                  The best part of pickleball isn't always the score. It's the
+                  people you meet between games.
+                </p>
+
+                <div className="mt-8 flex items-center gap-4">
+                  <div className="flex -space-x-2">
+                    {["A", "M", "J", "K"].map((letter, index) => (
+                      <div
+                        key={letter}
+                        className={`flex h-10 w-10 items-center justify-center rounded-full border-2 border-white text-xs font-black ${
+                          index % 2 === 0
+                            ? "bg-lime-300 text-emerald-950"
+                            : "bg-emerald-900 text-white"
+                        }`}
+                      >
+                        {letter}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-black text-slate-900">
+                      Your next crew is here.
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      Friendly games. Real connections.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Reviews */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                {reviews.map((review, index) => (
+                  <article
+                    key={review.name}
+                    className={`rounded-[1.75rem] border border-emerald-900/10 p-6 ${
+                      index === 0 ? "bg-[#eef6ed]" : "bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex gap-1 text-lime-600">
+                        {Array.from({ length: 5 }).map((_, starIndex) => (
                           <svg
-                            key={index}
-                            className="h-4 w-4"
+                            key={starIndex}
+                            className="h-3.5 w-3.5"
                             viewBox="0 0 24 24"
                             fill="currentColor"
                           >
@@ -1154,61 +1320,96 @@ export function HomePage() {
                           </svg>
                         ))}
                       </div>
-                      <p className="mt-4 text-sm leading-7 text-slate-600">
-                        “{review.text}”
-                      </p>
-                      <div className="mt-3 text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+
+                      <span className="text-[10px] font-black text-slate-300">
+                        5.0
+                      </span>
+                    </div>
+
+                    <p className="mt-6 text-sm leading-7 text-slate-600">
+                      “{review.text}”
+                    </p>
+
+                    <div className="mt-6 flex items-center gap-3 border-t border-slate-900/5 pt-5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-950 text-xs font-black text-lime-300">
+                        {review.name.charAt(0)}
+                      </div>
+
+                      <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
                         {review.name}
                       </div>
-                    </article>
-                  ))}
-                </div>
-              </div>
-              <div className="overflow-hidden rounded-4xl border border-emerald-900/10">
-                <img
-                  src="https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=1600&q=80"
-                  className="h-full min-h-110 w-full object-cover"
-                  alt=""
-                />
+                    </div>
+                  </article>
+                ))}
               </div>
             </div>
           </div>
         </section>
 
-        <section className="bg-[#173f2d] py-16 text-white">
-          <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 md:grid-cols-[1fr,0.95fr]">
-            <div>
-              <div className="text-xs font-black uppercase tracking-[0.26em] text-lime-300">
-                Join the Club
+        {/* CTA */}
+        <section className="relative overflow-hidden bg-emerald-950 text-white">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(163,230,53,0.15),transparent_35%)]" />
+
+          <div className="relative mx-auto max-w-7xl px-5 py-24 lg:py-28">
+            <div className="grid gap-12 lg:grid-cols-[1fr,0.85fr] lg:items-center">
+              <div>
+                <div className="flex items-center gap-3">
+                  <span className="h-2 w-2 rounded-full bg-lime-300" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.25em] text-lime-300">
+                    Your next game
+                  </span>
+                </div>
+
+                <h2 className="mt-6 max-w-2xl text-5xl font-black leading-[0.9] tracking-[-0.055em] md:text-6xl lg:text-7xl">
+                  Your next court
+                  <br />
+                  <span className="text-lime-300">is waiting.</span>
+                </h2>
+
+                <p className="mt-7 max-w-xl text-base leading-8 text-emerald-50/65">
+                  Reserve your time, bring your people, and make pickleball part
+                  of your weekly routine.
+                </p>
+
+                <div className="mt-9 flex flex-wrap gap-3">
+                  <Link
+                    to="/book/maria-studio"
+                    className="group inline-flex items-center gap-4 rounded-full bg-lime-300 px-7 py-4 text-sm font-black text-emerald-950 transition hover:bg-lime-200"
+                  >
+                    Book Your Court
+                    <span className="transition-transform group-hover:translate-x-1">
+                      →
+                    </span>
+                  </Link>
+
+                  <a
+                    href="#booking"
+                    className="inline-flex items-center rounded-full border border-white/15 px-7 py-4 text-sm font-black text-white transition hover:border-white/30 hover:bg-white/5"
+                  >
+                    Find a Court
+                  </a>
+                </div>
               </div>
-              <h2 className="mt-4 text-5xl font-black leading-none tracking-[-0.04em]">
-                Your next court is waiting.
-              </h2>
-              <p className="mt-5 max-w-xl text-emerald-50 leading-8">
-                Reserve your time, meet your playing group, and build a
-                consistent pickleball routine with a club that runs well.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-4">
-                <Link
-                  to="/book/maria-studio"
-                  className="rounded-2xl bg-lime-300 px-7 py-3 text-sm font-black text-slate-950 transition hover:bg-lime-200"
-                >
-                  Book Your Court
-                </Link>
-                <a
-                  href="#booking"
-                  className="rounded-2xl border border-white/30 px-7 py-3 text-sm font-black text-white transition hover:bg-white/10"
-                >
-                  Find a Court
-                </a>
+
+              {/* Image */}
+              <div className="group relative overflow-hidden rounded-[2.5rem]">
+                <img
+                  src="https://images.unsplash.com/photo-1556817411-31ae72fa3ea0?auto=format&fit=crop&w=1600&q=80"
+                  className="h-105 w-full object-cover transition duration-700 group-hover:scale-105 lg:h-130"
+                  alt="Players enjoying an active game"
+                />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/70 via-transparent to-transparent" />
+
+                <div className="absolute bottom-6 left-6">
+                  <div className="text-[10px] font-black uppercase tracking-[0.22em] text-lime-300">
+                    Play more
+                  </div>
+                  <div className="mt-2 text-2xl font-black text-white">
+                    Make it your game.
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="overflow-hidden rounded-4xl border border-lime-300/30">
-              <img
-                src="https://images.unsplash.com/photo-1556817411-31ae72fa3ea0?auto=format&fit=crop&w=1600&q=80"
-                className="h-105 w-full object-cover"
-                alt=""
-              />
             </div>
           </div>
         </section>
