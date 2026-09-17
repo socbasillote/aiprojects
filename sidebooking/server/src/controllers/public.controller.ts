@@ -56,6 +56,7 @@ export async function getPublicBusiness(req: Request, res: Response) {
 
   const bookings = await Booking.find({
     businessId: business._id,
+    status: { $ne: "Rejected" },
   })
     .select("date time court")
     .lean();
@@ -230,6 +231,7 @@ export async function createPublicBooking(req: Request, res: Response) {
       date: input.date,
       time: slot.time,
       court: slot.court,
+      status: { $ne: "Rejected" },
     }).select("_id");
 
     if (existing) {

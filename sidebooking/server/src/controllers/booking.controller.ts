@@ -9,11 +9,13 @@ const bookingSchema = z.object({
   service: z.string().trim().min(2),
   staff: z.string().trim().min(2).default("Maria"),
   date: z.string().min(8),
-  time: z.string().regex(/^([01]\d|2[0-3]):(00|30)$/),
-  status: z.enum(["Pending", "Confirmed", "Completed"]).default("Pending"),
+  time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+  status: z.enum(["Pending", "Confirmed", "Completed", "Rejected"]).default("Pending"),
   payment: z.enum(["Unpaid", "Deposit", "Paid"]),
   paymentMethod: z.enum(["Cash", "Card", "GCash", "Bank transfer", "PayPal"]),
 });
+
+const updateBookingSchema = bookingSchema.partial();
 
 export async function listBookings(req: AuthRequest, res: Response) {
   const businessId = req.businessId;
@@ -65,15 +67,7 @@ export async function updateBooking(req: AuthRequest, res: Response) {
       .json({ success: false, message: "Booking not found" });
   }
 
-  const payload = z
-    .object({
-      status: z.enum(["Pending", "Confirmed", "Completed"]).optional(),
-      payment: z.enum(["Unpaid", "Deposit", "Paid"]).optional(),
-      paymentMethod: z
-        .enum(["Cash", "Card", "GCash", "Bank transfer", "PayPal"])
-        .optional(),
-    })
-    .parse(req.body);
+  const payload = updateBookingSchema.parse(req.body);
 
   Object.assign(booking, payload);
   await booking.save();
