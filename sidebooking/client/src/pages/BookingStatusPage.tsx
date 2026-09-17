@@ -14,7 +14,7 @@ type BookingStatusData = {
     time: string;
     payment: "Unpaid" | "Deposit" | "Paid";
     paymentMethod: string;
-    status: "Pending" | "Confirmed" | "Completed";
+    status: "Pending" | "Confirmed" | "Completed" | "Rejected";
     business: string;
   };
   qr: string;
@@ -100,7 +100,17 @@ export function BookingStatusPage() {
                   {booking.business}
                 </h1>
               </div>
-              <div className="rounded-full border border-white/30 px-4 py-2 text-xs font-semibold uppercase tracking-wide">
+              <div
+                className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide ${
+                  booking.status === "Rejected"
+                    ? "border-red-200 bg-red-100 text-red-700"
+                    : booking.status === "Confirmed"
+                      ? "border-emerald-200 bg-emerald-100 text-emerald-700"
+                      : booking.status === "Completed"
+                        ? "border-sky-200 bg-sky-100 text-sky-700"
+                        : "border-white/30 bg-white/10 text-white"
+                }`}
+              >
                 {booking.status}
               </div>
             </div>

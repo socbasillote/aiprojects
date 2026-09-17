@@ -6,4 +6,4 @@ export const bookingRouter = Router();
 bookingRouter.use(requireAuth);
 bookingRouter.get("/", listBookings);
 bookingRouter.post("/", createBooking);
-bookingRouter.patch(":id", updateBooking);
+bookingRouter.patch("/:id", updateBooking);

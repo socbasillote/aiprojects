@@ -16,7 +16,7 @@ type Booking = {
   staff: string;
   date: string;
   time: string;
-  status: "Confirmed" | "Pending" | "Completed";
+  status: "Confirmed" | "Pending" | "Completed" | "Rejected";
   payment: "Unpaid" | "Deposit" | "Paid";
   paymentMethod: "Cash" | "Card" | "GCash" | "Bank transfer" | "PayPal";
 };
@@ -162,19 +162,37 @@ export function BookingsPage() {
                     {row.date} · {row.time}
                   </td>
                   <td className="px-4 py-3">
-                    <select
-                      value={row.status}
-                      onChange={(event) =>
-                        patchBooking(row.id, {
-                          status: event.target.value as Booking["status"],
-                        })
-                      }
-                      className="rounded-lg border border-slate-200 px-2 py-1 text-xs"
-                    >
-                      <option>Pending</option>
-                      <option>Confirmed</option>
-                      <option>Completed</option>
-                    </select>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-block h-2.5 w-2.5 rounded-full ${
+                          row.status === "Rejected"
+                            ? "bg-red-500"
+                            : row.status === "Confirmed"
+                              ? "bg-emerald-500"
+                              : row.status === "Completed"
+                                ? "bg-blue-500"
+                                : "bg-amber-500"
+                        }`}
+                      />
+                      <select
+                        value={row.status}
+                        onChange={(event) =>
+                          patchBooking(row.id, {
+                            status: event.target.value as Booking["status"],
+                          })
+                        }
+                        className={`rounded-lg border px-2 py-1 text-xs ${
+                          row.status === "Rejected"
+                            ? "border-red-200 bg-red-50 text-red-700"
+                            : "border-slate-200 bg-white text-slate-700"
+                        }`}
+                      >
+                        <option>Pending</option>
+                        <option>Confirmed</option>
+                        <option>Completed</option>
+                        <option>Rejected</option>
+                      </select>
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <select
@@ -256,6 +274,7 @@ export function BookingsPage() {
                 <option>Confirmed</option>
                 <option>Pending</option>
                 <option>Completed</option>
+                <option>Rejected</option>
               </select>
               <select
                 name="payment"

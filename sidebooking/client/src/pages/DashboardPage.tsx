@@ -25,7 +25,7 @@ type Booking = {
   staff: string;
   date: string;
   time: string;
-  status: "Confirmed" | "Pending" | "Completed";
+  status: "Confirmed" | "Pending" | "Completed" | "Rejected";
   payment: "Unpaid" | "Deposit" | "Paid";
   paymentMethod: "Cash" | "Card" | "GCash" | "Bank transfer" | "PayPal";
 };

@@ -9,10 +9,26 @@ type Booking = {
   staff: string;
   date: string;
   time: string;
-  status: "Confirmed" | "Pending" | "Completed";
+  status: "Confirmed" | "Pending" | "Completed" | "Rejected";
   payment: "Unpaid" | "Deposit" | "Paid";
   paymentMethod: "Cash" | "Card" | "GCash" | "Bank transfer" | "PayPal";
 };
+
+function normalizeBooking(raw: Partial<Booking> & { _id?: string }) {
+  return {
+    ...raw,
+    id: raw.id ?? String(raw._id ?? ""),
+    customer: raw.customer ?? "",
+    email: raw.email ?? "",
+    service: raw.service ?? "",
+    staff: raw.staff ?? "Maria",
+    date: raw.date ?? toDateKey(new Date()),
+    time: raw.time ?? "09:00",
+    status: raw.status ?? "Pending",
+    payment: raw.payment ?? "Unpaid",
+    paymentMethod: raw.paymentMethod ?? "PayPal",
+  } as Booking;
+}
 
 function toDateKey(date: Date) {
   const year = date.getFullYear();
@@ -27,6 +43,8 @@ export function CalendarPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [editDraft, setEditDraft] = useState<Booking | null>(null);
   const [currentMonth, setCurrentMonth] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   );
@@ -45,8 +63,9 @@ export function CalendarPage() {
   useEffect(() => {
     async function loadBookings() {
       try {
-        const data = await apiRequest<{ bookings: Booking[] }>("/bookings/");
-        setBookings(data.bookings ?? []);
+        const data = await apiRequest<{ bookings: Booking[] }>('/bookings/');
+        const mapped = (data.bookings ?? []).map((row) => normalizeBooking(row as Partial<Booking> & { _id?: string }));
+        setBookings(mapped);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Unable to load bookings",
@@ -67,7 +86,11 @@ export function CalendarPage() {
         body: JSON.stringify(draft),
       });
       const data = await apiRequest<{ bookings: Booking[] }>("/bookings/");
-      setBookings(data.bookings ?? []);
+      setBookings(
+        (data.bookings ?? []).map((row) =>
+          normalizeBooking(row as Partial<Booking> & { _id?: string }),
+        ),
+      );
       setShowForm(false);
       setDraft({
         ...draft,
@@ -82,6 +105,44 @@ export function CalendarPage() {
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to create booking");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveBookingChanges(event: React.FormEvent) {
+    event.preventDefault();
+    if (!selectedBooking || !editDraft) return;
+
+    setBusy(true);
+    setError("");
+
+    try {
+      await apiRequest<{ booking: Booking }>(`/bookings/${selectedBooking.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          customer: editDraft.customer,
+          email: editDraft.email,
+          service: editDraft.service,
+          staff: editDraft.staff,
+          date: editDraft.date,
+          time: editDraft.time,
+          status: editDraft.status,
+          payment: editDraft.payment,
+          paymentMethod: editDraft.paymentMethod,
+        }),
+      });
+
+      const data = await apiRequest<{ bookings: Booking[] }>('/bookings/');
+      setBookings(
+        (data.bookings ?? []).map((row) =>
+          normalizeBooking(row as Partial<Booking> & { _id?: string }),
+        ),
+      );
+      setSelectedBooking(null);
+      setEditDraft(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update booking");
     } finally {
       setBusy(false);
     }
@@ -243,17 +304,35 @@ export function CalendarPage() {
                       </div>
                     ) : (
                       dateBookings.map((booking) => (
-                        <div
+                        <button
                           key={booking.id}
-                          className="rounded-xl bg-slate-900 px-2 py-1 text-left text-[11px] leading-4 text-white shadow-sm"
+                          type="button"
+                          onClick={() => {
+                            setSelectedBooking(booking);
+                            setEditDraft({ ...booking });
+                          }}
+                          className={`w-full rounded-xl px-2 py-1 text-left text-[11px] leading-4 shadow-sm transition ${
+                            booking.status === "Rejected"
+                              ? "bg-red-600 text-white hover:bg-red-500"
+                              : booking.status === "Confirmed"
+                                ? "bg-emerald-600 text-white hover:bg-emerald-500"
+                                : booking.status === "Completed"
+                                  ? "bg-sky-600 text-white hover:bg-sky-500"
+                                  : "bg-slate-900 text-white hover:bg-slate-700"
+                          }`}
                         >
                           <div className="truncate font-semibold">
                             {booking.customer.slice(0, 12)} — {booking.service}
                           </div>
-                          <div className="mt-0.5 text-slate-300">
+                          <div className="mt-0.5 opacity-90">
                             {booking.time}
                           </div>
-                        </div>
+                          {booking.status === "Rejected" && (
+                            <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-100">
+                              Rejected
+                            </div>
+                          )}
+                        </button>
                       ))
                     )}
                   </div>
@@ -263,6 +342,172 @@ export function CalendarPage() {
           </div>
         </div>
       </div>
+
+      {selectedBooking && editDraft && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+          <div className="w-full max-w-2xl rounded-3xl border border-white/40 bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600">
+                  Booking details
+                </div>
+                <h2 className="mt-1 text-2xl font-semibold text-slate-900">
+                  {selectedBooking.customer}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedBooking(null);
+                  setEditDraft(null);
+                }}
+                className="rounded-full border border-slate-200 px-3 py-1 text-slate-500 transition hover:bg-slate-100"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mb-5 rounded-2xl bg-slate-50 p-3 text-sm text-slate-600">
+              <div className="flex flex-wrap gap-3">
+                <span><strong>Service:</strong> {selectedBooking.service}</span>
+                <span><strong>Date:</strong> {selectedBooking.date}</span>
+                <span><strong>Time:</strong> {selectedBooking.time}</span>
+              </div>
+            </div>
+
+            <form onSubmit={saveBookingChanges} className="grid gap-4 sm:grid-cols-2">
+              <label className="text-sm font-medium text-slate-700">
+                Customer
+                <input
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-violet-500"
+                  value={editDraft.customer}
+                  onChange={(event) =>
+                    setEditDraft({ ...editDraft, customer: event.target.value })
+                  }
+                />
+              </label>
+              <label className="text-sm font-medium text-slate-700">
+                Email
+                <input
+                  type="email"
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-violet-500"
+                  value={editDraft.email}
+                  onChange={(event) =>
+                    setEditDraft({ ...editDraft, email: event.target.value })
+                  }
+                />
+              </label>
+              <label className="text-sm font-medium text-slate-700">
+                Service
+                <input
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-violet-500"
+                  value={editDraft.service}
+                  onChange={(event) =>
+                    setEditDraft({ ...editDraft, service: event.target.value })
+                  }
+                />
+              </label>
+              <label className="text-sm font-medium text-slate-700">
+                Staff
+                <input
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-violet-500"
+                  value={editDraft.staff}
+                  onChange={(event) =>
+                    setEditDraft({ ...editDraft, staff: event.target.value })
+                  }
+                />
+              </label>
+              <label className="text-sm font-medium text-slate-700">
+                Date
+                <input
+                  type="date"
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-violet-500"
+                  value={editDraft.date}
+                  onChange={(event) =>
+                    setEditDraft({ ...editDraft, date: event.target.value })
+                  }
+                />
+              </label>
+              <label className="text-sm font-medium text-slate-700">
+                Time
+                <input
+                  type="time"
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-violet-500"
+                  value={editDraft.time}
+                  onChange={(event) =>
+                    setEditDraft({ ...editDraft, time: event.target.value })
+                  }
+                />
+              </label>
+              <label className="text-sm font-medium text-slate-700">
+                Status
+                <select
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-violet-500"
+                  value={editDraft.status}
+                  onChange={(event) =>
+                    setEditDraft({ ...editDraft, status: event.target.value as Booking["status"] })
+                  }
+                >
+                  <option value="Pending">Pending</option>
+                  <option value="Confirmed">Confirmed</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </label>
+              <label className="text-sm font-medium text-slate-700">
+                Payment
+                <select
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-violet-500"
+                  value={editDraft.payment}
+                  onChange={(event) =>
+                    setEditDraft({ ...editDraft, payment: event.target.value as Booking["payment"] })
+                  }
+                >
+                  <option value="Unpaid">Unpaid</option>
+                  <option value="Deposit">Deposit</option>
+                  <option value="Paid">Paid</option>
+                </select>
+              </label>
+              <label className="text-sm font-medium text-slate-700 sm:col-span-2">
+                Payment method
+                <select
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-violet-500"
+                  value={editDraft.paymentMethod}
+                  onChange={(event) =>
+                    setEditDraft({ ...editDraft, paymentMethod: event.target.value as Booking["paymentMethod"] })
+                  }
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="Card">Card</option>
+                  <option value="GCash">GCash</option>
+                  <option value="Bank transfer">Bank transfer</option>
+                  <option value="PayPal">PayPal</option>
+                </select>
+              </label>
+
+              <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedBooking(null);
+                    setEditDraft(null);
+                  }}
+                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {busy ? "Saving..." : "Save changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
@@ -399,6 +644,7 @@ export function CalendarPage() {
                   <option value="Pending">Pending</option>
                   <option value="Confirmed">Confirmed</option>
                   <option value="Completed">Completed</option>
+                  <option value="Rejected">Rejected</option>
                 </select>
               </label>
               <label className="text-sm font-medium text-slate-700">

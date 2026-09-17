@@ -11,7 +11,7 @@ export interface IBooking extends Document {
   time: string;
   payment: "Unpaid" | "Deposit" | "Paid";
   paymentMethod: "Cash" | "Card" | "GCash" | "Bank transfer" | "PayPal";
-  status: "Pending" | "Confirmed" | "Completed";
+  status: "Pending" | "Confirmed" | "Completed" | "Rejected";
   confirmationCode: string;
   createdAt: Date;
 }
@@ -42,7 +42,7 @@ const bookingSchema = new Schema<IBooking>(
     },
     status: {
       type: String,
-      enum: ["Pending", "Confirmed", "Completed"],
+      enum: ["Pending", "Confirmed", "Completed", "Rejected"],
       default: "Pending",
     },
     confirmationCode: { type: String, required: true, unique: true },
