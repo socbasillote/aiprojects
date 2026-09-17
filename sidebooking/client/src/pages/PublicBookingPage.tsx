@@ -24,7 +24,10 @@ type BusinessData = {
     openHour?: string;
     closeHour?: string;
     slotsPerHour?: number;
+    slotIntervalMinutes?: number;
+    isOpen24Hours?: boolean;
     courtsCount?: number;
+    disabledCourts?: string[];
   };
   services: BusinessService[];
   bookings?: BookingEntry[];
@@ -42,22 +45,38 @@ type ChosenSlot = {
   time: string;
 };
 
-const isValidBookingTime = (value: string) =>
-  /^([01]\d|2[0-3]):(00|30)$/.test(value);
+const isValidBookingTime = (
+  value: string,
+  slotIntervalMinutes = 30,
+  openHour = "00:00",
+) => {
+  if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(value)) return false;
+
+  const selectedMinutes = minutesFromTime(value);
+  const startMinutes = minutesFromTime(openHour);
+  return (
+    selectedMinutes >= startMinutes &&
+    (selectedMinutes - startMinutes) % slotIntervalMinutes === 0
+  );
+};
 
 function minutesFromTime(value: string) {
   const [hour, minute] = value.split(":").map(Number);
   return hour * 60 + minute;
 }
 
-function getSlots(openHour = "08:00", closeHour = "20:00", slotsPerHour = 2) {
+function getSlots(
+  openHour = "08:00",
+  closeHour = "20:00",
+  slotIntervalMinutes = 30,
+) {
   const start = minutesFromTime(openHour);
   const end = minutesFromTime(closeHour);
-  const interval = 60 / Math.max(1, Math.min(2, slotsPerHour ?? 2));
+  const interval = Math.max(15, Number(slotIntervalMinutes) || 30);
   const slots: string[] = [];
 
   for (let minute = start; minute < end; minute += interval) {
-    const hour = Math.floor(minute / 60);
+    const hour = Math.floor(minute / 60) % 24;
     const minuteOfHour = minute % 60;
     slots.push(
       `${String(hour).padStart(2, "0")}:${String(minuteOfHour).padStart(2, "0")}`,
@@ -105,15 +124,23 @@ export function PublicBookingPage() {
   const isDraggingDatesRef = useRef(false);
 
   const courtsCount = Math.max(1, Number(data?.business?.courtsCount ?? 3));
-  const courtNames = Array.from(
+  const disabledCourtSet = new Set(data?.business?.disabledCourts ?? []);
+  const allCourtNames = Array.from(
     { length: courtsCount },
     (_, index) => `Court ${index + 1}`,
   );
+  const availableCourtNames = allCourtNames.filter(
+    (court) => !disabledCourtSet.has(court),
+  );
+  const activeCourt = availableCourtNames.includes(selectedCourt)
+    ? selectedCourt
+    : (availableCourtNames[0] ?? "Court 1");
 
+  const slotIntervalMinutes = Number(data?.business?.slotIntervalMinutes ?? 30);
   const allSlots = getSlots(
     data?.business?.openHour ?? "08:00",
     data?.business?.closeHour ?? "20:00",
-    data?.business?.slotsPerHour ?? 2,
+    slotIntervalMinutes,
   );
 
   function isDateFullyBooked(date: string) {
@@ -127,9 +154,10 @@ export function PublicBookingPage() {
   }
 
   function chooseDate(date: string) {
+    const nextCourt = availableCourtNames[0] ?? "Court 1";
     setSelectedDate(date);
     setSelectedSlots([]);
-    setSelectedCourt("Court 1");
+    setSelectedCourt(nextCourt);
   }
 
   useEffect(() => {
@@ -138,8 +166,14 @@ export function PublicBookingPage() {
         setData(payload);
         const firstAvailable =
           getDateOptions(45)[0] ?? dateKeyFromDate(new Date());
+        const allowedCourtNames = Array.from(
+          { length: Math.max(1, Number(payload.business?.courtsCount ?? 3)) },
+          (_, index) => `Court ${index + 1}`,
+        ).filter(
+          (court) => !(payload.business?.disabledCourts ?? []).includes(court),
+        );
         setSelectedDate(firstAvailable);
-        setSelectedCourt("Court 1");
+        setSelectedCourt(allowedCourtNames[0] ?? "Court 1");
         setSelectedSlots([]);
       })
       .catch((err) =>
@@ -165,9 +199,19 @@ export function PublicBookingPage() {
       }
 
       selectedSlots.forEach((slot) => {
-        if (!isValidBookingTime(slot.time)) {
+        if (disabledCourtSet.has(slot.court)) {
+          throw new Error(`Court ${slot.court} is currently unavailable.`);
+        }
+
+        if (
+          !isValidBookingTime(
+            slot.time,
+            slotIntervalMinutes,
+            data?.business?.openHour ?? "08:00",
+          )
+        ) {
           throw new Error(
-            "Choose booking times in 30-minute steps, such as 09:00 or 09:30.",
+            `Choose booking times in ${slotIntervalMinutes}-minute steps.`,
           );
         }
       });
@@ -434,7 +478,7 @@ export function PublicBookingPage() {
                     </div>
 
                     <span className="rounded-full bg-[#eef6ed] px-4 py-2 text-xs font-black text-slate-600">
-                      {courtNames.length} courts
+                      {availableCourtNames.length} available
                     </span>
                   </div>
 
@@ -453,7 +497,7 @@ export function PublicBookingPage() {
                       {(() => {
                         const courtsPerPage = 4;
                         const totalPages = Math.ceil(
-                          courtNames.length / courtsPerPage,
+                          allCourtNames.length / courtsPerPage,
                         );
 
                         const currentPage = Math.min(
@@ -461,7 +505,7 @@ export function PublicBookingPage() {
                           Math.max(0, totalPages - 1),
                         );
 
-                        const visibleCourts = courtNames.slice(
+                        const visibleCourts = allCourtNames.slice(
                           currentPage * courtsPerPage,
                           currentPage * courtsPerPage + courtsPerPage,
                         );
@@ -470,7 +514,37 @@ export function PublicBookingPage() {
                           <>
                             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                               {visibleCourts.map((court) => {
-                                const isSelected = selectedCourt === court;
+                                const isDisabled = disabledCourtSet.has(court);
+                                const isSelected =
+                                  !isDisabled && activeCourt === court;
+
+                                if (isDisabled) {
+                                  return (
+                                    <div
+                                      key={court}
+                                      className="rounded-3xl border border-slate-200 bg-slate-100 p-4 opacity-70"
+                                    >
+                                      <div className="flex items-center justify-between gap-3">
+                                        <div>
+                                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                                            Court
+                                          </p>
+                                          <h4 className="mt-1 text-lg font-black text-slate-500">
+                                            {court}
+                                          </h4>
+                                        </div>
+
+                                        <span className="rounded-full bg-slate-300 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-slate-700">
+                                          Off
+                                        </span>
+                                      </div>
+
+                                      <div className="mt-4 rounded-2xl border border-slate-300 bg-slate-200/80 px-3 py-2 text-center text-xs font-black uppercase tracking-[0.16em] text-slate-600">
+                                        Under maintenance
+                                      </div>
+                                    </div>
+                                  );
+                                }
 
                                 return (
                                   <div
@@ -481,6 +555,7 @@ export function PublicBookingPage() {
                                         : "border-emerald-900/10 bg-[#eef6ed]"
                                     }`}
                                   >
+                                    {/* Court header */}
                                     <div className="flex items-center justify-between gap-3">
                                       <div>
                                         <p
@@ -511,94 +586,137 @@ export function PublicBookingPage() {
                                       )}
                                     </div>
 
-                                    <div className="mt-4 space-y-2">
-                                      {allSlots.map((slot) => {
-                                        const isBooked = (
-                                          data?.bookings ?? []
-                                        ).some(
-                                          (entry) =>
-                                            entry.date === selectedDate &&
-                                            entry.time === slot &&
-                                            entry.court === court,
-                                        );
+                                    {/* Time slots */}
+                                    <div className="relative mt-4">
+                                      {/* Scrollable time area */}
+                                      <div
+                                        className="
+              court-time-scroll max-h-[24rem] overflow-y-auto overscroll-contain pr-1
+            "
+                                      >
+                                        <div className="space-y-2">
+                                          {allSlots.map((slot) => {
+                                            const isBooked = (
+                                              data?.bookings ?? []
+                                            ).some(
+                                              (entry) =>
+                                                entry.date === selectedDate &&
+                                                entry.time === slot &&
+                                                entry.court === court,
+                                            );
 
-                                        const exists = selectedSlots.some(
-                                          (entry) =>
-                                            entry.date === selectedDate &&
-                                            entry.court === court &&
-                                            entry.time === slot,
-                                        );
+                                            const exists = selectedSlots.some(
+                                              (entry) =>
+                                                entry.date === selectedDate &&
+                                                entry.court === court &&
+                                                entry.time === slot,
+                                            );
 
-                                        return (
-                                          <button
-                                            key={`${court}-${slot}`}
-                                            type="button"
-                                            disabled={isBooked}
-                                            onClick={() => {
-                                              setSelectedCourt(court);
+                                            return (
+                                              <button
+                                                key={`${court}-${slot}`}
+                                                type="button"
+                                                disabled={isBooked}
+                                                onClick={() => {
+                                                  setSelectedCourt(court);
 
-                                              const nextSlot = {
-                                                date: selectedDate,
-                                                court,
-                                                time: slot,
-                                              };
+                                                  const nextSlot = {
+                                                    date: selectedDate,
+                                                    court,
+                                                    time: slot,
+                                                  };
 
-                                              setSelectedSlots((current) => {
-                                                const found = current.some(
-                                                  (entry) =>
-                                                    entry.date ===
-                                                      selectedDate &&
-                                                    entry.court === court &&
-                                                    entry.time === slot,
-                                                );
+                                                  setSelectedSlots(
+                                                    (current) => {
+                                                      const found =
+                                                        current.some(
+                                                          (entry) =>
+                                                            entry.date ===
+                                                              selectedDate &&
+                                                            entry.court ===
+                                                              court &&
+                                                            entry.time === slot,
+                                                        );
 
-                                                if (found) {
-                                                  return current.filter(
-                                                    (entry) =>
-                                                      !(
-                                                        entry.date ===
-                                                          selectedDate &&
-                                                        entry.court === court &&
-                                                        entry.time === slot
-                                                      ),
+                                                      if (found) {
+                                                        return current.filter(
+                                                          (entry) =>
+                                                            !(
+                                                              entry.date ===
+                                                                selectedDate &&
+                                                              entry.court ===
+                                                                court &&
+                                                              entry.time ===
+                                                                slot
+                                                            ),
+                                                        );
+                                                      }
+
+                                                      return [
+                                                        ...current,
+                                                        nextSlot,
+                                                      ];
+                                                    },
                                                   );
-                                                }
+                                                }}
+                                                className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-sm font-black transition ${
+                                                  exists
+                                                    ? "border-lime-300 bg-lime-300 text-emerald-950"
+                                                    : isSelected
+                                                      ? "border-white/10 bg-white/10 text-white hover:bg-white/20"
+                                                      : "border-emerald-900/10 bg-white text-slate-700 hover:border-emerald-950 hover:bg-lime-50"
+                                                } ${
+                                                  isBooked
+                                                    ? "cursor-not-allowed opacity-35 line-through"
+                                                    : ""
+                                                }`}
+                                              >
+                                                <span>{slot}</span>
 
-                                                return [...current, nextSlot];
-                                              });
-                                            }}
-                                            className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-sm font-black transition ${
-                                              exists
-                                                ? "border-lime-300 bg-lime-300 text-emerald-950"
-                                                : isSelected
-                                                  ? "border-white/10 bg-white/10 text-white hover:bg-white/20"
-                                                  : "border-emerald-900/10 bg-white text-slate-700 hover:border-emerald-950 hover:bg-lime-50"
-                                            } ${
-                                              isBooked
-                                                ? "cursor-not-allowed opacity-35 line-through"
-                                                : ""
-                                            }`}
-                                          >
-                                            <span>{slot}</span>
+                                                <span className="text-[9px] uppercase tracking-wider opacity-60">
+                                                  {isBooked
+                                                    ? "Booked"
+                                                    : exists
+                                                      ? "Added"
+                                                      : "Available"}
+                                                </span>
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
 
-                                            <span className="text-[9px] uppercase tracking-wider opacity-60">
-                                              {isBooked
-                                                ? "Booked"
-                                                : exists
-                                                  ? "Added"
-                                                  : "Available"}
-                                            </span>
-                                          </button>
-                                        );
-                                      })}
+                                      {/* Bottom fade indicates more times below */}
+                                      {allSlots.length > 8 && (
+                                        <div
+                                          className={`pointer-events-none absolute bottom-0 left-0 right-1 h-10 rounded-b-2xl bg-gradient-to-t ${
+                                            isSelected
+                                              ? "from-emerald-950 to-transparent"
+                                              : "from-[#eef6ed] to-transparent"
+                                          }`}
+                                        />
+                                      )}
                                     </div>
+
+                                    {/* Scroll hint */}
+                                    {allSlots.length > 8 && (
+                                      <div
+                                        className={`mt-2 text-center text-[9px] font-black uppercase tracking-[0.16em] ${
+                                          isSelected
+                                            ? "text-lime-300/70"
+                                            : "text-slate-400"
+                                        }`}
+                                      >
+                                        Scroll for more times ↓
+                                      </div>
+                                    )}
                                   </div>
                                 );
                               })}
                             </div>
 
                             {/* Pagination only when 5+ courts */}
-                            {courtNames.length >= 5 && (
+                            {allCourtNames.length >= 5 && (
                               <div className="mt-5 flex items-center justify-between border-t border-emerald-900/10 pt-4">
                                 <button
                                   type="button"
@@ -656,7 +774,7 @@ export function PublicBookingPage() {
                   <input
                     type="hidden"
                     name="court"
-                    value={selectedCourt}
+                    value={activeCourt}
                     required
                   />
                 </div>

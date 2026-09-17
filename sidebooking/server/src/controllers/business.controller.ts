@@ -8,7 +8,9 @@ const settingsSchema = z
   .object({
     booking: z
       .object({
-        slotsPerHour: z.number().int().min(1).max(2).optional(),
+        slotsPerHour: z.number().int().min(1).max(12).optional(),
+        slotIntervalMinutes: z.number().int().min(15).max(180).optional(),
+        isOpen24Hours: z.boolean().optional(),
         courtsCount: z.number().int().min(1).optional(),
         bookingTypes: z
           .array(
@@ -157,14 +159,17 @@ const businessSchema = z.object({
   description: z.string().trim().max(500).optional().default(""),
   openHour: z
     .string()
-    .regex(/^([01]\d|2[0-3]):(00|30)$/)
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/)
     .default("08:00"),
   closeHour: z
     .string()
-    .regex(/^([01]\d|2[0-3]):(00|30)$/)
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/)
     .default("20:00"),
-  slotsPerHour: z.number().int().min(1).max(2).optional().default(2),
+  slotsPerHour: z.number().int().min(1).max(12).optional().default(2),
+  slotIntervalMinutes: z.number().int().min(15).max(180).optional().default(30),
+  isOpen24Hours: z.boolean().optional().default(false),
   courtsCount: z.number().int().min(1).optional().default(3),
+  disabledCourts: z.array(z.string().trim().min(1)).optional().default([]),
   settings: settingsSchema.optional(),
 });
 
@@ -185,9 +190,26 @@ export async function saveBusiness(req: AuthRequest, res: Response) {
   let business = user.businessIds[0]
     ? await Business.findById(user.businessIds[0])
     : null;
+  const slotIntervalMinutes = input.slotIntervalMinutes ?? 30;
+  const isOpen24Hours =
+    Boolean(input.isOpen24Hours) ||
+    (input.openHour === "00:00" && input.closeHour === "23:30");
+  const normalizedOpenHour = isOpen24Hours ? "00:00" : input.openHour;
+  const normalizedCloseHour = isOpen24Hours ? "23:30" : input.closeHour;
   const slotsPerHour = input.slotsPerHour ?? 2;
+  const validCourtNames = Array.from(
+    { length: Math.max(1, input.courtsCount ?? 3) },
+    (_, index) => `Court ${index + 1}`,
+  );
+  const disabledCourts = [
+    ...new Set(
+      (input.disabledCourts ?? []).map((court) => court.trim()).filter(Boolean),
+    ),
+  ].filter((court) => validCourtNames.includes(court));
   const defaultSettings = {
     booking: {
+      slotIntervalMinutes: 30,
+      isOpen24Hours: false,
       bookingTypes: [
         {
           name: "Appointment",
@@ -442,11 +464,21 @@ export async function saveBusiness(req: AuthRequest, res: Response) {
     };
 
     business.settings = mergedSettings;
+    business.openHour = normalizedOpenHour;
+    business.closeHour = normalizedCloseHour;
     business.slotsPerHour = slotsPerHour;
+    business.slotIntervalMinutes = slotIntervalMinutes;
+    business.isOpen24Hours = isOpen24Hours;
     business.courtsCount = input.courtsCount ?? 3;
+    business.disabledCourts = disabledCourts;
     Object.assign(business, input, {
+      openHour: normalizedOpenHour,
+      closeHour: normalizedCloseHour,
       slotsPerHour,
+      slotIntervalMinutes,
+      isOpen24Hours,
       courtsCount: input.courtsCount ?? 3,
+      disabledCourts,
     });
     await business.save();
   } else {
@@ -463,8 +495,13 @@ export async function saveBusiness(req: AuthRequest, res: Response) {
     business = await Business.create({
       ...input,
       ownerId: user._id,
+      openHour: normalizedOpenHour,
+      closeHour: normalizedCloseHour,
       slotsPerHour,
+      slotIntervalMinutes,
+      isOpen24Hours,
       courtsCount: input.courtsCount ?? 3,
+      disabledCourts,
       settings: normalizedSettings,
     });
     user.businessIds = [business._id];

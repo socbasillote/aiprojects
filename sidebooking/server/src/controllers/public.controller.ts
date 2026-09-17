@@ -20,13 +20,13 @@ const bookingSchema = z.object({
   date: z.string().min(8),
   time: z
     .string()
-    .regex(/^([01]\d|2[0-3]):(00|30)$/)
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/)
     .optional(),
   slots: z
     .array(
       z.object({
         court: z.string().trim().min(1),
-        time: z.string().regex(/^([01]\d|2[0-3]):(00|30)$/),
+        time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
       }),
     )
     .optional(),
@@ -39,7 +39,7 @@ export async function getPublicBusiness(req: Request, res: Response) {
     slug: req.params.slug,
     isActive: true,
   }).select(
-    "name slug description openHour closeHour slotsPerHour courtsCount settings",
+    "name slug description openHour closeHour slotsPerHour slotIntervalMinutes isOpen24Hours courtsCount disabledCourts settings",
   );
   if (!business)
     return res
@@ -62,7 +62,17 @@ export async function getPublicBusiness(req: Request, res: Response) {
 
   const slotsPerHour =
     business.slotsPerHour ?? business.settings?.booking?.slotsPerHour ?? 2;
+  const slotIntervalMinutes =
+    business.slotIntervalMinutes ??
+    business.settings?.booking?.slotIntervalMinutes ??
+    30;
   const courtsCount = business.courtsCount ?? 3;
+  const isOpen24Hours =
+    Boolean(business.isOpen24Hours) ||
+    (business.openHour === "00:00" && business.closeHour === "23:30");
+  const disabledCourts = Array.isArray(business.disabledCourts)
+    ? business.disabledCourts
+    : [];
 
   return res.json({
     success: true,
@@ -74,7 +84,10 @@ export async function getPublicBusiness(req: Request, res: Response) {
         openHour: business.openHour ?? "08:00",
         closeHour: business.closeHour ?? "20:00",
         slotsPerHour,
+        slotIntervalMinutes,
+        isOpen24Hours,
         courtsCount,
+        disabledCourts,
       },
       services: services.map((service) => ({
         id: service._id.toString(),
@@ -150,8 +163,20 @@ export async function createPublicBooking(req: Request, res: Response) {
       .status(404)
       .json({ success: false, message: "Booking page not found" });
 
+  const isOpen24Hours =
+    Boolean(business.isOpen24Hours) ||
+    (business.openHour === "00:00" && business.closeHour === "23:30");
   const openMinutes = minutesFromTime(business.openHour ?? "08:00");
-  const closeMinutes = minutesFromTime(business.closeHour ?? "20:00");
+  const closeMinutes = isOpen24Hours
+    ? 24 * 60
+    : minutesFromTime(business.closeHour ?? "20:00");
+  const slotIntervalMinutes =
+    business.slotIntervalMinutes ??
+    business.settings?.booking?.slotIntervalMinutes ??
+    30;
+  const disabledCourts = new Set(
+    (business.disabledCourts ?? []).map((court) => court.trim()),
+  );
 
   const chosenSlots = input.slots?.length
     ? input.slots
@@ -165,15 +190,28 @@ export async function createPublicBooking(req: Request, res: Response) {
   }
 
   for (const slot of chosenSlots) {
-    if (!/^([01]\d|2[0-3]):(00|30)$/.test(slot.time)) {
+    if (disabledCourts.has(slot.court)) {
       return res.status(400).json({
         success: false,
-        message:
-          "Choose booking times in 30-minute steps, such as 09:00 or 09:30.",
+        message: `Court ${slot.court} is currently unavailable for booking.`,
+      });
+    }
+
+    if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(slot.time)) {
+      return res.status(400).json({
+        success: false,
+        message: "Choose a valid booking time in the business schedule.",
       });
     }
 
     const selectedMinutes = minutesFromTime(slot.time);
+    if ((selectedMinutes - openMinutes) % slotIntervalMinutes !== 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Choose booking times in ${slotIntervalMinutes}-minute steps.`,
+      });
+    }
+
     if (selectedMinutes < openMinutes || selectedMinutes >= closeMinutes) {
       return res.status(400).json({
         success: false,

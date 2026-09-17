@@ -8,11 +8,16 @@ export interface IBusiness extends Document {
   openHour: string;
   closeHour: string;
   slotsPerHour?: number;
+  slotIntervalMinutes?: number;
+  isOpen24Hours?: boolean;
   courtsCount?: number;
+  disabledCourts?: string[];
   isActive: boolean;
   settings?: {
     booking: {
       slotsPerHour?: number;
+      slotIntervalMinutes?: number;
+      isOpen24Hours?: boolean;
       courtsCount?: number;
       bookingTypes: Array<{
         name: string;
@@ -335,8 +340,11 @@ const businessSchema = new Schema<IBusiness>(
     description: { type: String, default: "" },
     openHour: { type: String, default: "08:00" },
     closeHour: { type: String, default: "20:00" },
-    slotsPerHour: { type: Number, default: 2, min: 1, max: 2 },
+    slotsPerHour: { type: Number, default: 2, min: 1, max: 12 },
+    slotIntervalMinutes: { type: Number, default: 30, min: 15, max: 180 },
+    isOpen24Hours: { type: Boolean, default: false },
     courtsCount: { type: Number, default: 3, min: 1 },
+    disabledCourts: { type: [String], default: [] },
     isActive: { type: Boolean, default: true },
     settings: {
       type: Object,
