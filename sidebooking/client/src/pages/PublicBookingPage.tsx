@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiRequest } from "../lib/api";
+import HeaderComponent from "./HomeComponent/HeaderComponent";
 
 type BusinessService = {
   id: string;
@@ -97,6 +98,11 @@ export function PublicBookingPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [courtPage, setCourtPage] = useState(0);
+  const dateScrollerRef = useRef<HTMLDivElement | null>(null);
+  const dragStartX = useRef<number | null>(null);
+  const dragStartScrollLeft = useRef(0);
+  const dragThreshold = 8;
+  const isDraggingDatesRef = useRef(false);
 
   const courtsCount = Math.max(1, Number(data?.business?.courtsCount ?? 3));
   const courtNames = Array.from(
@@ -104,31 +110,11 @@ export function PublicBookingPage() {
     (_, index) => `Court ${index + 1}`,
   );
 
-  const handleDateChange = (date) => {
-    setCourtPage(0);
-    chooseDate(date);
-  };
-
   const allSlots = getSlots(
     data?.business?.openHour ?? "08:00",
     data?.business?.closeHour ?? "20:00",
     data?.business?.slotsPerHour ?? 2,
   );
-
-  const courtGridStyle =
-    courtsCount <= 1
-      ? { gridTemplateColumns: "repeat(1, minmax(150px, 1fr))" }
-      : courtsCount === 2
-        ? { gridTemplateColumns: "repeat(2, minmax(150px, 1fr))" }
-        : courtsCount === 3
-          ? { gridTemplateColumns: "repeat(3, minmax(150px, 1fr))" }
-          : courtsCount === 4
-            ? { gridTemplateColumns: "repeat(4, minmax(150px, 1fr))" }
-            : courtsCount === 5
-              ? { gridTemplateColumns: "repeat(5, minmax(150px, 1fr))" }
-              : courtsCount >= 6
-                ? { gridTemplateColumns: "repeat(5, minmax(150px, 1fr))" }
-                : { gridTemplateColumns: "repeat(3, minmax(150px, 1fr))" };
 
   function isDateFullyBooked(date: string) {
     const dayBookings = (data?.bookings ?? []).filter(
@@ -261,117 +247,9 @@ export function PublicBookingPage() {
 
   return (
     <div className="min-h-screen bg-[#eef6ed] text-slate-900">
-      <header className="border-b border-emerald-900/10 bg-[#173f2d] text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-          <Link to="/" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-lime-300 bg-lime-300 text-sm font-black text-slate-950 shadow-sm">
-              PB
-            </span>
-            <span className="text-lg font-black tracking-tight">
-              PicklePark
-            </span>
-          </Link>
-
-          <nav className="hidden items-center gap-8 lg:flex">
-            {["Club", "Courts", "Programs", "Events", "Reviews", "About"].map(
-              (item) => (
-                <a
-                  key={item}
-                  href="#"
-                  className="text-sm font-bold uppercase tracking-[0.14em] text-emerald-50 transition hover:text-lime-300"
-                >
-                  {item}
-                </a>
-              ),
-            )}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/login"
-              className="rounded-xl px-4 py-2 text-sm font-bold text-emerald-50 transition hover:bg-white/10"
-            >
-              Club login
-            </Link>
-            <Link
-              to="/book/maria-studio"
-              className="rounded-xl bg-lime-300 px-4 py-2.5 text-sm font-black text-slate-950 shadow-sm transition hover:bg-lime-200"
-            >
-              Book a Court
-            </Link>
-          </div>
-        </div>
-      </header>
+      <HeaderComponent />
 
       <main className="bg-[#eef6ed]">
-        <section className="relative overflow-hidden border-b border-emerald-900/10 bg-[#183f2e] text-white">
-          <div className="absolute -right-24 top-0 h-80 w-80 rounded-full bg-lime-300/20 blur-3xl" />
-          <div className="absolute left-0 top-16 h-56 w-56 rounded-full bg-emerald-400/20 blur-3xl" />
-
-          <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-14 md:grid-cols-[0.8fr,1.2fr]">
-            <div className="max-w-xl">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-lime-300" />
-                <span className="text-xs font-black uppercase tracking-[0.26em] text-lime-200">
-                  Pickleball Club
-                </span>
-              </div>
-
-              <h1 className="mt-6 text-5xl font-black leading-none tracking-[-0.045em] md:text-6xl">
-                {data?.business.name ?? "Book a Court"}
-              </h1>
-
-              <p className="mt-5 max-w-xl text-lg leading-8 text-emerald-50">
-                {data?.business.description ??
-                  "Choose a service and time that works for you."}
-              </p>
-
-              <div className="mt-8 flex flex-wrap items-center gap-4">
-                <Link
-                  to="/"
-                  className="rounded-2xl border border-white/30 px-7 py-3 text-sm font-black text-white transition hover:bg-white/10"
-                >
-                  Back to club
-                </Link>
-                <span className="rounded-2xl bg-lime-300 px-7 py-3 text-sm font-black text-slate-950">
-                  Open daily
-                </span>
-              </div>
-            </div>
-
-            <aside className="relative">
-              <div className="rounded-4xl border border-lime-300/30 bg-white/8 p-2 shadow-2xl shadow-slate-950/50 backdrop-blur">
-                <div className="rounded-[1.7rem] bg-[#eaf7d7] p-5 text-slate-900">
-                  <img
-                    src="https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=1600&q=80"
-                    className="h-64 w-full rounded-[1.4rem] object-cover"
-                    alt=""
-                  />
-                  <div className="mt-5 grid grid-cols-3 gap-2">
-                    {[
-                      ["Today", "Open"],
-                      ["Court", "03"],
-                      ["Status", "Live"],
-                    ].map(([label, value]) => (
-                      <div
-                        key={label}
-                        className="rounded-2xl border border-emerald-900/10 bg-white p-3 text-center"
-                      >
-                        <div className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
-                          {label}
-                        </div>
-                        <div className="mt-2 text-lg font-black text-slate-900">
-                          {value}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </aside>
-          </div>
-        </section>
-
         <section className="mx-auto max-w-6xl px-5 py-12">
           <div className="mb-8 text-center">
             <div className="text-xs font-black uppercase tracking-[0.26em] text-emerald-700">
@@ -424,7 +302,58 @@ export function PublicBookingPage() {
                     )}
                   </div>
 
-                  <div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-7">
+                  <div
+                    ref={dateScrollerRef}
+                    onPointerDown={(
+                      event: React.PointerEvent<HTMLDivElement>,
+                    ) => {
+                      const target = event.target as HTMLElement | null;
+                      if (target?.closest("button")) return;
+
+                      const el = dateScrollerRef.current;
+                      if (!el) return;
+
+                      dragStartX.current = event.clientX;
+                      dragStartScrollLeft.current = el.scrollLeft;
+                      isDraggingDatesRef.current = false;
+                      el.setPointerCapture(event.pointerId);
+                      el.style.cursor = "grabbing";
+                    }}
+                    onPointerMove={(event) => {
+                      if (dragStartX.current === null) return;
+
+                      const el = dateScrollerRef.current;
+                      if (!el) return;
+
+                      const delta = event.clientX - dragStartX.current;
+                      if (Math.abs(delta) > dragThreshold) {
+                        isDraggingDatesRef.current = true;
+                        el.scrollLeft = dragStartScrollLeft.current - delta;
+                      }
+                    }}
+                    onPointerUp={() => {
+                      dragStartX.current = null;
+                      isDraggingDatesRef.current = false;
+                      if (dateScrollerRef.current) {
+                        dateScrollerRef.current.style.cursor = "grab";
+                      }
+                    }}
+                    onPointerLeave={() => {
+                      dragStartX.current = null;
+                      isDraggingDatesRef.current = false;
+                      if (dateScrollerRef.current) {
+                        dateScrollerRef.current.style.cursor = "grab";
+                      }
+                    }}
+                    onPointerCancel={() => {
+                      dragStartX.current = null;
+                      isDraggingDatesRef.current = false;
+                      if (dateScrollerRef.current) {
+                        dateScrollerRef.current.style.cursor = "grab";
+                      }
+                    }}
+                    className="mt-5 flex cursor-grab gap-2 overflow-x-auto pb-2 scroll-smooth"
+                  >
                     {getDateOptions(45).map((date) => {
                       const booked = isDateFullyBooked(date);
                       const isActive = selectedDate === date;
@@ -445,7 +374,7 @@ export function PublicBookingPage() {
                           type="button"
                           disabled={booked}
                           onClick={() => chooseDate(date)}
-                          className={`rounded-2xl border px-3 py-3 text-center transition ${
+                          className={`min-w-[110px] shrink-0 rounded-2xl border px-3 py-3 text-center transition ${
                             isActive
                               ? "border-emerald-950 bg-emerald-950 text-lime-300 shadow-md"
                               : "border-emerald-900/10 bg-[#eef6ed] text-slate-700 hover:border-emerald-950 hover:bg-lime-50"
@@ -541,15 +470,6 @@ export function PublicBookingPage() {
                           <>
                             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                               {visibleCourts.map((court) => {
-                                const courtSlots = allSlots.filter((slot) =>
-                                  selectedSlots.some(
-                                    (entry) =>
-                                      entry.date === selectedDate &&
-                                      entry.court === court &&
-                                      entry.time === slot,
-                                  ),
-                                );
-
                                 const isSelected = selectedCourt === court;
 
                                 return (

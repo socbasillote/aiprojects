@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import pickleballImage from "../assets/heropickle2.png";
-import picklogo from "../assets/wesmontlogo3.png";
+import pickleballImage from "../assets/whitepaddle.png";
 import aerialview from "../assets/aerialview.png";
 import courtzoomview from "../assets/courtzoomview.png";
 import netview from "../assets/netview2.png";
@@ -9,64 +8,25 @@ import morningview from "../assets/morningview.png";
 import playerperspective from "../assets/playerperspective2.png";
 import pantryview from "../assets/pantryview.png";
 import portraittest from "../assets/portraittest.png";
+import teamvsteam from "../assets/teamvsteampickle.png";
+import footerimage from "../assets/footerimage.png";
+import HeaderComponent from "./HomeComponent/HeaderComponent";
+import FooterComponent from "./HomeComponent/FooterComponent";
 
-function SocialIcon({ label }: { label: string }) {
-  const common =
-    "h-9 w-9 rounded-full border border-slate-200 p-2 text-slate-600 transition hover:bg-lime-300 hover:text-slate-950";
-
-  if (label === "Instagram") {
-    return (
-      <svg
-        className={common}
-        viewBox="0 0 24 24"
-        fill="none"
-        aria-label="Instagram"
-      >
-        <rect
-          x="3"
-          y="3"
-          width="18"
-          height="18"
-          rx="5"
-          stroke="currentColor"
-          strokeWidth="2"
-        />
-        <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2" />
-        <circle cx="16.5" cy="7.5" r="1" fill="currentColor" />
-      </svg>
-    );
-  }
-
-  if (label === "Facebook") {
-    return (
-      <svg
-        className={common}
-        viewBox="0 0 24 24"
-        fill="none"
-        aria-label="Facebook"
-      >
-        <path
-          d="M14 8h3V4h-3c-3 0-5 2-5 5v2H7v4h2v6h4v-6h3l1-4h-4V9c0-.6.4-1 1-1Z"
-          fill="currentColor"
-        />
-      </svg>
-    );
-  }
-
-  return (
-    <svg
-      className={common}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-label="LinkedIn"
-    >
-      <path
-        d="M4 4h4v16H4zM10 4h4v3h.2c.7-1.3 2.3-2.6 4.8-2.6C20.4 4.4 21 7 21 9.2V20h-4v-18.8C17 10.2 16.7 10 16.2 10H14v10h-4z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
+import {
+  CalendarCheck2,
+  CircleDot,
+  CalendarClock,
+  BadgeCheck,
+  ParkingCircle,
+  Utensils,
+  UserPlus,
+  UsersRound,
+  Users,
+  Apple,
+  GlassWater,
+  UserRoundGroup,
+} from "lucide-react";
 
 export function HomePage() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -280,28 +240,32 @@ export function HomePage() {
     return () => window.removeEventListener("resize", resizeCanvas);
   }, []);
 
-  const navLinks = ["Club", "Courts", "Programs", "Events", "Reviews", "About"];
+  const navLinks = [
+    { nav: "Club", link: "/club" },
+    { nav: "Events", link: "/event" },
+    { nav: "About Us", link: "/about" },
+  ];
 
   const whyBook = [
     {
       title: "Easy booking",
       copy: "Pick your court, time, and format in minutes.",
-      icon: "01",
+      icon: <CalendarCheck2 />,
     },
     {
       title: "Great courts",
       copy: "Play on smooth, well-lit, club-ready courts.",
-      icon: "02",
+      icon: <CircleDot />,
     },
     {
       title: "Flexible schedules",
       copy: "Choose open play, league nights, or private sessions.",
-      icon: "03",
+      icon: <CalendarClock />,
     },
     {
       title: "Instant confirmation",
       copy: "Get a booking-ready experience from start to finish.",
-      icon: "04",
+      icon: <BadgeCheck />,
     },
   ];
 
@@ -403,45 +367,7 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#eef6ed] text-slate-900">
-      <header className="border-b border-emerald-900/10 bg-[#173f2d] text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-          <Link to="/" className="flex items-center gap-3">
-            <img
-              src={picklogo}
-              alt="Logo"
-              className="h-8 w-auto object-contain"
-            />
-          </Link>
-
-          <nav className="hidden items-center gap-8 lg:flex">
-            {navLinks.map((item) => (
-              <a
-                key={item}
-                href="#"
-                className="text-sm font-bold uppercase tracking-[0.14em] text-emerald-50 transition hover:text-lime-300"
-              >
-                {item}
-              </a>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/login"
-              className="rounded-xl px-4 py-2 text-sm font-bold text-emerald-50 transition hover:bg-white/10"
-            >
-              Club login
-            </Link>
-
-            <Link
-              to="/book/maria-studio"
-              className="rounded-xl bg-lime-300 px-4 py-2.5 text-sm font-black text-slate-950 shadow-sm transition hover:bg-lime-200"
-            >
-              Book a Court
-            </Link>
-          </div>
-        </div>
-      </header>
+      <HeaderComponent />
 
       <main>
         {/* HEADER + HERO = 100vh */}
@@ -467,9 +393,12 @@ export function HomePage() {
           <div className="relative mx-auto flex h-full max-w-7xl flex-col px-5 py-10 md:px-8 md:py-12">
             {/* TOP LEFT */}
             <div className="relative z-20 max-w-3xl">
-              <span className="text-xs font-black uppercase tracking-[0.26em] text-lime-200">
-                Pickleball Court
-              </span>
+              <div className="mb-5 flex items-center gap-3">
+                <span className="h-2.5 w-2.5 rounded-full bg-lime-300" />
+                <span className="text-[11px] font-black uppercase tracking-[0.3em] text-lime-200">
+                  Pickleball Court
+                </span>
+              </div>
 
               <h1 className="mt-6 text-left text-5xl font-black leading-[0.9] tracking-[-0.055em] md:text-7xl lg:text-8xl">
                 Rally up your
@@ -499,23 +428,19 @@ export function HomePage() {
               <div className="flex flex-wrap items-center gap-4">
                 <Link
                   to="/book/maria-studio"
-                  className="hero-button rounded-2xl bg-lime-300 px-7 py-3 text-sm font-black text-slate-950 shadow-sm transition hover:bg-lime-200"
+                  className="group inline-flex items-center gap-4 rounded-full bg-lime-300 px-7 py-4 text-sm font-black text-emerald-950 transition hover:bg-lime-200"
                 >
                   Book a Court
+                  <span className="transition-transform group-hover:translate-x-1">
+                    →
+                  </span>
                 </Link>
-
-                <a
-                  href="#booking"
-                  className="hero-button rounded-2xl border border-white/30 px-7 py-3 text-sm font-black text-white transition hover:bg-white/10"
-                >
-                  Find a Court
-                </a>
               </div>
 
               {/* DATA */}
               <div className="flex flex-wrap justify-end gap-x-10 gap-y-6 text-right">
                 {[
-                  ["3+", "Indoor Courts"],
+                  ["3+", "Outdoor Courts"],
                   ["24/7", "Open"],
                 ].map(([number, label]) => (
                   <div key={label}>
@@ -897,12 +822,12 @@ export function HomePage() {
                   {[
                     ...whyBook,
                     {
-                      icon: "P",
+                      icon: <ParkingCircle />,
                       title: "Easy Parking",
                       copy: "Convenient parking so you can get from your car to the court without the hassle.",
                     },
                     {
-                      icon: "F",
+                      icon: <Utensils />,
                       title: "Food & Drinks",
                       copy: "Grab refreshing drinks and food before or after your game.",
                     },
@@ -972,6 +897,23 @@ export function HomePage() {
                       </span>
                     ))}
                   </div>
+
+                  {/* 
+                  <div className="mt-7 flex flex-wrap gap-2">
+                    {[
+                      { icon: <CircleParking />, text: "Parking" },
+                      { icon: <GlassWater />, text: "Drinks" },
+                      { icon: <Apple />, text: "Food" },
+                    ].map((item) => (
+                      <span
+                        key={item}
+                        className="rounded-full border border-white/15 bg-white/10 px-4 py-2.5 text-xs font-bold text-white backdrop-blur-md"
+                      >
+                        {item.icon} {item.text}
+                      </span>
+                    ))}
+                  </div>
+                  */}
 
                   <button
                     type="button"
@@ -1095,7 +1037,7 @@ export function HomePage() {
               <div className="max-w-3xl">
                 <div className="inline-flex items-center gap-3 rounded-full border border-emerald-900/10 bg-white px-4 py-2 shadow-sm">
                   <span className="h-2 w-2 rounded-full bg-lime-400" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-800">
+                  <span className="text-[11px] font-black uppercase tracking-[0.24em] text-emerald-800">
                     Pickleball Community
                   </span>
                 </div>
@@ -1129,7 +1071,7 @@ export function HomePage() {
                 {/* Image */}
                 <div className="group relative min-h-120 overflow-hidden lg:min-h-150">
                   <img
-                    src="https://www.ronshoal.com/pickleball/images/slider/pickleball_beginner.jpg"
+                    src={teamvsteam}
                     alt="Group of people playing pickleball together"
                     className="absolute inset-0 h-full w-full object-cover transition duration-1000 group-hover:scale-105"
                   />
@@ -1196,17 +1138,17 @@ export function HomePage() {
                     <div className="mt-9 divide-y divide-white/10 border-y border-white/10">
                       {[
                         {
-                          number: "01",
+                          number: <UserRoundGroup />,
                           title: "Meet New Players",
                           text: "Find people who love the game as much as you do.",
                         },
                         {
-                          number: "02",
+                          number: <UsersRound />,
                           title: "Every Skill Level",
                           text: "Beginner, intermediate, or experienced — everyone belongs.",
                         },
                         {
-                          number: "03",
+                          number: <Users />,
                           title: "Build Your Crew",
                           text: "Turn casual games into a community you look forward to.",
                         },
@@ -1255,7 +1197,7 @@ export function HomePage() {
               <div>
                 <div className="flex items-center gap-3">
                   <span className="h-2 w-2 rounded-full bg-lime-400" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-700">
+                  <span className="text-[11px] font-black uppercase tracking-[0.24em] text-emerald-700">
                     Player Stories
                   </span>
                 </div>
@@ -1355,7 +1297,7 @@ export function HomePage() {
               <div>
                 <div className="flex items-center gap-3">
                   <span className="h-2 w-2 rounded-full bg-lime-300" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.25em] text-lime-300">
+                  <span className="text-[11px] font-black uppercase tracking-[0.25em] text-lime-300">
                     Your next game
                   </span>
                 </div>
@@ -1381,20 +1323,13 @@ export function HomePage() {
                       →
                     </span>
                   </Link>
-
-                  <a
-                    href="#booking"
-                    className="inline-flex items-center rounded-full border border-white/15 px-7 py-4 text-sm font-black text-white transition hover:border-white/30 hover:bg-white/5"
-                  >
-                    Find a Court
-                  </a>
                 </div>
               </div>
 
               {/* Image */}
               <div className="group relative overflow-hidden rounded-[2.5rem]">
                 <img
-                  src="https://images.unsplash.com/photo-1556817411-31ae72fa3ea0?auto=format&fit=crop&w=1600&q=80"
+                  src={footerimage}
                   className="h-105 w-full object-cover transition duration-700 group-hover:scale-105 lg:h-130"
                   alt="Players enjoying an active game"
                 />
@@ -1415,57 +1350,7 @@ export function HomePage() {
         </section>
       </main>
 
-      <footer className="border-t border-emerald-900/10 bg-[#173f2d] text-emerald-50">
-        <div className="mx-auto max-w-7xl px-5 py-10">
-          <div className="flex flex-wrap items-center justify-between gap-10">
-            <Link to="/" className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-lime-300 bg-lime-300 text-sm font-black text-slate-950">
-                PB
-              </span>
-              <span className="text-lg font-black tracking-tight text-white">
-                PicklePark
-              </span>
-            </Link>
-
-            <nav className="flex flex-wrap items-center gap-5 text-xs font-black uppercase tracking-[0.18em]">
-              {navLinks.map((link) => (
-                <a
-                  key={link}
-                  href="#"
-                  className="transition hover:text-lime-300"
-                >
-                  {link}
-                </a>
-              ))}
-              <a href="#" className="transition hover:text-lime-300">
-                About us
-              </a>
-              <a href="#" className="transition hover:text-lime-300">
-                Contact
-              </a>
-            </nav>
-
-            <div className="flex items-center gap-3">
-              {["Instagram", "Facebook", "LinkedIn"].map((label) => (
-                <a
-                  key={label}
-                  href="#"
-                  className="inline-flex items-center justify-center"
-                >
-                  <SocialIcon label={label} />
-                </a>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-6 text-xs font-black uppercase tracking-[0.2em] text-emerald-200">
-            <span>© 2026 PicklePark</span>
-            <span className="text-lime-300">
-              Open play • Club courts • Leagues
-            </span>
-          </div>
-        </div>
-      </footer>
+      <FooterComponent />
     </div>
   );
 }

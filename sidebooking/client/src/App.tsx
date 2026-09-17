@@ -17,6 +17,10 @@ import { HomePage } from "./pages/HomePage";
 import { PromotionsPage } from "./pages/PromotionsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import "./App.css";
+import ClubPage from "./pages/ClubPage";
+import EventPage from "./pages/EventPage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
 
 function ProtectedApp() {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
@@ -67,6 +71,10 @@ function App() {
             element={<BookingStatusPage />}
           />
           <Route path="/" element={<HomePage />} />
+          <Route path="/club" element={<ClubPage />} />
+          <Route path="/event" element={<EventPage />} />
+          <Route path="/About" element={<AboutPage />} />
+          <Route path="/Contact" element={<ContactPage />} />
           <Route path="*" element={<ProtectedApp />} />
         </Routes>
       </BrowserRouter>

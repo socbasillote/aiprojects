@@ -23,10 +23,6 @@ body,
 
 body {
   min-width: 320px;
-  cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cg fill='none'%3E%3Ccircle cx='18' cy='18' r='14' fill='%23eef6ed' stroke='%2389b36b' stroke-width='2'/%3E%3Ccircle cx='18' cy='18' r='8' fill='%23edf7da' stroke='%23A7C472' stroke-width='1'/%3E%3Ccircle cx='18' cy='18' r='2.2' fill='%23678666'/%3E%3C/g%3E%3C/svg%3E")
-      18 18,
-    auto;
 }
 
 * {
