@@ -3,6 +3,7 @@ import { apiRequest } from "../lib/api";
 
 type Booking = {
   id: string;
+  confirmationCode?: string;
   customer: string;
   email: string;
   service: string;
@@ -69,8 +70,10 @@ export function CalendarPage() {
   useEffect(() => {
     async function loadBookings() {
       try {
-        const data = await apiRequest<{ bookings: Booking[] }>('/bookings/');
-        const mapped = (data.bookings ?? []).map((row) => normalizeBooking(row as Partial<Booking> & { _id?: string }));
+        const data = await apiRequest<{ bookings: Booking[] }>("/bookings/");
+        const mapped = (data.bookings ?? []).map((row) =>
+          normalizeBooking(row as Partial<Booking> & { _id?: string }),
+        );
         setBookings(mapped);
       } catch (err) {
         setError(
@@ -124,22 +127,25 @@ export function CalendarPage() {
     setError("");
 
     try {
-      await apiRequest<{ booking: Booking }>(`/bookings/${selectedBooking.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          customer: editDraft.customer,
-          email: editDraft.email,
-          service: editDraft.service,
-          staff: editDraft.staff,
-          date: editDraft.date,
-          time: editDraft.time,
-          status: editDraft.status,
-          payment: editDraft.payment,
-          paymentMethod: editDraft.paymentMethod,
-        }),
-      });
+      await apiRequest<{ booking: Booking }>(
+        `/bookings/${selectedBooking.id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            customer: editDraft.customer,
+            email: editDraft.email,
+            service: editDraft.service,
+            staff: editDraft.staff,
+            date: editDraft.date,
+            time: editDraft.time,
+            status: editDraft.status,
+            payment: editDraft.payment,
+            paymentMethod: editDraft.paymentMethod,
+          }),
+        },
+      );
 
-      const data = await apiRequest<{ bookings: Booking[] }>('/bookings/');
+      const data = await apiRequest<{ bookings: Booking[] }>("/bookings/");
       setBookings(
         (data.bookings ?? []).map((row) =>
           normalizeBooking(row as Partial<Booking> & { _id?: string }),
@@ -375,13 +381,26 @@ export function CalendarPage() {
 
             <div className="mb-5 rounded-2xl bg-slate-50 p-3 text-sm text-slate-600">
               <div className="flex flex-wrap gap-3">
-                <span><strong>Service:</strong> {selectedBooking.service}</span>
-                <span><strong>Date:</strong> {selectedBooking.date}</span>
-                <span><strong>Time:</strong> {selectedBooking.time}</span>
+                <span>
+                  <strong>Booking code:</strong>{" "}
+                  {selectedBooking.confirmationCode ?? "-"}
+                </span>
+                <span>
+                  <strong>Service:</strong> {selectedBooking.service}
+                </span>
+                <span>
+                  <strong>Date:</strong> {selectedBooking.date}
+                </span>
+                <span>
+                  <strong>Time:</strong> {selectedBooking.time}
+                </span>
               </div>
             </div>
 
-            <form onSubmit={saveBookingChanges} className="grid gap-4 sm:grid-cols-2">
+            <form
+              onSubmit={saveBookingChanges}
+              className="grid gap-4 sm:grid-cols-2"
+            >
               <label className="text-sm font-medium text-slate-700">
                 Customer
                 <input
@@ -451,7 +470,10 @@ export function CalendarPage() {
                   className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-violet-500"
                   value={editDraft.status}
                   onChange={(event) =>
-                    setEditDraft({ ...editDraft, status: event.target.value as Booking["status"] })
+                    setEditDraft({
+                      ...editDraft,
+                      status: event.target.value as Booking["status"],
+                    })
                   }
                 >
                   <option value="Pending">Pending</option>
@@ -466,7 +488,10 @@ export function CalendarPage() {
                   className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-violet-500"
                   value={editDraft.payment}
                   onChange={(event) =>
-                    setEditDraft({ ...editDraft, payment: event.target.value as Booking["payment"] })
+                    setEditDraft({
+                      ...editDraft,
+                      payment: event.target.value as Booking["payment"],
+                    })
                   }
                 >
                   <option value="Unpaid">Unpaid</option>
@@ -480,7 +505,11 @@ export function CalendarPage() {
                   className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-violet-500"
                   value={editDraft.paymentMethod}
                   onChange={(event) =>
-                    setEditDraft({ ...editDraft, paymentMethod: event.target.value as Booking["paymentMethod"] })
+                    setEditDraft({
+                      ...editDraft,
+                      paymentMethod: event.target
+                        .value as Booking["paymentMethod"],
+                    })
                   }
                 >
                   <option value="Cash">Cash</option>
@@ -488,7 +517,7 @@ export function CalendarPage() {
                   <option value="GCash">GCash</option>
                   <option value="Bank transfer">Bank transfer</option>
                   <option value="PayPal">PayPal</option>
-                    <option value="PayMongo">PayMongo</option>
+                  <option value="PayMongo">PayMongo</option>
                 </select>
               </label>
 

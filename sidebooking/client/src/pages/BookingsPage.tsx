@@ -10,6 +10,7 @@ type Service = {
 };
 type Booking = {
   id: string;
+  confirmationCode?: string;
   customer: string;
   email: string;
   service: string;
@@ -31,6 +32,11 @@ export function BookingsPage() {
   const [params] = useSearchParams();
   const [open, setOpen] = useState(params.get("new") === "1");
   const [query, setQuery] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"" | Booking["status"]>("");
+  const [paymentFilter, setPaymentFilter] = useState<"" | Booking["payment"]>(
+    "",
+  );
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [error, setError] = useState("");
@@ -38,15 +44,15 @@ export function BookingsPage() {
 
   async function loadData() {
     try {
-      const bookingData = await apiRequest<{ bookings: Booking[] }>(
-        "/bookings/",
-      );
+      const bookingData = await apiRequest<{
+        bookings: Array<Booking & { _id?: string }>;
+      }>("/bookings/");
       const serviceData = await apiRequest<{ services: Service[] }>(
         "/services/",
       );
       const mapped = (bookingData.bookings ?? []).map((row) => ({
         ...row,
-        id: row.id ?? String((row as any)._id),
+        id: row.id ?? String(row._id ?? ""),
       }));
       setBookings(mapped);
       setServices(serviceData.services ?? []);
@@ -102,11 +108,15 @@ export function BookingsPage() {
     }
   }
 
-  const filtered = bookings.filter((row) =>
-    `${row.customer} ${row.service} ${row.staff}`
+  const filtered = bookings.filter((row) => {
+    const matchesQuery = `${row.customer} ${row.service} ${row.staff}`
       .toLowerCase()
-      .includes(query.toLowerCase()),
-  );
+      .includes(query.toLowerCase());
+    const matchesDate = !dateFilter || row.date === dateFilter;
+    const matchesStatus = !statusFilter || row.status === statusFilter;
+    const matchesPayment = !paymentFilter || row.payment === paymentFilter;
+    return matchesQuery && matchesDate && matchesStatus && matchesPayment;
+  });
 
   return (
     <div className="space-y-5">
@@ -127,13 +137,61 @@ export function BookingsPage() {
         </div>
       )}
       <div className="page-card overflow-hidden">
-        <div className="border-b border-slate-200 p-4">
+        <div className="flex flex-wrap gap-3 border-b border-slate-200 p-4">
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search customer, service or staff"
-            className="w-full max-w-md rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"
+            className="w-full min-w-56 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"
           />
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(event) => setDateFilter(event.target.value)}
+            aria-label="Filter by date"
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"
+          />
+          <select
+            value={statusFilter}
+            onChange={(event) =>
+              setStatusFilter(event.target.value as "" | Booking["status"])
+            }
+            aria-label="Filter by status"
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"
+          >
+            <option value="">All statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Completed">Completed</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+          <select
+            value={paymentFilter}
+            onChange={(event) =>
+              setPaymentFilter(event.target.value as "" | Booking["payment"])
+            }
+            aria-label="Filter by payment"
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"
+          >
+            <option value="">All payments</option>
+            <option value="Unpaid">Unpaid</option>
+            <option value="Deposit">Deposit</option>
+            <option value="Paid">Paid</option>
+          </select>
+          {(dateFilter || statusFilter || paymentFilter || query) && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setDateFilter("");
+                setStatusFilter("");
+                setPaymentFilter("");
+              }}
+              className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
         <div className="table-shell">
           <table className="w-full text-left text-sm">
