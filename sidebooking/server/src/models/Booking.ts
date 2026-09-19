@@ -11,16 +11,8 @@ export interface IBooking extends Document {
   date: string;
   time: string;
   payment: "Unpaid" | "Deposit" | "Paid";
-  paymentMethod:
-    | "Cash"
-    | "Card"
-    | "GCash"
-    | "Bank transfer"
-    | "PayPal"
-    | "PayMongo";
-  paymongoCheckoutSessionId?: string;
-  confirmationEmailSentAt?: Date;
-  status: "Pending" | "Confirmed" | "Completed" | "Rejected";
+  paymentMethod: "Cash" | "Card" | "GCash" | "Bank transfer" | "PayPal";
+  status: "Pending" | "Confirmed" | "Completed";
   confirmationCode: string;
   createdAt: Date;
 }
