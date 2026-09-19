@@ -1,6 +1,8 @@
 import type { Response } from "express";
 import { z } from "zod";
 import { Booking } from "../models/Booking.js";
+import { Business } from "../models/Business.js";
+import { sendBookingConfirmation } from "../services/email.service.js";
 import type { AuthRequest } from "../middleware/auth.js";
 
 const bookingSchema = z.object({
@@ -10,9 +12,18 @@ const bookingSchema = z.object({
   staff: z.string().trim().min(2).default("Maria"),
   date: z.string().min(8),
   time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
-  status: z.enum(["Pending", "Confirmed", "Completed", "Rejected"]).default("Pending"),
+  status: z
+    .enum(["Pending", "Confirmed", "Completed", "Rejected"])
+    .default("Pending"),
   payment: z.enum(["Unpaid", "Deposit", "Paid"]),
-  paymentMethod: z.enum(["Cash", "Card", "GCash", "Bank transfer", "PayPal"]),
+  paymentMethod: z.enum([
+    "Cash",
+    "Card",
+    "GCash",
+    "Bank transfer",
+    "PayPal",
+    "PayMongo",
+  ]),
 });
 
 const updateBookingSchema = bookingSchema.partial();
@@ -68,9 +79,36 @@ export async function updateBooking(req: AuthRequest, res: Response) {
   }
 
   const payload = updateBookingSchema.parse(req.body);
+  const wasPending = booking.status === "Pending";
+  const isCashApproval =
+    booking.paymentMethod === "Cash" &&
+    wasPending &&
+    payload.status === "Confirmed";
 
   Object.assign(booking, payload);
   await booking.save();
+
+  if (isCashApproval && !booking.confirmationEmailSentAt) {
+    const business = await Business.findById(businessId).select("name");
+    const statusPageUrl = `${process.env.CLIENT_URL ?? "http://localhost:5173"}/status/${booking.confirmationCode}`;
+    const email = await sendBookingConfirmation({
+      to: booking.email,
+      customer: booking.customer,
+      business: business?.name ?? "Booking",
+      service: booking.service,
+      date: booking.date,
+      time: booking.time,
+      paymentMethod: booking.paymentMethod,
+      payment: booking.payment,
+      confirmationCode: booking.confirmationCode,
+      statusPageUrl,
+    });
+
+    if (email.delivered) {
+      booking.confirmationEmailSentAt = new Date();
+      await booking.save();
+    }
+  }
 
   return res.json({ success: true, data: { booking } });
 }

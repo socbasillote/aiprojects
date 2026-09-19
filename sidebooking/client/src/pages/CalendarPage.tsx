@@ -11,7 +11,13 @@ type Booking = {
   time: string;
   status: "Confirmed" | "Pending" | "Completed" | "Rejected";
   payment: "Unpaid" | "Deposit" | "Paid";
-  paymentMethod: "Cash" | "Card" | "GCash" | "Bank transfer" | "PayPal";
+  paymentMethod:
+    | "Cash"
+    | "Card"
+    | "GCash"
+    | "Bank transfer"
+    | "PayPal"
+    | "PayMongo";
 };
 
 function normalizeBooking(raw: Partial<Booking> & { _id?: string }) {
@@ -482,6 +488,7 @@ export function CalendarPage() {
                   <option value="GCash">GCash</option>
                   <option value="Bank transfer">Bank transfer</option>
                   <option value="PayPal">PayPal</option>
+                    <option value="PayMongo">PayMongo</option>
                 </select>
               </label>
 
@@ -682,6 +689,7 @@ export function CalendarPage() {
                   <option>GCash</option>
                   <option>Bank transfer</option>
                   <option>PayPal</option>
+                  <option>PayMongo</option>
                 </select>
               </label>
 

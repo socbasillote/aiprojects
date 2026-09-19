@@ -60,6 +60,11 @@ const settingsSchema = z
       .optional(),
     payments: z
       .object({
+        paymongo: z
+          .object({
+            secretKey: z.string().trim().min(1).optional(),
+          })
+          .optional(),
         paymentTypes: z
           .array(
             z.object({
@@ -149,6 +154,19 @@ const settingsSchema = z
   })
   .optional();
 
+function businessResponse(business: any) {
+  const response = business.toObject ? business.toObject() : { ...business };
+  const secretKey = response.settings?.payments?.paymongo?.secretKey;
+
+  if (response.settings?.payments?.paymongo) {
+    response.settings.payments.paymongo = secretKey
+      ? { configured: true, keyLast4: secretKey.slice(-4) }
+      : { configured: false };
+  }
+
+  return response;
+}
+
 const businessSchema = z.object({
   name: z.string().trim().min(2),
   slug: z
@@ -178,7 +196,10 @@ export async function getBusiness(req: AuthRequest, res: Response) {
   const business = user?.businessIds?.[0]
     ? await Business.findById(user.businessIds[0])
     : null;
-  return res.json({ success: true, data: { business } });
+  return res.json({
+    success: true,
+    data: { business: business ? businessResponse(business) : null },
+  });
 }
 
 export async function saveBusiness(req: AuthRequest, res: Response) {
@@ -472,6 +493,7 @@ export async function saveBusiness(req: AuthRequest, res: Response) {
     business.courtsCount = input.courtsCount ?? 3;
     business.disabledCourts = disabledCourts;
     Object.assign(business, input, {
+      settings: mergedSettings,
       openHour: normalizedOpenHour,
       closeHour: normalizedCloseHour,
       slotsPerHour,
@@ -508,5 +530,8 @@ export async function saveBusiness(req: AuthRequest, res: Response) {
     await user.save();
   }
 
-  return res.json({ success: true, data: { business } });
+  return res.json({
+    success: true,
+    data: { business: businessResponse(business) },
+  });
 }

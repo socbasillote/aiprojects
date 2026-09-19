@@ -29,27 +29,45 @@ export function BookingStatusPage() {
 
   useEffect(() => {
     if (!confirmationCode) {
-      setError("No confirmation code was provided.");
       return;
     }
 
-    async function loadStatus() {
-      setLoading(true);
+    let pollTimer: number | undefined;
+    let pollCount = 0;
+
+    async function loadStatus(showLoading = true) {
+      if (showLoading) setLoading(true);
       try {
         const payload = await apiRequest<BookingStatusData>(
           `/public/status/${confirmationCode}`,
         );
         setData(payload);
+
+        const waitingForPayMongo =
+          payload.booking.paymentMethod === "PayMongo" &&
+          payload.booking.payment !== "Paid" &&
+          payload.booking.status === "Pending";
+
+        if (waitingForPayMongo && pollCount < 15) {
+          pollCount += 1;
+          pollTimer = window.setTimeout(() => {
+            void loadStatus(false);
+          }, 2000);
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Unable to load booking status",
         );
       } finally {
-        setLoading(false);
+        if (showLoading) setLoading(false);
       }
     }
 
     void loadStatus();
+
+    return () => {
+      if (pollTimer !== undefined) window.clearTimeout(pollTimer);
+    };
   }, [confirmationCode]);
 
   if (loading) {
@@ -62,7 +80,7 @@ export function BookingStatusPage() {
     );
   }
 
-  if (error) {
+  if (error || !confirmationCode) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
         <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
@@ -72,7 +90,9 @@ export function BookingStatusPage() {
           <h1 className="text-2xl font-semibold text-slate-900">
             Booking not found
           </h1>
-          <p className="mt-3 text-sm text-slate-600">{error}</p>
+          <p className="mt-3 text-sm text-slate-600">
+            {error || "No confirmation code was provided."}
+          </p>
         </div>
       </div>
     );
@@ -85,6 +105,7 @@ export function BookingStatusPage() {
   const { booking } = data;
   const canShowPayment =
     booking.payment === "Paid" || booking.payment === "Deposit";
+  const paymentComplete = booking.payment === "Paid";
 
   return (
     <div className="min-h-screen bg-slate-100 px-4 py-10">
@@ -127,6 +148,28 @@ export function BookingStatusPage() {
                     {booking.confirmationCode}
                   </span>
                 </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-emerald-900/10 bg-emerald-50 p-4 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-800">
+                {["Date & Time, Court", "Details", "Payment"].map(
+                  (label, index) => (
+                    <span key={label} className="flex items-center gap-2">
+                      {index > 0 && <span className="text-emerald-300">→</span>}
+                      <span className="flex items-center gap-1">
+                        <span
+                          className={`flex h-5 w-5 items-center justify-center rounded-full ${
+                            paymentComplete
+                              ? "bg-lime-300 text-emerald-950"
+                              : "bg-white text-slate-500"
+                          }`}
+                        >
+                          {paymentComplete ? "✓" : index + 1}
+                        </span>
+                        <span className="hidden sm:inline">{label}</span>
+                      </span>
+                    </span>
+                  ),
+                )}
               </div>
 
               <div className="grid gap-3">

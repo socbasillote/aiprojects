@@ -17,7 +17,13 @@ export type Booking = {
   time: string;
   status: "Confirmed" | "Pending" | "Completed" | "Rejected";
   payment: "Unpaid" | "Deposit" | "Paid";
-  paymentMethod: "Cash" | "Card" | "GCash" | "Bank transfer" | "PayPal";
+  paymentMethod:
+    | "Cash"
+    | "Card"
+    | "GCash"
+    | "Bank transfer"
+    | "PayPal"
+    | "PayMongo";
 };
 const defaultServices: Service[] = [
   {

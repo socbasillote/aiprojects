@@ -4,13 +4,22 @@ export interface IBooking extends Document {
   businessId: Types.ObjectId;
   customer: string;
   email: string;
+  phone?: string;
   service: string;
   staff: string;
   court: string;
   date: string;
   time: string;
   payment: "Unpaid" | "Deposit" | "Paid";
-  paymentMethod: "Cash" | "Card" | "GCash" | "Bank transfer" | "PayPal";
+  paymentMethod:
+    | "Cash"
+    | "Card"
+    | "GCash"
+    | "Bank transfer"
+    | "PayPal"
+    | "PayMongo";
+  paymongoCheckoutSessionId?: string;
+  confirmationEmailSentAt?: Date;
   status: "Pending" | "Confirmed" | "Completed" | "Rejected";
   confirmationCode: string;
   createdAt: Date;
@@ -25,6 +34,7 @@ const bookingSchema = new Schema<IBooking>(
     },
     customer: { type: String, required: true, trim: true },
     email: { type: String, required: true, lowercase: true, trim: true },
+    phone: { type: String, trim: true, default: "" },
     service: { type: String, required: true, trim: true },
     staff: { type: String, required: true, default: "Maria", trim: true },
     court: { type: String, required: true, default: "Court 1", trim: true },
@@ -37,9 +47,11 @@ const bookingSchema = new Schema<IBooking>(
     },
     paymentMethod: {
       type: String,
-      enum: ["Cash", "Card", "GCash", "Bank transfer", "PayPal"],
+      enum: ["Cash", "Card", "GCash", "Bank transfer", "PayPal", "PayMongo"],
       required: true,
     },
+    paymongoCheckoutSessionId: { type: String, index: true },
+    confirmationEmailSentAt: { type: Date },
     status: {
       type: String,
       enum: ["Pending", "Confirmed", "Completed", "Rejected"],

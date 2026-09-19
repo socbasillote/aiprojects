@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { apiRequest } from "../lib/api";
 import HeaderComponent from "./HomeComponent/HeaderComponent";
+import FooterComponent from "./HomeComponent/FooterComponent";
 
 type BusinessService = {
   id: string;
@@ -35,8 +36,9 @@ type BusinessData = {
 
 type Confirmation = {
   booking: { confirmationCode: string; status: string };
-  qr: string;
-  emailDelivered: boolean;
+  qr?: string;
+  emailDelivered?: boolean;
+  checkoutUrl?: string;
 };
 
 type ChosenSlot = {
@@ -116,7 +118,10 @@ export function PublicBookingPage() {
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [activeStep, setActiveStep] = useState(1);
+  const [paymentMethod, setPaymentMethod] = useState("PayMongo");
   const [courtPage, setCourtPage] = useState(0);
+  const bookingFormRef = useRef<HTMLFormElement | null>(null);
   const dateScrollerRef = useRef<HTMLDivElement | null>(null);
   const dragStartX = useRef<number | null>(null);
   const dragStartScrollLeft = useRef(0);
@@ -155,9 +160,54 @@ export function PublicBookingPage() {
 
   function chooseDate(date: string) {
     const nextCourt = availableCourtNames[0] ?? "Court 1";
+
     setSelectedDate(date);
     setSelectedSlots([]);
     setSelectedCourt(nextCourt);
+    setCourtPage(0);
+  }
+
+  function continueToDetails() {
+    setError("");
+
+    if (!selectedDate) {
+      setError("Choose a date first.");
+      return;
+    }
+
+    if (selectedSlots.length === 0) {
+      setError("Choose at least one time slot to continue.");
+      return;
+    }
+
+    setActiveStep(2);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function continueToPayment() {
+    setError("");
+
+    const form = bookingFormRef.current;
+    if (!form) return;
+
+    const detailFields = ["customer", "email", "phone", "paymentMethod"];
+
+    const detailsAreValid = detailFields.every((name) => {
+      const field = form.elements.namedItem(name);
+
+      return field instanceof HTMLInputElement ||
+        field instanceof HTMLSelectElement
+        ? field.checkValidity()
+        : false;
+    });
+
+    if (!detailsAreValid) {
+      form.reportValidity();
+      return;
+    }
+
+    setActiveStep(3);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   useEffect(() => {
@@ -216,30 +266,35 @@ export function PublicBookingPage() {
         }
       });
 
-      const paymentMethod = String(form.get("paymentMethod") ?? "PayPal");
+      const selectedPaymentMethod = String(
+        form.get("paymentMethod") ?? paymentMethod,
+      );
       const payment =
-        paymentMethod === "PayPal"
-          ? "Paid"
-          : String(form.get("payment") ?? "Unpaid");
+        selectedPaymentMethod === "PayMongo" ? "Unpaid" : "Unpaid";
 
       const payload = {
         customer: String(form.get("customer")),
         email: String(form.get("email")),
-        service: String(form.get("service")),
-        staff: String(form.get("staff") ?? "Maria"),
+        phone: String(form.get("phone")),
+        service: String(data?.services[0]?.name ?? "Court booking"),
+        staff: "Maria",
         date,
         slots: selectedSlots.map((slot) => ({
           court: slot.court,
           time: slot.time,
         })),
         payment,
-        paymentMethod,
+        paymentMethod: selectedPaymentMethod,
       };
 
       const next = await apiRequest<Confirmation>(`/public/${slug}/bookings`, {
         method: "POST",
         body: JSON.stringify(payload),
       });
+      if (next.checkoutUrl) {
+        window.location.assign(next.checkoutUrl);
+        return;
+      }
       setConfirmation(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to create booking");
@@ -252,6 +307,21 @@ export function PublicBookingPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#eef6ed] p-4">
         <div className="w-full max-w-md rounded-4xl border border-emerald-900/10 bg-white p-8 text-center shadow-sm">
+          <div className="mb-7 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.12em] text-emerald-800">
+            {["Date & Time, Court", "Details", "Payment"].map(
+              (label, index) => (
+                <span key={label} className="flex items-center gap-2">
+                  {index > 0 && <span className="text-emerald-300">→</span>}
+                  <span className="flex items-center gap-1">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-lime-300 text-emerald-950">
+                      ✓
+                    </span>
+                    <span className="hidden sm:inline">{label}</span>
+                  </span>
+                </span>
+              ),
+            )}
+          </div>
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-lime-200 text-emerald-800">
             ✓
           </div>
@@ -259,7 +329,9 @@ export function PublicBookingPage() {
             Booking received
           </h1>
           <p className="mt-3 text-sm leading-7 text-slate-600">
-            Your confirmation QR code has been sent to your email.
+            {confirmation.booking.status === "Pending"
+              ? "Your booking is awaiting admin approval. We will email you once it is approved."
+              : "Your booking is confirmed. Your confirmation details are below."}
           </p>
           <img
             src={confirmation.qr}
@@ -279,7 +351,11 @@ export function PublicBookingPage() {
             </p>
           )}
           <button
-            onClick={() => setConfirmation(null)}
+            onClick={() => {
+              setConfirmation(null);
+              setActiveStep(1);
+              setError("");
+            }}
             className="mt-6 rounded-2xl border border-emerald-900/20 bg-white px-5 py-2.5 text-sm font-black text-slate-900 transition hover:bg-emerald-950 hover:text-white"
           >
             Make another booking
@@ -309,14 +385,72 @@ export function PublicBookingPage() {
             </p>
           </div>
 
+          <div className="mb-5 rounded-3xl border border-emerald-900/10 bg-white px-4 py-4 shadow-sm shadow-emerald-900/5 sm:px-6">
+            <div className="flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]">
+              {[
+                [1, "Date, Time & Court"],
+                [2, "Details"],
+                [3, "Payment"],
+              ].map(([step, label]) => {
+                const stepNumber = Number(step);
+                const complete = stepNumber < activeStep;
+                const current = stepNumber === activeStep;
+
+                return (
+                  <div
+                    key={stepNumber}
+                    className={`flex min-w-0 items-center gap-2 ${
+                      current || complete
+                        ? "text-emerald-950"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs ${
+                        complete
+                          ? "bg-lime-300 text-emerald-950"
+                          : current
+                            ? "bg-emerald-950 text-lime-300"
+                            : "border border-slate-300 bg-white text-slate-400"
+                      }`}
+                    >
+                      {complete ? "✓" : stepNumber}
+                    </span>
+
+                    <span className="hidden truncate sm:inline">{label}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-2" aria-hidden="true">
+              {[1, 2].map((step) => (
+                <span
+                  key={step}
+                  className={`h-1 rounded-full ${
+                    activeStep > step
+                      ? "bg-lime-300"
+                      : activeStep === step
+                        ? "bg-emerald-950"
+                        : "bg-slate-200"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
           <form
+            ref={bookingFormRef}
             onSubmit={submit}
             className="overflow-hidden rounded-[2rem] border border-emerald-900/10 bg-white shadow-sm shadow-emerald-900/10"
           >
             {/* =========================================================
-        STEP 1 — DATE
+        STEP 1 — DATE, TIME, & COURT
     ========================================================= */}
-            <div className="border-b border-emerald-900/10 p-5 sm:p-7">
+            <div
+              hidden={activeStep !== 1}
+              className="border-b border-emerald-900/10 p-5 sm:p-7"
+            >
               <div className="flex items-start gap-4">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-950 text-sm font-black text-lime-300">
                   1
@@ -326,10 +460,10 @@ export function PublicBookingPage() {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
-                        Step 1
+                        Step 1 · Date, Time, & Court
                       </p>
                       <h3 className="mt-1 text-xl font-black text-slate-950">
-                        Choose your date
+                        Choose your date and time
                       </h3>
                     </div>
 
@@ -447,352 +581,380 @@ export function PublicBookingPage() {
             </div>
 
             {/* =========================================================
-        STEP 3 — COURTS
+        STEP 1 — COURT & TIME
     ========================================================= */}
             <div
-              className={`border-b border-emerald-900/10 p-5 sm:p-7 ${
+              hidden={activeStep !== 1}
+              className={`border-b border-emerald-900/10 bg-[#fbfdf9] p-5 sm:p-7 ${
                 !selectedDate ? "opacity-50" : ""
               }`}
             >
-              <div className="flex items-start gap-4">
-                <div
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black ${
-                    selectedDate
-                      ? "bg-emerald-950 text-lime-300"
-                      : "bg-slate-200 text-slate-500"
-                  }`}
-                >
-                  2
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
-                        Step 2
-                      </p>
-
-                      <h3 className="mt-1 text-xl font-black text-slate-950">
-                        Choose your court and time
-                      </h3>
-                    </div>
-
-                    <span className="rounded-full bg-[#eef6ed] px-4 py-2 text-xs font-black text-slate-600">
-                      {availableCourtNames.length} available
-                    </span>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="mt-1 text-lg font-black text-slate-950 sm:text-xl">
+                      Available courts & times
+                    </h3>
                   </div>
 
-                  {!selectedDate ? (
-                    <div className="mt-5 rounded-2xl border border-dashed border-emerald-900/15 bg-[#eef6ed] px-4 py-5 text-center">
-                      <p className="text-sm font-bold text-slate-500">
-                        Select a date first.
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      {/* 
+                  <span className="rounded-full bg-[#eef6ed] px-4 py-2 text-xs font-black text-slate-600">
+                    {availableCourtNames.length} available
+                  </span>
+                </div>
+
+                {!selectedDate ? (
+                  <div className="mt-5 rounded-2xl border border-dashed border-emerald-900/15 bg-[#eef6ed] px-4 py-5 text-center">
+                    <p className="text-sm font-bold text-slate-500">
+                      Select a date first.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* 
                 Replace these with state:
                 const [courtPage, setCourtPage] = useState(0)
               */}
-                      {(() => {
-                        const courtsPerPage = 4;
-                        const totalPages = Math.ceil(
-                          allCourtNames.length / courtsPerPage,
-                        );
+                    {(() => {
+                      const courtsPerPage = 4;
+                      const totalPages = Math.ceil(
+                        allCourtNames.length / courtsPerPage,
+                      );
 
-                        const currentPage = Math.min(
-                          courtPage,
-                          Math.max(0, totalPages - 1),
-                        );
+                      const currentPage = Math.min(
+                        courtPage,
+                        Math.max(0, totalPages - 1),
+                      );
 
-                        const visibleCourts = allCourtNames.slice(
-                          currentPage * courtsPerPage,
-                          currentPage * courtsPerPage + courtsPerPage,
-                        );
+                      const visibleCourts = allCourtNames.slice(
+                        currentPage * courtsPerPage,
+                        currentPage * courtsPerPage + courtsPerPage,
+                      );
 
-                        return (
-                          <>
-                            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                              {visibleCourts.map((court) => {
-                                const isDisabled = disabledCourtSet.has(court);
-                                const isSelected =
-                                  !isDisabled && activeCourt === court;
+                      return (
+                        <>
+                          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {visibleCourts.map((court) => {
+                              const isDisabled = disabledCourtSet.has(court);
+                              const isSelected =
+                                !isDisabled && activeCourt === court;
 
-                                if (isDisabled) {
-                                  return (
-                                    <div
-                                      key={court}
-                                      className="rounded-3xl border border-slate-200 bg-slate-100 p-4 opacity-70"
-                                    >
-                                      <div className="flex items-center justify-between gap-3">
-                                        <div>
-                                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                                            Court
-                                          </p>
-                                          <h4 className="mt-1 text-lg font-black text-slate-500">
-                                            {court}
-                                          </h4>
-                                        </div>
-
-                                        <span className="rounded-full bg-slate-300 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-slate-700">
-                                          Off
-                                        </span>
-                                      </div>
-
-                                      <div className="mt-4 rounded-2xl border border-slate-300 bg-slate-200/80 px-3 py-2 text-center text-xs font-black uppercase tracking-[0.16em] text-slate-600">
-                                        Under maintenance
-                                      </div>
-                                    </div>
-                                  );
-                                }
-
+                              if (isDisabled) {
                                 return (
                                   <div
                                     key={court}
-                                    className={`rounded-3xl border p-4 transition ${
-                                      isSelected
-                                        ? "border-emerald-950 bg-emerald-950 shadow-md"
-                                        : "border-emerald-900/10 bg-[#eef6ed]"
-                                    }`}
+                                    className="rounded-3xl border border-slate-200 bg-slate-100 p-4 opacity-70"
                                   >
-                                    {/* Court header */}
                                     <div className="flex items-center justify-between gap-3">
                                       <div>
-                                        <p
-                                          className={`text-[10px] font-black uppercase tracking-[0.2em] ${
-                                            isSelected
-                                              ? "text-lime-300"
-                                              : "text-emerald-700"
-                                          }`}
-                                        >
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                                           Court
                                         </p>
-
-                                        <h4
-                                          className={`mt-1 text-lg font-black ${
-                                            isSelected
-                                              ? "text-white"
-                                              : "text-slate-950"
-                                          }`}
-                                        >
+                                        <h4 className="mt-1 text-lg font-black text-slate-500">
                                           {court}
                                         </h4>
                                       </div>
 
-                                      {isSelected && (
-                                        <div className="rounded-full bg-lime-300 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-emerald-950">
-                                          Selected
-                                        </div>
-                                      )}
+                                      <span className="rounded-full bg-slate-300 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-slate-700">
+                                        Off
+                                      </span>
                                     </div>
 
-                                    {/* Time slots */}
-                                    <div className="relative mt-4">
-                                      {/* Scrollable time area */}
-                                      <div
-                                        className="
-              court-time-scroll max-h-[24rem] overflow-y-auto overscroll-contain pr-1
-            "
-                                      >
-                                        <div className="space-y-2">
-                                          {allSlots.map((slot) => {
-                                            const isBooked = (
-                                              data?.bookings ?? []
-                                            ).some(
-                                              (entry) =>
-                                                entry.date === selectedDate &&
-                                                entry.time === slot &&
-                                                entry.court === court,
-                                            );
-
-                                            const exists = selectedSlots.some(
-                                              (entry) =>
-                                                entry.date === selectedDate &&
-                                                entry.court === court &&
-                                                entry.time === slot,
-                                            );
-
-                                            return (
-                                              <button
-                                                key={`${court}-${slot}`}
-                                                type="button"
-                                                disabled={isBooked}
-                                                onClick={() => {
-                                                  setSelectedCourt(court);
-
-                                                  const nextSlot = {
-                                                    date: selectedDate,
-                                                    court,
-                                                    time: slot,
-                                                  };
-
-                                                  setSelectedSlots(
-                                                    (current) => {
-                                                      const found =
-                                                        current.some(
-                                                          (entry) =>
-                                                            entry.date ===
-                                                              selectedDate &&
-                                                            entry.court ===
-                                                              court &&
-                                                            entry.time === slot,
-                                                        );
-
-                                                      if (found) {
-                                                        return current.filter(
-                                                          (entry) =>
-                                                            !(
-                                                              entry.date ===
-                                                                selectedDate &&
-                                                              entry.court ===
-                                                                court &&
-                                                              entry.time ===
-                                                                slot
-                                                            ),
-                                                        );
-                                                      }
-
-                                                      return [
-                                                        ...current,
-                                                        nextSlot,
-                                                      ];
-                                                    },
-                                                  );
-                                                }}
-                                                className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-sm font-black transition ${
-                                                  exists
-                                                    ? "border-lime-300 bg-lime-300 text-emerald-950"
-                                                    : isSelected
-                                                      ? "border-white/10 bg-white/10 text-white hover:bg-white/20"
-                                                      : "border-emerald-900/10 bg-white text-slate-700 hover:border-emerald-950 hover:bg-lime-50"
-                                                } ${
-                                                  isBooked
-                                                    ? "cursor-not-allowed opacity-35 line-through"
-                                                    : ""
-                                                }`}
-                                              >
-                                                <span>{slot}</span>
-
-                                                <span className="text-[9px] uppercase tracking-wider opacity-60">
-                                                  {isBooked
-                                                    ? "Booked"
-                                                    : exists
-                                                      ? "Added"
-                                                      : "Available"}
-                                                </span>
-                                              </button>
-                                            );
-                                          })}
-                                        </div>
-                                      </div>
-
-                                      {/* Bottom fade indicates more times below */}
-                                      {allSlots.length > 8 && (
-                                        <div
-                                          className={`pointer-events-none absolute bottom-0 left-0 right-1 h-10 rounded-b-2xl bg-gradient-to-t ${
-                                            isSelected
-                                              ? "from-emerald-950 to-transparent"
-                                              : "from-[#eef6ed] to-transparent"
-                                          }`}
-                                        />
-                                      )}
+                                    <div className="mt-4 rounded-2xl border border-slate-300 bg-slate-200/80 px-3 py-2 text-center text-xs font-black uppercase tracking-[0.16em] text-slate-600">
+                                      Under maintenance
                                     </div>
+                                  </div>
+                                );
+                              }
 
-                                    {/* Scroll hint */}
-                                    {allSlots.length > 8 && (
-                                      <div
-                                        className={`mt-2 text-center text-[9px] font-black uppercase tracking-[0.16em] ${
+                              return (
+                                <div
+                                  key={court}
+                                  className={`rounded-3xl border p-4 transition ${
+                                    isSelected
+                                      ? "border-emerald-950 bg-emerald-950 shadow-md"
+                                      : "border-emerald-900/10 bg-[#eef6ed]"
+                                  }`}
+                                >
+                                  {/* Court header */}
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                      <p
+                                        className={`text-[10px] font-black uppercase tracking-[0.2em] ${
                                           isSelected
-                                            ? "text-lime-300/70"
-                                            : "text-slate-400"
+                                            ? "text-lime-300"
+                                            : "text-emerald-700"
                                         }`}
                                       >
-                                        Scroll for more times ↓
+                                        Court
+                                      </p>
+
+                                      <h4
+                                        className={`mt-1 text-lg font-black ${
+                                          isSelected
+                                            ? "text-white"
+                                            : "text-slate-950"
+                                        }`}
+                                      >
+                                        {court}
+                                      </h4>
+                                    </div>
+
+                                    {isSelected && (
+                                      <div className="rounded-full bg-lime-300 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-emerald-950">
+                                        Selected
                                       </div>
                                     )}
                                   </div>
-                                );
-                              })}
-                            </div>
 
-                            {/* Pagination only when 5+ courts */}
-                            {allCourtNames.length >= 5 && (
-                              <div className="mt-5 flex items-center justify-between border-t border-emerald-900/10 pt-4">
-                                <button
-                                  type="button"
-                                  disabled={currentPage === 0}
-                                  onClick={() =>
-                                    setCourtPage((page) =>
-                                      Math.max(0, page - 1),
-                                    )
-                                  }
-                                  className="rounded-xl border border-emerald-900/10 bg-white px-4 py-2 text-xs font-black uppercase tracking-wider text-slate-700 transition hover:bg-lime-50 disabled:cursor-not-allowed disabled:opacity-30"
-                                >
-                                  ← Previous
-                                </button>
+                                  {/* Time slots */}
+                                  <div className="relative mt-4">
+                                    {/* Scrollable time area */}
+                                    <div
+                                      className="
+              court-time-scroll max-h-[24rem] overflow-y-auto overscroll-contain pr-1
+            "
+                                    >
+                                      <div className="space-y-2">
+                                        {allSlots.map((slot) => {
+                                          const isBooked = (
+                                            data?.bookings ?? []
+                                          ).some(
+                                            (entry) =>
+                                              entry.date === selectedDate &&
+                                              entry.time === slot &&
+                                              entry.court === court,
+                                          );
 
-                                <div className="flex items-center gap-2">
-                                  {Array.from(
-                                    { length: totalPages },
-                                    (_, index) => (
-                                      <button
-                                        key={index}
-                                        type="button"
-                                        onClick={() => setCourtPage(index)}
-                                        className={`h-8 min-w-8 rounded-full px-2 text-xs font-black transition ${
-                                          currentPage === index
-                                            ? "bg-emerald-950 text-lime-300"
-                                            : "bg-[#eef6ed] text-slate-600 hover:bg-lime-50"
+                                          const exists = selectedSlots.some(
+                                            (entry) =>
+                                              entry.date === selectedDate &&
+                                              entry.court === court &&
+                                              entry.time === slot,
+                                          );
+
+                                          return (
+                                            <button
+                                              key={`${court}-${slot}`}
+                                              type="button"
+                                              disabled={isBooked}
+                                              onClick={() => {
+                                                setSelectedCourt(court);
+
+                                                const nextSlot = {
+                                                  date: selectedDate,
+                                                  court,
+                                                  time: slot,
+                                                };
+
+                                                setSelectedSlots((current) => {
+                                                  const found = current.some(
+                                                    (entry) =>
+                                                      entry.date ===
+                                                        selectedDate &&
+                                                      entry.court === court &&
+                                                      entry.time === slot,
+                                                  );
+
+                                                  if (found) {
+                                                    return current.filter(
+                                                      (entry) =>
+                                                        !(
+                                                          entry.date ===
+                                                            selectedDate &&
+                                                          entry.court ===
+                                                            court &&
+                                                          entry.time === slot
+                                                        ),
+                                                    );
+                                                  }
+
+                                                  return [...current, nextSlot];
+                                                });
+                                              }}
+                                              className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-sm font-black transition ${
+                                                exists
+                                                  ? "border-lime-300 bg-lime-300 text-emerald-950"
+                                                  : isSelected
+                                                    ? "border-white/10 bg-white/10 text-white hover:bg-white/20"
+                                                    : "border-emerald-900/10 bg-white text-slate-700 hover:border-emerald-950 hover:bg-lime-50"
+                                              } ${
+                                                isBooked
+                                                  ? "cursor-not-allowed opacity-35 line-through"
+                                                  : ""
+                                              }`}
+                                            >
+                                              <span>{slot}</span>
+
+                                              <span className="text-[9px] uppercase tracking-wider opacity-60">
+                                                {isBooked
+                                                  ? "Booked"
+                                                  : exists
+                                                    ? "Added"
+                                                    : "Available"}
+                                              </span>
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+
+                                    {/* Bottom fade indicates more times below */}
+                                    {allSlots.length > 8 && (
+                                      <div
+                                        className={`pointer-events-none absolute bottom-0 left-0 right-1 h-10 rounded-b-2xl bg-gradient-to-t ${
+                                          isSelected
+                                            ? "from-emerald-950 to-transparent"
+                                            : "from-[#eef6ed] to-transparent"
                                         }`}
-                                      >
-                                        {index + 1}
-                                      </button>
-                                    ),
+                                      />
+                                    )}
+                                  </div>
+
+                                  {/* Scroll hint */}
+                                  {allSlots.length > 8 && (
+                                    <div
+                                      className={`mt-2 text-center text-[9px] font-black uppercase tracking-[0.16em] ${
+                                        isSelected
+                                          ? "text-lime-300/70"
+                                          : "text-slate-400"
+                                      }`}
+                                    >
+                                      Scroll for more times ↓
+                                    </div>
                                   )}
                                 </div>
+                              );
+                            })}
+                          </div>
 
-                                <button
-                                  type="button"
-                                  disabled={currentPage === totalPages - 1}
-                                  onClick={() =>
-                                    setCourtPage((page) =>
-                                      Math.min(totalPages - 1, page + 1),
-                                    )
-                                  }
-                                  className="rounded-xl border border-emerald-900/10 bg-white px-4 py-2 text-xs font-black uppercase tracking-wider text-slate-700 transition hover:bg-lime-50 disabled:cursor-not-allowed disabled:opacity-30"
-                                >
-                                  Next →
-                                </button>
+                          {/* Pagination only when 5+ courts */}
+                          {allCourtNames.length >= 5 && (
+                            <div className="mt-5 flex items-center justify-between border-t border-emerald-900/10 pt-4">
+                              <button
+                                type="button"
+                                disabled={currentPage === 0}
+                                onClick={() =>
+                                  setCourtPage((page) => Math.max(0, page - 1))
+                                }
+                                className="rounded-xl border border-emerald-900/10 bg-white px-4 py-2 text-xs font-black uppercase tracking-wider text-slate-700 transition hover:bg-lime-50 disabled:cursor-not-allowed disabled:opacity-30"
+                              >
+                                ← Previous
+                              </button>
+
+                              <div className="flex items-center gap-2">
+                                {Array.from(
+                                  { length: totalPages },
+                                  (_, index) => (
+                                    <button
+                                      key={index}
+                                      type="button"
+                                      onClick={() => setCourtPage(index)}
+                                      className={`h-8 min-w-8 rounded-full px-2 text-xs font-black transition ${
+                                        currentPage === index
+                                          ? "bg-emerald-950 text-lime-300"
+                                          : "bg-[#eef6ed] text-slate-600 hover:bg-lime-50"
+                                      }`}
+                                    >
+                                      {index + 1}
+                                    </button>
+                                  ),
+                                )}
                               </div>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </>
-                  )}
 
-                  <input
-                    type="hidden"
-                    name="court"
-                    value={activeCourt}
-                    required
-                  />
+                              <button
+                                type="button"
+                                disabled={currentPage === totalPages - 1}
+                                onClick={() =>
+                                  setCourtPage((page) =>
+                                    Math.min(totalPages - 1, page + 1),
+                                  )
+                                }
+                                className="rounded-xl border border-emerald-900/10 bg-white px-4 py-2 text-xs font-black uppercase tracking-wider text-slate-700 transition hover:bg-lime-50 disabled:cursor-not-allowed disabled:opacity-30"
+                              >
+                                Next →
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </>
+                )}
+
+                <input
+                  type="hidden"
+                  name="court"
+                  value={activeCourt}
+                  required
+                />
+
+                <div className="sticky bottom-3 z-10 mt-5 rounded-3xl border border-emerald-900/10 bg-[#eef6ed]/95 p-4 shadow-lg shadow-emerald-950/10 backdrop-blur sm:static sm:bg-[#eef6ed] sm:shadow-none">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-700">
+                        Booking summary
+                      </p>
+                      <p className="mt-1 text-sm font-black text-slate-950">
+                        {selectedDate
+                          ? new Date(
+                              `${selectedDate}T00:00:00`,
+                            ).toLocaleDateString(undefined, {
+                              weekday: "long",
+                              month: "long",
+                              day: "numeric",
+                            })
+                          : "Choose a date"}
+                      </p>
+                    </div>
+                    <span className="text-right text-xs font-black text-slate-500">
+                      {selectedSlots.length} slot
+                      {selectedSlots.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {selectedSlots.length > 0 ? (
+                      selectedSlots.map((entry) => (
+                        <span
+                          key={`${entry.date}-${entry.court}-${entry.time}`}
+                          className="rounded-full bg-emerald-950 px-3 py-1.5 text-xs font-black text-lime-300"
+                        >
+                          {entry.court} · {entry.time}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs font-bold text-slate-500">
+                        Select a time below to continue.
+                      </span>
+                    )}
+                  </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={continueToDetails}
+                  disabled={!selectedDate || selectedSlots.length === 0}
+                  className="mt-6 w-full rounded-2xl bg-emerald-950 px-4 py-3.5 text-sm font-black uppercase tracking-[0.2em] text-lime-300 transition hover:bg-slate-950 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Continue to details
+                </button>
               </div>
             </div>
 
             {/* =========================================================
-        STEP 4 — CUSTOMER DETAILS
+        STEP 2 — DETAILS
     ========================================================= */}
-            <div className="border-b border-emerald-900/10 p-5 sm:p-7">
+            <div
+              className="border-b border-emerald-900/10 p-5 sm:p-7"
+              hidden={activeStep !== 2}
+            >
               <div className="mb-5 flex items-start gap-4">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-950 text-sm font-black text-lime-300">
-                  3
+                  2
                 </div>
 
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
-                    Step 3
+                    Step 2 · Details
                   </p>
 
                   <h3 className="mt-1 text-xl font-black text-slate-950">
@@ -805,9 +967,33 @@ export function PublicBookingPage() {
                 </div>
               </div>
 
+              <div className="mb-5 rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-4">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-700">
+                  Booking summary
+                </p>
+                <p className="mt-1 text-sm font-black text-slate-950">
+                  {selectedDate
+                    ? new Date(`${selectedDate}T00:00:00`).toLocaleDateString(
+                        undefined,
+                        { weekday: "long", month: "long", day: "numeric" },
+                      )
+                    : "Date not selected"}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {selectedSlots.map((entry) => (
+                    <span
+                      key={`${entry.date}-${entry.court}-${entry.time}`}
+                      className="rounded-full bg-emerald-950 px-3 py-1.5 text-xs font-black text-lime-300"
+                    >
+                      {entry.court} · {entry.time}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-                  Your name
+                  Full name
                   <input
                     name="customer"
                     required
@@ -827,26 +1013,13 @@ export function PublicBookingPage() {
                 </label>
 
                 <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-                  Service
-                  <select
-                    name="service"
-                    required
-                    className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
-                  >
-                    {(data?.services ?? []).map((service) => (
-                      <option key={service.id} value={service.name}>
-                        {service.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-                  Staff
+                  Phone number
                   <input
-                    name="staff"
+                    name="phone"
                     required
-                    defaultValue="Maria"
+                    type="tel"
+                    autoComplete="tel"
+                    placeholder="+63 917 123 4567"
                     className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
                   />
                 </label>
@@ -855,188 +1028,115 @@ export function PublicBookingPage() {
                   Payment method
                   <select
                     name="paymentMethod"
-                    defaultValue="PayPal"
+                    required
+                    value={paymentMethod}
+                    onChange={(event) => setPaymentMethod(event.target.value)}
                     className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
                   >
-                    <option>Cash</option>
-                    <option>Card</option>
-                    <option>GCash</option>
-                    <option>Bank transfer</option>
-                    <option>PayPal</option>
+                    <option value="PayMongo">PayMongo online checkout</option>
+                    <option value="Cash">Pay at the club</option>
                   </select>
                 </label>
+              </div>
 
-                <label className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-                  Payment
-                  <select
-                    name="payment"
-                    className="mt-2 w-full rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-emerald-700"
-                  >
-                    <option>Unpaid</option>
-                    <option>Deposit</option>
-                    <option>Paid</option>
-                  </select>
-                </label>
+              <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-emerald-900/10 bg-[#eef6ed] px-4 py-3">
+                <span className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
+                  Booking total
+                </span>
+                <span className="text-lg font-black text-emerald-950">
+                  PHP{" "}
+                  {(
+                    (data?.services[0]?.price ?? 0) * selectedSlots.length
+                  ).toLocaleString()}
+                </span>
+              </div>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveStep(1);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="rounded-2xl border border-emerald-900/15 bg-white px-4 py-3.5 text-sm font-black uppercase tracking-[0.2em] text-slate-700 transition hover:bg-lime-50"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={continueToPayment}
+                  className="rounded-2xl bg-emerald-950 px-4 py-3.5 text-sm font-black uppercase tracking-[0.2em] text-lime-300 transition hover:bg-slate-950"
+                >
+                  Continue to payment
+                </button>
               </div>
             </div>
 
             {/* =========================================================
-        SUMMARY
+        STEP 3 — PAYMENT
     ========================================================= */}
-            <div className="bg-[#eef6ed] p-5 sm:p-7">
-              <div className="rounded-3xl border border-emerald-900/10 bg-white p-5">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
-                      Booking summary
-                    </p>
-
-                    <h3 className="mt-2 text-xl font-black text-slate-950">
-                      {selectedDate
-                        ? new Date(
-                            `${selectedDate}T00:00:00`,
-                          ).toLocaleDateString(undefined, {
-                            weekday: "long",
-                            month: "long",
-                            day: "numeric",
-                          })
-                        : "Choose a date"}
-                    </h3>
-                  </div>
-
-                  <div className="text-right">
-                    <p className="text-xs font-black uppercase tracking-wider text-slate-400">
-                      Selected
-                    </p>
-
-                    <p className="mt-1 text-sm font-black text-slate-950">
-                      {selectedSlots.length} slot
-                      {selectedSlots.length === 1 ? "" : "s"}
-                    </p>
-                  </div>
+            <div className="bg-[#eef6ed] p-5 sm:p-7" hidden={activeStep !== 3}>
+              <div className="mb-5 flex items-start gap-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-950 text-sm font-black text-lime-300">
+                  3
                 </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
+                    Step 3 · Payment
+                  </p>
+                  <h3 className="mt-1 text-xl font-black text-slate-950">
+                    Choose how you will pay
+                  </h3>
+                </div>
+              </div>
 
-                {selectedSlots.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {selectedSlots.map((entry) => (
-                      <span
-                        key={`${entry.date}-${entry.court}-${entry.time}`}
-                        className="rounded-full bg-emerald-950 px-3 py-1.5 text-xs font-black text-lime-300"
-                      >
-                        {entry.court} · {entry.time}
-                      </span>
-                    ))}
-                  </div>
-                )}
+              <div className="rounded-2xl border border-emerald-900/10 bg-white px-4 py-4">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
+                  Total amount
+                </p>
+                <p className="mt-1 text-2xl font-black text-emerald-950">
+                  PHP{" "}
+                  {(
+                    (data?.services[0]?.price ?? 0) * selectedSlots.length
+                  ).toLocaleString()}
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {selectedSlots.length} court time
+                  {selectedSlots.length === 1 ? "" : "s"} · {paymentMethod}
+                </p>
               </div>
 
               {error && (
                 <p className="mt-4 text-sm font-bold text-red-600">{error}</p>
               )}
 
-              <button
-                type="submit"
-                disabled={
-                  busy || !data || !selectedDate || selectedSlots.length === 0
-                }
-                className="mt-5 w-full rounded-2xl bg-emerald-950 px-4 py-4 text-sm font-black uppercase tracking-[0.26em] text-lime-300 shadow-sm transition hover:bg-slate-950 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {busy ? "Booking…" : "Confirm booking"}
-              </button>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveStep(2);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="rounded-2xl border border-emerald-900/15 bg-white px-4 py-4 text-sm font-black uppercase tracking-[0.2em] text-slate-700 transition hover:bg-lime-50"
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={
+                    busy || !data || !selectedDate || selectedSlots.length === 0
+                  }
+                  className="rounded-2xl bg-emerald-950 px-4 py-4 text-sm font-black uppercase tracking-[0.2em] text-lime-300 shadow-sm transition hover:bg-slate-950 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {busy ? "Booking…" : "Confirm booking"}
+                </button>
+              </div>
             </div>
           </form>
         </section>
       </main>
 
-      <footer className="border-t border-emerald-900/10 bg-[#173f2d] text-emerald-50">
-        <div className="mx-auto max-w-7xl px-5 py-10">
-          <div className="flex flex-wrap items-center justify-between gap-10">
-            <Link to="/" className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-lime-300 bg-lime-300 text-sm font-black text-slate-950">
-                PB
-              </span>
-              <span className="text-lg font-black tracking-tight text-white">
-                PicklePark
-              </span>
-            </Link>
-
-            <nav className="flex flex-wrap items-center gap-5 text-xs font-black uppercase tracking-[0.18em]">
-              {["Club", "Courts", "Programs", "Events", "Reviews", "About"].map(
-                (link) => (
-                  <a
-                    key={link}
-                    href="#"
-                    className="transition hover:text-lime-300"
-                  >
-                    {link}
-                  </a>
-                ),
-              )}
-              <a href="#" className="transition hover:text-lime-300">
-                Contact
-              </a>
-            </nav>
-
-            <div className="flex items-center gap-3">
-              {["Instagram", "Facebook", "LinkedIn"].map((label) => (
-                <a
-                  key={label}
-                  href="#"
-                  className="inline-flex items-center justify-center"
-                >
-                  <svg
-                    className="h-9 w-9 rounded-full border border-slate-200 p-2 text-slate-600 transition hover:bg-lime-300 hover:text-slate-950"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    aria-label={label}
-                  >
-                    {label === "Instagram" && (
-                      <>
-                        <rect
-                          x="3"
-                          y="3"
-                          width="18"
-                          height="18"
-                          rx="5"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        />
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="4"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        />
-                        <circle cx="16.5" cy="7.5" r="1" fill="currentColor" />
-                      </>
-                    )}
-                    {label === "Facebook" && (
-                      <path
-                        d="M14 8h3V4h-3c-3 0-5 2-5 5v2H7v4h2v6h4v-6h3l1-4h-4V9c0-.6.4-1 1-1Z"
-                        fill="currentColor"
-                      />
-                    )}
-                    {label === "LinkedIn" && (
-                      <path
-                        d="M4 4h4v16H4zM10 4h4v3h.2c.7-1.3 2.3-2.6 4.8-2.6C20.4 4.4 21 7 21 9.2V20h-4v-18.8C17 10.2 16.7 10 16.2 10H14v10h-4z"
-                        fill="currentColor"
-                      />
-                    )}
-                  </svg>
-                </a>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-6 text-xs font-black uppercase tracking-[0.2em] text-emerald-200">
-            <span>© 2026 PicklePark</span>
-            <span className="text-lime-300">
-              Open play • Club courts • Leagues
-            </span>
-          </div>
-        </div>
-      </footer>
+      <FooterComponent />
     </div>
   );
 }

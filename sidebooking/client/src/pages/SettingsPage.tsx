@@ -14,6 +14,14 @@ type BusinessSettings = {
     isOpen24Hours?: boolean;
     courtsCount?: number;
     disabledCourts?: string[];
+    settings?: {
+      payments?: {
+        paymongo?: {
+          configured?: boolean;
+          keyLast4?: string;
+        };
+      };
+    };
   } | null;
 };
 
@@ -30,6 +38,9 @@ export function SettingsPage() {
   const [disabledCourts, setDisabledCourts] = useState<string[]>([]);
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const [paymongoSecretKey, setPaymongoSecretKey] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState("");
+  const [paymentBusy, setPaymentBusy] = useState(false);
 
   const courtOptions = Array.from(
     { length: Math.max(1, courtsCount) },
@@ -134,6 +145,44 @@ export function SettingsPage() {
       setStatus(err instanceof Error ? err.message : "Unable to update hours");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function savePaymentSettings(event: React.FormEvent) {
+    event.preventDefault();
+    if (!paymongoSecretKey.trim()) {
+      setPaymentStatus("Paste a PayMongo secret key before saving.");
+      return;
+    }
+
+    setPaymentBusy(true);
+    setPaymentStatus("");
+    try {
+      const response = await apiRequest<{
+        business: BusinessSettings["business"];
+      }>("/business/", {
+        method: "PUT",
+        body: JSON.stringify({
+          name: business?.name ?? "Maria Studio",
+          slug: business?.slug ?? "maria-studio",
+          description: business?.description ?? "",
+          settings: {
+            payments: {
+              paymongo: { secretKey: paymongoSecretKey.trim() },
+            },
+          },
+        }),
+      });
+
+      setBusiness(response.business);
+      setPaymongoSecretKey("");
+      setPaymentStatus("PayMongo is connected and ready for online bookings.");
+    } catch (err) {
+      setPaymentStatus(
+        err instanceof Error ? err.message : "Unable to save payment settings",
+      );
+    } finally {
+      setPaymentBusy(false);
     }
   }
 
@@ -311,7 +360,9 @@ export function SettingsPage() {
               min={1}
               max={12}
               value={slotsPerHour}
-              onChange={(event) => setSlotsPerHour(Number(event.target.value) || 1)}
+              onChange={(event) =>
+                setSlotsPerHour(Number(event.target.value) || 1)
+              }
               className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"
             />
           </label>
@@ -319,7 +370,9 @@ export function SettingsPage() {
             Time per slot
             <select
               value={slotIntervalMinutes}
-              onChange={(event) => setSlotIntervalMinutes(Number(event.target.value))}
+              onChange={(event) =>
+                setSlotIntervalMinutes(Number(event.target.value))
+              }
               className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"
             >
               <option value={15}>15 min</option>
@@ -400,6 +453,50 @@ export function SettingsPage() {
         </div>
 
         {status && <p className="mt-3 text-sm text-slate-600">{status}</p>}
+      </section>
+
+      <section className="page-card p-5">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">
+            Payment processor
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Connect PayMongo for card, GCash, and Maya checkout payments.
+          </p>
+        </div>
+
+        <form onSubmit={savePaymentSettings} className="mt-4 space-y-4">
+          <label className="block text-sm font-medium text-slate-700">
+            PayMongo secret key
+            <input
+              type="password"
+              value={paymongoSecretKey}
+              onChange={(event) => setPaymongoSecretKey(event.target.value)}
+              placeholder={
+                business?.settings?.payments?.paymongo?.configured
+                  ? `Connected (...${business.settings.payments.paymongo.keyLast4 ?? ""})`
+                  : "sk_test_..."
+              }
+              autoComplete="new-password"
+              className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"
+            />
+          </label>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-slate-500">
+              Your key is stored on the server and never shown after saving.
+            </p>
+            <button
+              type="submit"
+              disabled={paymentBusy}
+              className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {paymentBusy ? "Connecting..." : "Connect PayMongo"}
+            </button>
+          </div>
+          {paymentStatus && (
+            <p className="text-sm text-slate-600">{paymentStatus}</p>
+          )}
+        </form>
       </section>
 
       <section className="page-card p-5">

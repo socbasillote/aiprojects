@@ -10,6 +10,7 @@ import { customerRouter } from "./routes/customer.routes.js";
 import { publicRouter } from "./routes/public.routes.js";
 import { serviceRouter } from "./routes/service.routes.js";
 import { teamRouter } from "./routes/team.routes.js";
+import { handlePayMongoWebhook } from "./controllers/public.controller.js";
 
 export const app = express();
 
@@ -22,6 +23,11 @@ app.use(
   }),
 );
 app.use(helmet());
+app.post(
+  "/api/payments/paymongo/webhook",
+  express.raw({ type: "application/json" }),
+  handlePayMongoWebhook,
+);
 app.use(express.json({ limit: "1mb" }));
 app.use(
   rateLimit({

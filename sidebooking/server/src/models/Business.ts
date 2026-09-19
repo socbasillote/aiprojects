@@ -51,6 +51,9 @@ export interface IBusiness extends Document {
       };
     };
     payments: {
+      paymongo?: {
+        secretKey?: string;
+      };
       paymentTypes: Array<{
         name: string;
         description?: string;

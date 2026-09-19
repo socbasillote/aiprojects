@@ -47,7 +47,8 @@ export type PaymentMethod =
   | "Card"
   | "GCash"
   | "Bank transfer"
-  | "PayPal";
+  | "PayPal"
+  | "PayMongo";
 export type BookingPayload = {
   bookings: Array<{
     id: string;

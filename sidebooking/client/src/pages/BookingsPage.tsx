@@ -18,7 +18,13 @@ type Booking = {
   time: string;
   status: "Confirmed" | "Pending" | "Completed" | "Rejected";
   payment: "Unpaid" | "Deposit" | "Paid";
-  paymentMethod: "Cash" | "Card" | "GCash" | "Bank transfer" | "PayPal";
+  paymentMethod:
+    | "Cash"
+    | "Card"
+    | "GCash"
+    | "Bank transfer"
+    | "PayPal"
+    | "PayMongo";
 };
 
 export function BookingsPage() {
@@ -293,6 +299,7 @@ export function BookingsPage() {
                 <option>GCash</option>
                 <option>Bank transfer</option>
                 <option>PayPal</option>
+                <option>PayMongo</option>
               </select>
             </div>
             <div className="mt-6 flex justify-end gap-3">
