@@ -3,6 +3,7 @@ import { z } from "zod";
 import QRCode from "qrcode";
 import { Business } from "../models/Business.js";
 import { Booking } from "../models/Booking.js";
+import { syncCustomerFromBooking } from "../services/customer.service.js";
 import { Service } from "../models/Service.js";
 import { sendBookingConfirmation } from "../services/email.service.js";
 import {
@@ -306,6 +307,13 @@ export async function createPublicBooking(req: Request, res: Response) {
   }
 
   const created = [];
+  await syncCustomerFromBooking({
+    businessId: business._id.toString(),
+    name: input.customer,
+    email: input.email,
+    phone: input.phone,
+  });
+
   for (const slot of chosenSlots) {
     const existing = await Booking.findOne({
       businessId: business._id,

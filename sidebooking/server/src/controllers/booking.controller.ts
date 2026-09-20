@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Booking } from "../models/Booking.js";
 import { Business } from "../models/Business.js";
 import { sendBookingConfirmation } from "../services/email.service.js";
+import { syncCustomerFromBooking } from "../services/customer.service.js";
 import type { AuthRequest } from "../middleware/auth.js";
 
 const bookingSchema = z.object({
@@ -56,6 +57,12 @@ export async function createBooking(req: AuthRequest, res: Response) {
     ...payload,
     businessId,
     confirmationCode,
+  });
+
+  await syncCustomerFromBooking({
+    businessId,
+    name: payload.customer,
+    email: payload.email,
   });
 
   return res.status(201).json({ success: true, data: { booking } });
