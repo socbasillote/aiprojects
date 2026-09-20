@@ -51,13 +51,20 @@ const footerNav = [
   { label: "Settings", to: "/settings", icon: Settings },
 ];
 
+const restrictedForStaff = new Set([
+  "Team",
+  "Promotions",
+  "Reports",
+  "Settings",
+]);
+
 export function Layout({ children }: { children: ReactNode }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
-  const [notifications, setNotifications] = useState<BookingNotification[]>(
-    getNotifications,
-  );
+  const isStaff = user?.role === "staff";
+  const [notifications, setNotifications] =
+    useState<BookingNotification[]>(getNotifications);
   const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
@@ -122,18 +129,22 @@ export function Layout({ children }: { children: ReactNode }) {
               Operations
             </div>
             <div className="space-y-1">
-              {operationsNav.map(({ label, to, icon: Icon }) => (
-                <NavLink
-                  key={label}
-                  to={to}
-                  className={({ isActive }) =>
-                    `sidebar-item flex items-center gap-3 rounded-xl px-3 py-2 ${isActive ? "active" : ""}`
-                  }
-                >
-                  <Icon size={16} className="shrink-0" />
-                  <span className="leading-none">{label}</span>
-                </NavLink>
-              ))}
+              {operationsNav
+                .filter(
+                  ({ label }) => !(isStaff && restrictedForStaff.has(label)),
+                )
+                .map(({ label, to, icon: Icon }) => (
+                  <NavLink
+                    key={label}
+                    to={to}
+                    className={({ isActive }) =>
+                      `sidebar-item flex items-center gap-3 rounded-xl px-3 py-2 ${isActive ? "active" : ""}`
+                    }
+                  >
+                    <Icon size={16} className="shrink-0" />
+                    <span className="leading-none">{label}</span>
+                  </NavLink>
+                ))}
             </div>
           </div>
 
@@ -142,35 +153,41 @@ export function Layout({ children }: { children: ReactNode }) {
               Growth
             </div>
             <div className="space-y-1">
-              {growthNav.map(({ label, to, icon: Icon }) => (
-                <NavLink
-                  key={label}
-                  to={to}
-                  className={({ isActive }) =>
-                    `sidebar-item flex items-center gap-3 rounded-xl px-3 py-2 ${isActive ? "active" : ""}`
-                  }
-                >
-                  <Icon size={16} className="shrink-0" />
-                  <span className="leading-none">{label}</span>
-                </NavLink>
-              ))}
+              {growthNav
+                .filter(
+                  ({ label }) => !(isStaff && restrictedForStaff.has(label)),
+                )
+                .map(({ label, to, icon: Icon }) => (
+                  <NavLink
+                    key={label}
+                    to={to}
+                    className={({ isActive }) =>
+                      `sidebar-item flex items-center gap-3 rounded-xl px-3 py-2 ${isActive ? "active" : ""}`
+                    }
+                  >
+                    <Icon size={16} className="shrink-0" />
+                    <span className="leading-none">{label}</span>
+                  </NavLink>
+                ))}
             </div>
           </div>
         </nav>
 
         <div className="mt-auto space-y-1 border-t border-slate-200 pt-4">
-          {footerNav.map(({ label, to, icon: Icon }) => (
-            <NavLink
-              key={label}
-              to={to}
-              className={({ isActive }) =>
-                `sidebar-item flex items-center gap-3 rounded-xl px-3 py-2 ${isActive ? "active" : ""}`
-              }
-            >
-              <Icon size={16} className="shrink-0" />
-              <span className="leading-none">{label}</span>
-            </NavLink>
-          ))}
+          {footerNav
+            .filter(({ label }) => !(isStaff && restrictedForStaff.has(label)))
+            .map(({ label, to, icon: Icon }) => (
+              <NavLink
+                key={label}
+                to={to}
+                className={({ isActive }) =>
+                  `sidebar-item flex items-center gap-3 rounded-xl px-3 py-2 ${isActive ? "active" : ""}`
+                }
+              >
+                <Icon size={16} className="shrink-0" />
+                <span className="leading-none">{label}</span>
+              </NavLink>
+            ))}
         </div>
 
         <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -183,7 +200,9 @@ export function Layout({ children }: { children: ReactNode }) {
                 <div className="font-medium text-slate-900">
                   {user?.name ?? "Alicia"}
                 </div>
-                <div className="text-xs text-slate-500">Owner</div>
+                <div className="text-xs capitalize text-slate-500">
+                  {user?.role ?? "owner"}
+                </div>
               </div>
             </div>
             <button
@@ -226,7 +245,10 @@ export function Layout({ children }: { children: ReactNode }) {
                 <Bell size={18} />
                 {notifications.some((notification) => !notification.read) && (
                   <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-bold text-white">
-                    {notifications.filter((notification) => !notification.read).length}
+                    {
+                      notifications.filter((notification) => !notification.read)
+                        .length
+                    }
                   </span>
                 )}
               </button>
@@ -263,14 +285,16 @@ export function Layout({ children }: { children: ReactNode }) {
                   )}
                 </div>
               )}
-              <button
-                onClick={() => navigate("/bookings?new=1")}
-                className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
-              >
-                <span className="inline-flex items-center gap-2">
-                  New Booking
-                </span>
-              </button>
+              {!isStaff && (
+                <button
+                  onClick={() => navigate("/settings")}
+                  className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    Business Settings
+                  </span>
+                </button>
+              )}
             </div>
           </div>
         </header>

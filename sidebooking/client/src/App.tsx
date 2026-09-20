@@ -23,7 +23,9 @@ import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 
 function ProtectedApp() {
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, user } = useSelector(
+    (state: RootState) => state.auth,
+  );
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -38,9 +40,37 @@ function ProtectedApp() {
         <Route path="/bookings" element={<BookingsPage />} />
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/services" element={<ServicesPage />} />
-        <Route path="/team" element={<TeamPage />} />
-        <Route path="/promotions" element={<PromotionsPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
+        <Route
+          path="/team"
+          element={
+            user?.role === "staff" ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <TeamPage />
+            )
+          }
+        />
+        <Route
+          path="/promotions"
+          element={
+            user?.role === "staff" ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <PromotionsPage />
+            )
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            user?.role === "staff" ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <SettingsPage />
+            )
+          }
+        />
+        <Route path="/reports" element={<Navigate to="/dashboard" replace />} />
         <Route path="/onboarding" element={<BusinessSetupPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

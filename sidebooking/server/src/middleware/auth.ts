@@ -10,6 +10,20 @@ export type AuthRequest = Request & {
   businessId?: string;
 };
 
+export function requireRole(...roles: string[]) {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.userRole || !roles.includes(req.userRole)) {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "You do not have access to this resource",
+        });
+    }
+    next();
+  };
+}
+
 export async function requireAuth(
   req: AuthRequest,
   res: Response,
@@ -45,12 +59,10 @@ export async function requireAuth(
     if (businessId) {
       const business = await Business.findById(businessId);
       if (!business || !business.isActive) {
-        return res
-          .status(403)
-          .json({
-            success: false,
-            message: "Business access is not available",
-          });
+        return res.status(403).json({
+          success: false,
+          message: "Business access is not available",
+        });
       }
       req.businessId = businessId;
     }

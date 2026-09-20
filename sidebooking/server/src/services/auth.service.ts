@@ -75,3 +75,32 @@ export async function loginUser(input: { email: string; password: string }) {
     token,
   };
 }
+
+export async function createStaffUser(input: {
+  name: string;
+  email: string;
+  password: string;
+  businessId: string;
+}) {
+  const existing = await User.findOne({ email: input.email.toLowerCase() });
+
+  if (existing) {
+    throw new Error("A user with that email already exists");
+  }
+
+  const passwordHash = await bcrypt.hash(input.password, 10);
+  const user = await User.create({
+    name: input.name,
+    email: input.email.toLowerCase(),
+    passwordHash,
+    role: "staff",
+    businessIds: [input.businessId],
+  });
+
+  return {
+    id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+}
