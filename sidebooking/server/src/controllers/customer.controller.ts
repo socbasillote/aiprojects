@@ -7,7 +7,9 @@ import type { AuthRequest } from "../middleware/auth.js";
 export async function listCustomers(req: AuthRequest, res: Response) {
   const businessId = req.businessId;
   if (!businessId) {
-    return res.status(400).json({ success: false, message: "Business context is required" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Business context is required" });
   }
 
   const bookings = await Booking.find({ businessId }).select(

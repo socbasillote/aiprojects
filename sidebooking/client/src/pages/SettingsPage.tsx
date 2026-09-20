@@ -230,10 +230,10 @@ export function SettingsPage() {
   ];
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
+    <div className="min-w-0 space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
             Settings
           </h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -286,8 +286,8 @@ export function SettingsPage() {
         </section>
       </div>
 
-      <section className="page-card p-5">
-        <div className="flex items-center justify-between gap-3">
+      <section className="page-card min-w-0 p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
               Opening Hours
@@ -306,7 +306,7 @@ export function SettingsPage() {
         <form
           id="business-settings-form"
           onSubmit={saveBusinessHours}
-          className="mt-4 grid gap-4 md:grid-cols-5"
+          className="mt-4 grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-5"
         >
           <label className="text-sm font-medium text-slate-700">
             Open hours

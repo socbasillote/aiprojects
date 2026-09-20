@@ -119,14 +119,14 @@ export function BookingsPage() {
   });
 
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-5">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
           Bookings
         </h1>
         <button
           onClick={() => setOpen(true)}
-          className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+          className="w-full shrink-0 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 md:w-auto"
         >
           + New Booking
         </button>
@@ -137,12 +137,12 @@ export function BookingsPage() {
         </div>
       )}
       <div className="page-card overflow-hidden">
-        <div className="flex flex-wrap gap-3 border-b border-slate-200 p-4">
+        <div className="flex min-w-0 flex-wrap gap-3 border-b border-slate-200 p-4">
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search customer, service or staff"
-            className="w-full min-w-56 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"
+            className="w-full min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"
           />
           <input
             type="date"

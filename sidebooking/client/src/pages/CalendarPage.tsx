@@ -143,8 +143,8 @@ export function CalendarPage() {
   });
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
+    <div className="min-w-0 space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -155,7 +155,7 @@ export function CalendarPage() {
           </h1>
         </div>
         <button
-          className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
+          className="w-full shrink-0 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800 sm:w-auto"
           onClick={() => setShowForm(true)}
         >
           + New Booking
@@ -224,91 +224,94 @@ export function CalendarPage() {
           </div>
         </div>
 
-        <div className="p-4">
-          <div className="grid grid-cols-7 gap-2 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            {days.map((day) => (
-              <div key={day} className="rounded-lg bg-slate-50 py-2">
-                {day}
-              </div>
-            ))}
-          </div>
+        <div className="min-w-0 overflow-x-auto p-4">
+          <div className="min-w-[44rem]">
+            <div className="grid grid-cols-7 gap-2 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              {days.map((day) => (
+                <div key={day} className="rounded-lg bg-slate-50 py-2">
+                  {day}
+                </div>
+              ))}
+            </div>
 
-          <div className="mt-2 grid grid-cols-7 gap-2">
-            {calendarCells.map((cell, idx) => {
-              if (!cell.date) {
+            <div className="mt-2 grid grid-cols-7 gap-2">
+              {calendarCells.map((cell, idx) => {
+                if (!cell.date) {
+                  return (
+                    <div
+                      key={`empty-${idx}`}
+                      className="min-h-28 rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-2"
+                    />
+                  );
+                }
+
+                const dateBookings = bookings.filter(
+                  (booking) => booking.date === cell.key,
+                );
+                const isToday = cell.key === toDateKey(new Date());
                 return (
                   <div
-                    key={`empty-${idx}`}
-                    className="min-h-28 rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-2"
-                  />
-                );
-              }
-
-              const dateBookings = bookings.filter(
-                (booking) => booking.date === cell.key,
-              );
-              const isToday = cell.key === toDateKey(new Date());
-              return (
-                <div
-                  key={cell.key}
-                  className={`min-h-28 rounded-2xl border p-2 shadow-sm transition ${
-                    isToday
-                      ? "border-violet-400 bg-violet-50/40"
-                      : "border-slate-200 bg-white hover:shadow-md"
-                  }`}
-                >
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-left text-sm font-semibold text-slate-700">
-                      {cell.dayNumber}
-                    </span>
-                    {isToday && (
-                      <span className="rounded-full bg-violet-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                        Today
+                    key={cell.key}
+                    className={`min-h-28 rounded-2xl border p-2 shadow-sm transition ${
+                      isToday
+                        ? "border-violet-400 bg-violet-50/40"
+                        : "border-slate-200 bg-white hover:shadow-md"
+                    }`}
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-left text-sm font-semibold text-slate-700">
+                        {cell.dayNumber}
                       </span>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    {dateBookings.length === 0 ? (
-                      <div className="rounded-lg border border-dashed border-slate-200 px-2 py-1 text-[10px] font-medium text-slate-400">
-                        Free
-                      </div>
-                    ) : (
-                      dateBookings.map((booking) => (
-                        <button
-                          key={booking.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedBooking(booking);
-                            setEditDraft({ ...booking });
-                          }}
-                          className={`w-full rounded-xl px-2 py-1 text-left text-[11px] leading-4 shadow-sm transition ${
-                            booking.status === "Rejected"
-                              ? "bg-red-600 text-white hover:bg-red-500"
-                              : booking.status === "Confirmed"
-                                ? "bg-emerald-600 text-white hover:bg-emerald-500"
-                                : booking.status === "Completed"
-                                  ? "bg-sky-600 text-white hover:bg-sky-500"
-                                  : "bg-slate-900 text-white hover:bg-slate-700"
-                          }`}
-                        >
-                          <div className="truncate font-semibold">
-                            {booking.customer.slice(0, 12)} — {booking.service}
-                          </div>
-                          <div className="mt-0.5 opacity-90">
-                            {booking.time}
-                          </div>
-                          {booking.status === "Rejected" && (
-                            <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-100">
-                              Rejected
+                      {isToday && (
+                        <span className="rounded-full bg-violet-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                          Today
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      {dateBookings.length === 0 ? (
+                        <div className="rounded-lg border border-dashed border-slate-200 px-2 py-1 text-[10px] font-medium text-slate-400">
+                          Free
+                        </div>
+                      ) : (
+                        dateBookings.map((booking) => (
+                          <button
+                            key={booking.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedBooking(booking);
+                              setEditDraft({ ...booking });
+                            }}
+                            className={`w-full rounded-xl px-2 py-1 text-left text-[11px] leading-4 shadow-sm transition ${
+                              booking.status === "Rejected"
+                                ? "bg-red-600 text-white hover:bg-red-500"
+                                : booking.status === "Confirmed"
+                                  ? "bg-emerald-600 text-white hover:bg-emerald-500"
+                                  : booking.status === "Completed"
+                                    ? "bg-sky-600 text-white hover:bg-sky-500"
+                                    : "bg-slate-900 text-white hover:bg-slate-700"
+                            }`}
+                          >
+                            <div className="truncate font-semibold">
+                              {booking.customer.slice(0, 12)} —{" "}
+                              {booking.service}
                             </div>
-                          )}
-                        </button>
-                      ))
-                    )}
+                            <div className="mt-0.5 opacity-90">
+                              {booking.time}
+                            </div>
+                            {booking.status === "Rejected" && (
+                              <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-100">
+                                Rejected
+                              </div>
+                            )}
+                          </button>
+                        ))
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

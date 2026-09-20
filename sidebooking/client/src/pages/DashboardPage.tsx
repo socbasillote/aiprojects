@@ -98,28 +98,24 @@ export function DashboardPage() {
     ];
   }, [bookings]);
 
-  const schedule = bookings
-    .slice(0, 4)
-    .map((row) => ({
-      time: row.time,
-      customer: row.customer,
-      service: row.service,
-      staff: row.staff,
-      status: row.status,
-      payment: row.payment,
-    }));
-  const revenueData = bookings
-    .slice(0, 7)
-    .map((row, idx) => ({
-      day: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][idx % 7],
-      value:
-        1000 +
-        idx * 400 +
-        (row.payment === "Paid" ? 800 : row.payment === "Deposit" ? 400 : 100),
-    }));
+  const schedule = bookings.slice(0, 4).map((row) => ({
+    time: row.time,
+    customer: row.customer,
+    service: row.service,
+    staff: row.staff,
+    status: row.status,
+    payment: row.payment,
+  }));
+  const revenueData = bookings.slice(0, 7).map((row, idx) => ({
+    day: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][idx % 7],
+    value:
+      1000 +
+      idx * 400 +
+      (row.payment === "Paid" ? 800 : row.payment === "Deposit" ? 400 : 100),
+  }));
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-sm text-slate-500">Good afternoon 👋</p>
@@ -127,7 +123,7 @@ export function DashboardPage() {
             Here’s what’s happening today.
           </h1>
         </div>
-        <button className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800">
+        <button className="w-full shrink-0 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 md:w-auto">
           + New Booking
         </button>
       </div>
