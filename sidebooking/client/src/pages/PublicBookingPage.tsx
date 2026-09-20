@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiRequest } from "../lib/api";
+import { addBookingNotification } from "../lib/notifications";
 import HeaderComponent from "./HomeComponent/HeaderComponent";
 import FooterComponent from "./HomeComponent/FooterComponent";
 
@@ -290,6 +291,11 @@ export function PublicBookingPage() {
       const next = await apiRequest<Confirmation>(`/public/${slug}/bookings`, {
         method: "POST",
         body: JSON.stringify(payload),
+      });
+      addBookingNotification({
+        customer: payload.customer,
+        date,
+        time: selectedSlots[0]?.time,
       });
       if (next.checkoutUrl) {
         window.location.assign(next.checkoutUrl);

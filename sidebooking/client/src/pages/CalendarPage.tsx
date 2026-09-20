@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../lib/api";
+import { addBookingNotification } from "../lib/notifications";
 
 type Booking = {
   id: string;
@@ -87,10 +88,11 @@ export function CalendarPage() {
     setError("");
 
     try {
-      await apiRequest<{ booking: Booking }>("/bookings/", {
+      const result = await apiRequest<{ booking: Booking }>("/bookings/", {
         method: "POST",
         body: JSON.stringify(draft),
       });
+      addBookingNotification(result.booking ?? draft);
       const data = await apiRequest<{ bookings: Booking[] }>("/bookings/");
       setBookings(
         (data.bookings ?? []).map((row) =>

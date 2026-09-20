@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Bell,
@@ -18,6 +19,13 @@ import {
 } from "lucide-react";
 import { logout } from "../features/auth/authSlice";
 import type { RootState } from "../store/store";
+import {
+  activateBookingNotifications,
+  getNotifications,
+  markNotificationsRead,
+  notificationEvent,
+  type BookingNotification,
+} from "../lib/notifications";
 
 const businessNav = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
@@ -47,6 +55,31 @@ export function Layout({ children }: { children: ReactNode }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
+  const [notifications, setNotifications] = useState<BookingNotification[]>(
+    getNotifications,
+  );
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    const refreshNotifications = () => setNotifications(getNotifications());
+    window.addEventListener(notificationEvent, refreshNotifications);
+    window.addEventListener("storage", refreshNotifications);
+    return () => {
+      window.removeEventListener(notificationEvent, refreshNotifications);
+      window.removeEventListener("storage", refreshNotifications);
+    };
+  }, []);
+
+  function openNotifications() {
+    setShowNotifications((isOpen) => {
+      if (!isOpen) {
+        markNotificationsRead();
+        setNotifications(getNotifications());
+      }
+      return !isOpen;
+    });
+    void activateBookingNotifications();
+  }
 
   return (
     <div className="app-shell flex min-h-screen bg-slate-50 text-slate-900">
@@ -183,10 +216,53 @@ export function Layout({ children }: { children: ReactNode }) {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <button className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50">
+            <div className="relative flex items-center gap-3">
+              <button
+                onClick={openNotifications}
+                className="relative rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50"
+                aria-label="Open notifications"
+                aria-expanded={showNotifications}
+              >
                 <Bell size={18} />
+                {notifications.some((notification) => !notification.read) && (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-bold text-white">
+                    {notifications.filter((notification) => !notification.read).length}
+                  </span>
+                )}
               </button>
+              {showNotifications && (
+                <div className="absolute right-0 top-12 z-30 w-80 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+                  <div className="flex items-center justify-between px-1 pb-2">
+                    <div className="text-sm font-semibold text-slate-900">
+                      Notifications
+                    </div>
+                    <span className="text-xs text-slate-400">
+                      {notifications.length} total
+                    </span>
+                  </div>
+                  {notifications.length === 0 ? (
+                    <p className="px-1 py-5 text-center text-sm text-slate-500">
+                      No bookings yet.
+                    </p>
+                  ) : (
+                    <div className="max-h-72 space-y-1 overflow-y-auto">
+                      {notifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className="rounded-lg bg-slate-50 px-3 py-2"
+                        >
+                          <div className="text-sm font-medium text-slate-900">
+                            {notification.title}
+                          </div>
+                          <div className="mt-0.5 text-xs text-slate-500">
+                            {notification.message}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <button
                 onClick={() => navigate("/bookings?new=1")}
                 className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
