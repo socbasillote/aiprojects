@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
   CalendarClock,
@@ -22,6 +23,7 @@ type Booking = {
   customer: string;
   email: string;
   service: string;
+  amount?: number;
   staff: string;
   date: string;
   time: string;
@@ -35,6 +37,7 @@ type Booking = {
     | "PayPal"
     | "PayMongo";
 };
+type BookingResponse = Booking & { _id?: string };
 
 export function DashboardPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -43,11 +46,13 @@ export function DashboardPage() {
   useEffect(() => {
     async function loadDashboard() {
       try {
-        const data = await apiRequest<{ bookings: Booking[] }>("/bookings/");
+        const data = await apiRequest<{ bookings: BookingResponse[] }>(
+          "/bookings/",
+        );
         setBookings(
           (data.bookings ?? []).map((row) => ({
             ...row,
-            id: (row as any).id ?? (row as any)._id,
+            id: row.id ?? row._id ?? "",
           })),
         );
       } catch (err) {
@@ -59,28 +64,33 @@ export function DashboardPage() {
     void loadDashboard();
   }, []);
 
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayBookings = useMemo(
+    () =>
+      bookings
+        .filter((row) => row.date === todayKey)
+        .sort((first, second) => first.time.localeCompare(second.time)),
+    [bookings, todayKey],
+  );
+
   const stats = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    const todayBookings = bookings.filter((row) => row.date === today);
     const pending = bookings.filter((row) => row.status === "Pending");
-    const revenue = bookings.reduce(
-      (sum, row) =>
-        sum +
-        (row.payment === "Paid" ? 250 : row.payment === "Deposit" ? 150 : 0),
+    const todayRevenue = todayBookings.reduce(
+      (sum, row) => sum + (row.payment === "Paid" ? Number(row.amount ?? 0) : 0),
       0,
     );
 
     return [
       {
         label: "Today's Bookings",
-        value: String(todayBookings.length || bookings.length || 0),
-        change: "+14%",
+        value: String(todayBookings.length),
+        change: `${todayBookings.length} scheduled`,
         icon: CalendarClock,
       },
       {
         label: "Today's Revenue",
-        value: `₱${revenue.toLocaleString()}`,
-        change: "+9%",
+        value: `₱${todayRevenue.toLocaleString()}`,
+        change: "From today's bookings",
         icon: CreditCard,
       },
       {
@@ -96,9 +106,9 @@ export function DashboardPage() {
         icon: Users,
       },
     ];
-  }, [bookings]);
+  }, [bookings, todayBookings]);
 
-  const schedule = bookings.slice(0, 4).map((row) => ({
+  const schedule = todayBookings.map((row) => ({
     time: row.time,
     customer: row.customer,
     service: row.service,
@@ -162,15 +172,21 @@ export function DashboardPage() {
             <h2 className="text-lg font-semibold text-slate-900">
               Today’s Schedule
             </h2>
-            <button className="text-sm text-slate-600 hover:text-slate-900">
+
+            <Link
+              to="/calendar"
+              className="text-sm text-slate-600 hover:text-slate-900"
+            >
               View all
-            </button>
+            </Link>
           </div>
+
           <div className="space-y-3">
             {schedule.length === 0 && (
               <div className="text-sm text-slate-500">No bookings yet.</div>
             )}
-            {schedule.map((booking) => (
+
+            {schedule.slice(0, 3).map((booking) => (
               <div
                 key={`${booking.time}-${booking.customer}`}
                 className="flex flex-col gap-3 rounded-xl border border-slate-200 p-3 md:flex-row md:items-center md:justify-between"
@@ -179,6 +195,7 @@ export function DashboardPage() {
                   <div className="w-14 text-sm font-semibold text-slate-500">
                     {booking.time}
                   </div>
+
                   <div>
                     <div className="font-medium text-slate-900">
                       {booking.customer}
@@ -188,44 +205,29 @@ export function DashboardPage() {
                     </div>
                   </div>
                 </div>
+
                 <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 md:justify-end">
                   <span className="rounded-full bg-slate-100 px-2.5 py-1">
                     {booking.staff}
                   </span>
+
                   <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
                     {booking.status}
                   </span>
+
                   <span className="rounded-full bg-sky-50 px-2.5 py-1 text-sky-700">
                     {booking.payment}
                   </span>
                 </div>
               </div>
             ))}
-          </div>
-        </div>
 
-        <div className="page-card p-5">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Needs Attention
-          </h2>
-          <ul className="mt-4 space-y-3">
-            <li className="flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50 p-3 text-sm text-amber-800">
-              <span className="mt-1 h-2.5 w-2.5 rounded-full bg-amber-500" />
-              {Math.max(
-                bookings.filter((row) => row.status === "Pending").length,
-                0,
-              )}{" "}
-              pending booking(s) need confirmation
-            </li>
-            <li className="flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50 p-3 text-sm text-amber-800">
-              <span className="mt-1 h-2.5 w-2.5 rounded-full bg-amber-500" />
-              {Math.max(
-                bookings.filter((row) => row.payment === "Unpaid").length,
-                0,
-              )}{" "}
-              unpaid invoices
-            </li>
-          </ul>
+            {schedule.length > 3 && (
+              <div className="pt-1 text-center text-xs text-slate-400">
+                +{schedule.length - 3} more scheduled today
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

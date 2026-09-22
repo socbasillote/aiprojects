@@ -157,3 +157,19 @@ button a,
 .court-time-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(23, 63, 45, 0.4);
 }
+
+/* Keep the weekly court matrix aligned while the time axis remains visible. */
+.min-w-\[760px\] {
+  min-width: 980px;
+}
+
+.min-w-\[760px\] > .grid:first-child {
+  grid-template-rows: auto auto;
+}
+
+.min-w-\[760px\] > .grid:last-child > .contents > div:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #fff;
+}

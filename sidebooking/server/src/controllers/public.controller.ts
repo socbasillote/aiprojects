@@ -289,21 +289,24 @@ export async function createPublicBooking(req: Request, res: Response) {
   const normalizedPayment =
     input.paymentMethod === "PayPal" ? "Paid" : input.payment;
 
-  let servicePrice = 0;
-  if (input.paymentMethod === "PayMongo") {
-    const service = await Service.findOne({
-      businessId: business._id,
-      name: input.service,
-      isActive: true,
-      onlineBookingEnabled: true,
-    }).select("price");
-    servicePrice = Number(service?.price ?? 0);
-    if (!service || servicePrice <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "This service is not available for online payment.",
-      });
-    }
+  const service = await Service.findOne({
+    businessId: business._id,
+    name: input.service,
+    isActive: true,
+    onlineBookingEnabled: true,
+  }).select("price");
+  const servicePrice = Number(service?.price ?? 0);
+  if (!service) {
+    return res.status(400).json({
+      success: false,
+      message: "This service is no longer available.",
+    });
+  }
+  if (input.paymentMethod === "PayMongo" && servicePrice <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "This service is not available for online payment.",
+    });
   }
 
   const created = [];
@@ -338,6 +341,7 @@ export async function createPublicBooking(req: Request, res: Response) {
       email: input.email,
       phone: input.phone,
       service: input.service,
+      amount: servicePrice,
       staff: input.staff,
       court: slot.court,
       date: input.date,

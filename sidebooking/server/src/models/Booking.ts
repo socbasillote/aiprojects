@@ -6,14 +6,23 @@ export interface IBooking extends Document {
   email: string;
   phone?: string;
   service: string;
+  amount: number;
   staff: string;
   court: string;
   date: string;
   time: string;
   payment: "Unpaid" | "Deposit" | "Paid";
-  paymentMethod: "Cash" | "Card" | "GCash" | "Bank transfer" | "PayPal";
-  status: "Pending" | "Confirmed" | "Completed";
+  paymentMethod:
+    | "Cash"
+    | "Card"
+    | "GCash"
+    | "Bank transfer"
+    | "PayPal"
+    | "PayMongo";
+  status: "Pending" | "Confirmed" | "Completed" | "Rejected";
   confirmationCode: string;
+  paymongoCheckoutSessionId?: string;
+  confirmationEmailSentAt?: Date;
   createdAt: Date;
 }
 
@@ -28,6 +37,7 @@ const bookingSchema = new Schema<IBooking>(
     email: { type: String, required: true, lowercase: true, trim: true },
     phone: { type: String, trim: true, default: "" },
     service: { type: String, required: true, trim: true },
+    amount: { type: Number, required: true, min: 0, default: 0 },
     staff: { type: String, required: true, default: "Maria", trim: true },
     court: { type: String, required: true, default: "Court 1", trim: true },
     date: { type: String, required: true },

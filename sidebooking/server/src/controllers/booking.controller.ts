@@ -1,9 +1,8 @@
 import type { Response } from "express";
 import { z } from "zod";
 import { Booking } from "../models/Booking.js";
-import { Business } from "../models/Business.js";
-import { sendBookingConfirmation } from "../services/email.service.js";
 import { syncCustomerFromBooking } from "../services/customer.service.js";
+import { Service } from "../models/Service.js";
 import type { AuthRequest } from "../middleware/auth.js";
 
 const bookingSchema = z.object({
@@ -11,6 +10,7 @@ const bookingSchema = z.object({
   email: z.string().email(),
   service: z.string().trim().min(2),
   staff: z.string().trim().min(2).default("Maria"),
+  court: z.string().trim().min(1).default("Court 1"),
   date: z.string().min(8),
   time: z.string().regex(/^([01]\d|2[0-3]):(00|30)$/),
   status: z.enum(["Pending", "Confirmed", "Completed"]).default("Pending"),
@@ -24,8 +24,6 @@ const bookingSchema = z.object({
     "PayMongo",
   ]),
 });
-
-const updateBookingSchema = bookingSchema.partial();
 
 export async function listBookings(req: AuthRequest, res: Response) {
   const businessId = req.businessId;
@@ -51,10 +49,15 @@ export async function createBooking(req: AuthRequest, res: Response) {
   }
 
   const payload = bookingSchema.parse(req.body);
+  const service = await Service.findOne({
+    businessId,
+    name: payload.service,
+  }).select("price");
   const confirmationCode = `SB-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 
   const booking = await Booking.create({
     ...payload,
+    amount: Number(service?.price ?? 0),
     businessId,
     confirmationCode,
   });
@@ -85,38 +88,25 @@ export async function updateBooking(req: AuthRequest, res: Response) {
 
   const payload = z
     .object({
-      status: z.enum(["Pending", "Confirmed", "Completed"]).optional(),
+      status: z
+        .enum(["Pending", "Confirmed", "Completed", "Rejected"])
+        .optional(),
       payment: z.enum(["Unpaid", "Deposit", "Paid"]).optional(),
       paymentMethod: z
-        .enum(["Cash", "Card", "GCash", "Bank transfer", "PayPal"])
+        .enum([
+          "Cash",
+          "Card",
+          "GCash",
+          "Bank transfer",
+          "PayPal",
+          "PayMongo",
+        ])
         .optional(),
     })
     .parse(req.body);
 
   Object.assign(booking, payload);
   await booking.save();
-
-  if (isCashApproval && !booking.confirmationEmailSentAt) {
-    const business = await Business.findById(businessId).select("name");
-    const statusPageUrl = `${process.env.CLIENT_URL ?? "http://localhost:5173"}/status/${booking.confirmationCode}`;
-    const email = await sendBookingConfirmation({
-      to: booking.email,
-      customer: booking.customer,
-      business: business?.name ?? "Booking",
-      service: booking.service,
-      date: booking.date,
-      time: booking.time,
-      paymentMethod: booking.paymentMethod,
-      payment: booking.payment,
-      confirmationCode: booking.confirmationCode,
-      statusPageUrl,
-    });
-
-    if (email.delivered) {
-      booking.confirmationEmailSentAt = new Date();
-      await booking.save();
-    }
-  }
 
   return res.json({ success: true, data: { booking } });
 }
