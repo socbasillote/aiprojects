@@ -1,0 +1,11 @@
+import { createClient, type Session } from '@supabase/supabase-js';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+
+const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
+export const isSupabaseConfigured = Boolean(url && key);
+export const supabase = isSupabaseConfigured ? createClient(url!, key!, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }) : null;
+type AuthContext = { session: Session | null; loading: boolean; signIn: (email: string, password: string) => Promise<string | null>; signUp: (email: string, password: string) => Promise<{ error: string | null; needsEmailConfirmation: boolean }>; signOut: () => Promise<void> };
+const AuthState = createContext<AuthContext | null>(null);
+export function SupabaseAuthProvider({ children }: { children: ReactNode }) { const [session, setSession] = useState<Session | null>(null); const [loading, setLoading] = useState(isSupabaseConfigured); useEffect(() => { if (!supabase) return; let active = true; supabase.auth.getSession().then(({ data }) => { if (active) { setSession(data.session); setLoading(false); } }); const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => { setSession(next); setLoading(false); }); return () => { active = false; listener.subscription.unsubscribe(); }; }, []); const signIn = async (email: string, password: string) => { if (!supabase) return 'Supabase is not configured'; const { error } = await supabase.auth.signInWithPassword({ email, password }); return error?.message ?? null; }; const signUp = async (email: string, password: string) => { if (!supabase) return { error: 'Supabase is not configured', needsEmailConfirmation: false }; const { data, error } = await supabase.auth.signUp({ email, password }); return { error: error?.message ?? null, needsEmailConfirmation: Boolean(data.user && !data.session) }; }; const signOut = async () => { if (supabase) await supabase.auth.signOut(); }; return <AuthState.Provider value={{ session, loading, signIn, signUp, signOut }}>{children}</AuthState.Provider>; }
+export function useSupabaseAuth() { const value = useContext(AuthState); if (!value) throw new Error('SupabaseAuthProvider is missing'); return value; }
